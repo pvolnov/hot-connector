@@ -39,8 +39,11 @@ The `window.selector` implements some features for this:
 
 ```ts
 interface NearSelector {
-  ready: (wallet: any) => void;
-  redirect: (url: string) => void;
+  location: string; // initial dapp location href
+  ready: (wallet: any) => void; // must call executor script for register wallet
+  redirect: (url: string) => void; // used for my-near-wallet
+
+  // use instead of localStorage
   storage: {
     set: (key: string, value: string) => Promise<void>;
     get: (key: string) => Promise<string>;
@@ -57,6 +60,15 @@ Like [Ethereum Multi Injected Provider Standart](https://eips.ethereum.org/EIPS/
 ```js
 window.dispatchEvent(new CustomEvent("near-wallet-injected", { detail: wallet }));
 ```
+
+## Background
+
+Maintaining the current near-wallet-selector takes a lot of time and effort, wallet developers wait a long time to get an update to their connector inside a monolithic code base. After which they can wait months for applications to integrate their wallet into their site or update their frontend to update the wallet connector. This requires a lot of work on the review side of the near-wallet-selector team and STILL does not ensure the security of internal packages that will be installed in applications (for example, RHEA Finance or Near Intents).
+All these problems prompted us to write a new solution that will:
+
+1. safely and isolatedly execute the code for connecting to wallets
+2. quickly and conveniently update wallets on all sites
+3. Save the internal near-wallet-selector team from endlessly maintaining a huge code base, because now only the wallet itself is responsible for the connection of each wallet and hosts its script wherever it wants.
 
 ## Milestones
 
