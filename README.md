@@ -1,6 +1,8 @@
 # NEAR Connect
 
-An easily upgradeable, secure and lightweight wallet connector for the NEAR blockchain
+![image.png](./media/image.png)
+
+Zero-dependenices, robust, secure and lightweight wallet connector for the NEAR blockchain with **easily updatable** wallets code
 
 ## How it works
 
@@ -8,7 +10,7 @@ Unlike near-wallet-selector, this library provides a secure execution environmen
 
 ## Wallet integration
 
-The developer writes a self-hosted script that implements the integration of their wallet and adds a description to the manifest:
+The developer writes a self-hosted script that implements the integration of their wallet and adds a description to the common [manifest](./src/manifest.ts):
 
 ```json
 {
@@ -24,7 +26,7 @@ The developer writes a self-hosted script that implements the integration of the
 }
 ```
 
-The script `https://hot-labs.org/hot-wallet.js` called in a standalone iframe if the user decides to use this wallet on the site. The script implements the NearWallet wallet class and registers it in a special object
+The `executor` endpoint called in a standalone iframe if the user decides to use this wallet on the site. The script implements the [NearWallet](./src/types/wallet.ts) wallet class and registers it in a special object
 `window.selector.ready(yourNearWallet)`
 
 After that, the library delegates user requests directly to `yourNearWallet` via `iframe.postMessage` communication.
@@ -50,7 +52,11 @@ interface NearSelector {
 
 ## Injected wallets
 
-Like Ethereum Multi Injected Provider stander (https://eips.ethereum.org/EIPS/eip-6963) this library supports injected wallets for extenstions and mobile browsers. Your injection script can dispatch custom event
+Like [Ethereum Multi Injected Provider Standart](https://eips.ethereum.org/EIPS/eip-6963) this library supports injected wallets for extenstions and in-app browsers. Your injection script can dispatch custom event with your wallet:
+
+```js
+window.dispatchEvent(new CustomEvent("near-wallet-injected", { detail: wallet }));
+```
 
 ## Milestones
 

@@ -24,5 +24,5 @@
     "noFallthroughCasesInSwitch": true
   },
 
-  "include": ["src", "../src", "vite-env.d.ts", "vite.config.ts", "tsconfig.json", "tsconfig.node.json", "./adapters"]
+  "include": ["src", "../src", "vite-env.d.ts", "vite.config.ts", "tsconfig.json", "tsconfig.node.json"]
 }

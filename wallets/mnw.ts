@@ -1,33 +1,19 @@
 import * as nearAPI from "near-api-js";
 import { KeyPair, PublicKey } from "@near-js/crypto";
-import { KeyStore } from "@near-js/keystores";
 import type { Transaction, Optional, Account } from "@near-wallet-selector/core";
 import { createAction } from "@near-wallet-selector/wallet-utils";
-import * as borsh from "borsh";
 import { Action } from "near-api-js/lib/transaction";
+import { KeyStore } from "@near-js/keystores";
+import * as borsh from "borsh";
 
 export class SelectorStorageKeyStore extends KeyStore {
-  storage = window.selector.storage;
-  constructor(private prefix = "near-api-js:keystore:") {
-    super();
-  }
+  readonly storage = window.selector.storage;
+  readonly prefix = "near-api-js:keystore:";
 
-  /**
-   * Stores a {@link KeyPair} in local storage.
-   * @param networkId The targeted network. (ex. default, betanet, etc…)
-   * @param accountId The NEAR account tied to the key pair
-   * @param keyPair The key pair to store in local storage
-   */
   async setKey(networkId: string, accountId: string, keyPair: KeyPair): Promise<void> {
     await this.storage.set(this.storageKeyForSecretKey(networkId, accountId), keyPair.toString());
   }
 
-  /**
-   * Gets a {@link KeyPair} from local storage
-   * @param networkId The targeted network. (ex. default, betanet, etc…)
-   * @param accountId The NEAR account tied to the key pair
-   * @returns {Promise<KeyPair>}
-   */
   async getKey(networkId: string, accountId: string): Promise<any> {
     const value = await this.storage.get(this.storageKeyForSecretKey(networkId, accountId)).catch(() => null);
     if (!value) return null;
@@ -61,13 +47,11 @@ export class SelectorStorageKeyStore extends KeyStore {
   async getAccounts(networkId: string): Promise<string[]> {
     const result = new Array<string>();
     for await (const key of this.storageKeys()) {
-      if (key.startsWith(this.prefix)) {
-        const parts = key.substring(this.prefix.length).split(":");
-        if (parts[1] === networkId) {
-          result.push(parts[0]);
-        }
-      }
+      if (!key.startsWith(this.prefix)) continue;
+      const parts = key.substring(this.prefix.length).split(":");
+      if (parts[1] === networkId) result.push(parts[0]);
     }
+
     return result;
   }
 

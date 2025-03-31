@@ -5,7 +5,7 @@
     "alwaysStrict": true,
     "allowJs": true,
     "strict": true,
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./build",
     "declaration": true,
     "sourceMap": true,
@@ -15,5 +15,5 @@
     "module": "CommonJS",
     "lib": ["ESNext", "dom"]
   },
-  "include": ["./src"]
+  "include": ["./src", "./wallets"]
 }

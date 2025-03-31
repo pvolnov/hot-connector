@@ -1,5 +1,4 @@
-import uuid4 from "uuid4";
-import { FinalExecutionOutcome } from "@near-js/types";
+import type { FinalExecutionOutcome } from "@near-js/types";
 
 import {
   Account,
@@ -14,6 +13,14 @@ import {
   WalletManifest,
 } from "./types/wallet";
 
+const uuid4 = () => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 export class SandboxExecutor {
   iframe?: HTMLIFrameElement;
   _initializeTask: Promise<HTMLIFrameElement> | null = null;
@@ -25,7 +32,7 @@ export class SandboxExecutor {
 
   async _initialize() {
     this.iframe = document.createElement("iframe");
-    this.iframe.setAttribute("sandbox", "allow-scripts");
+    this.iframe.setAttribute("sandbox", "allow-scripts allow-popups");
     this.iframe.allow = "usb *; hid *;";
     this.iframe.srcdoc = this.code;
 

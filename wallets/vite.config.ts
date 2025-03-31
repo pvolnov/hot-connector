@@ -8,10 +8,10 @@ export default defineConfig({
   root: "./",
   build: {
     emptyOutDir: false,
-    outDir: "./public",
+    outDir: "./example/public",
     rollupOptions: {
       input: {
-        main: `./adapters/${pkg}.ts`,
+        main: `./wallets/${pkg}.ts`,
       },
       output: {
         entryFileNames: `${pkg}.js`,
