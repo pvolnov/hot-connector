@@ -32,9 +32,9 @@ export class SandboxExecutor {
 
   async _initialize() {
     this.iframe = document.createElement("iframe");
-    this.iframe.setAttribute("sandbox", "allow-scripts allow-popups");
+    this.iframe.setAttribute("sandbox", "allow-scripts");
     this.iframe.allow = "usb *; hid *;";
-    this.iframe.srcdoc = this.code;
+    this.iframe.srcdoc = await this.code();
 
     const content = document.querySelector(".wallet-selector__modal-content");
 
@@ -90,7 +90,9 @@ export class SandboxExecutor {
     return this.iframe;
   }
 
-  get code() {
+  async code() {
+    const code = await fetch(this.endpoint).then((res) => res.text());
+
     return `
       <style>
         :root {
@@ -194,7 +196,7 @@ export class SandboxExecutor {
       });
       </script>
       
-      <script type="module" src="${this.endpoint}"></script>
+      <script type="module">${code}</script>
     `;
   }
 
