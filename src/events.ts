@@ -1,66 +1,64 @@
-export type EventCallback = (...args: any[]) => void;
-
-export class EventEmitter {
-  private events: Record<string, EventCallback[]> = {};
+/**
+ * Generic event emitter class for handling typed events and their callbacks
+ * @template T Record type containing event names as keys and their payload types as values
+ */
+export class EventEmitter<T extends Record<string, any>> {
+  /** Internal storage for event callbacks */
+  private events: Partial<Record<keyof T, Array<(payload: any) => void>>> = {};
 
   /**
-   * Register an event listener
-   * @param event Event name
-   * @param callback Function to be called when the event is emitted
+   * Subscribe to an event
+   * @template K Event name type
+   * @param event Name of the event to subscribe to
+   * @param callback Function to be called when event is emitted
    */
-  on(event: string, callback: EventCallback): void {
-    if (!this.events[event]) {
-      this.events[event] = [];
-    }
-    this.events[event].push(callback);
+  on<K extends keyof T>(event: K, callback: (payload: T[K]) => void): void {
+    if (!this.events[event]) this.events[event] = [];
+    this.events[event]!.push(callback);
   }
 
   /**
-   * Register a one-time event listener
-   * @param event Event name
-   * @param callback Function to be called when the event is emitted
+   * Emit an event with payload
+   * @template K Event name type
+   * @param event Name of the event to emit
+   * @param payload Data to pass to event handlers
    */
-  once(event: string, callback: EventCallback): void {
-    const onceWrapper = (...args: any[]) => {
-      callback(...args);
+  emit<K extends keyof T>(event: K, payload: T[K]): void {
+    this.events[event]?.forEach((cb) => cb(payload));
+  }
+
+  /**
+   * Unsubscribe from an event
+   * @template K Event name type
+   * @param event Name of the event to unsubscribe from
+   * @param callback Function to remove from event handlers
+   */
+  off<K extends keyof T>(event: K, callback: (payload: T[K]) => void): void {
+    this.events[event] = this.events[event]?.filter((cb) => cb !== callback);
+  }
+
+  /**
+   * Subscribe to an event for a single emission
+   * @template K Event name type
+   * @param event Name of the event to subscribe to
+   * @param callback Function to be called when event is emitted
+   */
+  once<K extends keyof T>(event: K, callback: (payload: T[K]) => void): void {
+    const onceWrapper = (payload: T[K]) => {
+      callback(payload);
       this.off(event, onceWrapper);
     };
     this.on(event, onceWrapper);
   }
 
   /**
-   * Remove an event listener
-   * @param event Event name
-   * @param callback Function to remove
+   * Remove all event listeners
+   * @template K Event name type
+   * @param event Optional event name to remove listeners for. If not provided, removes all listeners for all events
    */
-  off(event: string, callback: EventCallback): void {
-    if (!this.events[event]) return;
-    this.events[event] = this.events[event].filter((cb) => cb !== callback);
-  }
-
-  /**
-   * Emit an event
-   * @param event Event name
-   * @param args Arguments to pass to the event listeners
-   */
-  emit(event: string, ...args: any[]): void {
-    if (!this.events[event]) return;
-    this.events[event].forEach((callback) => {
-      try {
-        callback(...args);
-      } catch (error) {
-        console.error(`Error in event listener for ${event}:`, error);
-      }
-    });
-  }
-
-  /**
-   * Remove all listeners for an event
-   * @param event Event name (optional - if not provided, removes all listeners)
-   */
-  removeAllListeners(event?: string): void {
+  removeAllListeners<K extends keyof T>(event?: K): void {
     if (event) {
-      this.events[event] = [];
+      delete this.events[event];
     } else {
       this.events = {};
     }

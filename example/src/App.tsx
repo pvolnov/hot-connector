@@ -17,12 +17,12 @@ export const ExampleNEAR: FC = () => {
       });
     });
 
-    selector.on("signedIn", async (t) => {
+    selector.on("wallet:signIn", async (t) => {
       setWallet(await selector.wallet());
       setWalletId(t.accounts[0].accountId);
     });
 
-    selector.on("signedOut", async () => {
+    selector.on("wallet:signOut", async () => {
       setWallet(undefined);
       setWalletId(undefined);
     });

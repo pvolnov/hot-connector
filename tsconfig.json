@@ -15,5 +15,5 @@
     "module": "CommonJS",
     "lib": ["ESNext", "dom"]
   },
-  "include": ["./src", "./wallets"]
+  "include": ["./src", "./wallets", "./vite-env.d.ts"]
 }

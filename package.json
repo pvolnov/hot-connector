@@ -15,12 +15,15 @@
     "build:ledger": "PACKAGE=ledger vite build --config ./wallets/vite.config.ts",
     "build:mnw": "PACKAGE=mnw vite build --config ./wallets/vite.config.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "preact": "^10.26.5"
+  },
   "devDependencies": {
     "@hot-wallet/sdk": "^1.0.11",
     "@near-wallet-selector/core": "^8.9.12",
     "@near-wallet-selector/ledger": "^8.10.1",
     "@near-wallet-selector/modal-ui-js": "^8.9.12",
+    "@preact/preset-vite": "^2.10.1",
     "@vitejs/plugin-react": "^4.3.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

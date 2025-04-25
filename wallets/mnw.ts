@@ -96,6 +96,7 @@ const _completeSignInWithAccessKey = async () => {
 
 const setupWalletState = async () => {
   const authData = await _completeSignInWithAccessKey();
+
   const near = await nearAPI.connect({
     walletUrl: "https://app.mynearwallet.com",
     nodeUrl: "https://rpc.mainnet.near.org",
@@ -248,7 +249,7 @@ const MyNearWallet = async () => {
       const href = new URL("https://app.mynearwallet.com");
       href.pathname = "sign-message";
       href.searchParams.append("message", message);
-      href.searchParams.append("nonce", nonce.toString("base64"));
+      href.searchParams.append("nonce", btoa(String.fromCharCode(...nonce)));
       href.searchParams.append("recipient", recipient);
       href.searchParams.append("callbackUrl", url);
       if (state) href.searchParams.append("state", state);
