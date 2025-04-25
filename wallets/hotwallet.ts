@@ -32,7 +32,8 @@ const wallet = {
   signOut: async () => {},
 
   signMessage: async (payload: any) => {
-    return await HOT.request("near:signMessage", payload);
+    const res = await HOT.request("near:signMessage", payload);
+    return res;
   },
 
   signAndSendTransaction: async (payload: any) => {
