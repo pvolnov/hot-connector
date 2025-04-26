@@ -2,6 +2,7 @@ import TransportWebHID from "@ledgerhq/hw-transport-webhid";
 import type Transport from "@ledgerhq/hw-transport";
 import * as nearAPI from "near-api-js";
 import { providers } from "near-api-js";
+import { Schema, serialize } from "borsh";
 
 // Further reading regarding APDU Ledger API:
 // - https://gist.github.com/Wollac/49f0c4e318e42f463b8306298dfb4f4a
@@ -201,67 +202,247 @@ export class LedgerClient {
   };
 }
 
+class NearProvider {
+  private provider: providers.JsonRpcProvider;
+
+  constructor() {
+    this.provider = new providers.JsonRpcProvider({ url: "https://rpc.mainnet.near.org" });
+  }
+
+  async checkAccessKey(accountId: string, publicKey: string) {
+    const res = await this.provider.query({
+      request_type: "view_access_key",
+      finality: "final",
+      account_id: accountId,
+      public_key: `ed25519:${publicKey}`,
+    });
+
+    if ((res as any).error) {
+      return false;
+    }
+
+    return true;
+  }
+}
+
 const client = new LedgerClient();
-const wallet = {
-  getAccounts: async () => {
-    return [{ accountId: "hot-wallet" }];
+const nearProvider = new NearProvider();
+
+const NEAR_DEFAULT_PATH = "44'/397'/0'/0'/";
+
+export class LedgerPayload {
+  message: string;
+  nonce: Buffer;
+  recipient: string;
+  callbackUrl?: string;
+
+  constructor(data: LedgerPayload) {
+    this.message = data.message;
+    this.nonce = data.nonce;
+    this.recipient = data.recipient;
+    if (data.callbackUrl) {
+      this.callbackUrl = data.callbackUrl;
+    }
+  }
+}
+
+export const ledgerPayloadSchema: Schema = {
+  struct: {
+    message: "string",
+    nonce: { array: { type: "u8", len: 32 } },
+    recipient: "string",
+    callbackUrl: { option: "string" },
   },
+};
 
-  signIn: async () => {
-    document.body.innerHTML = `
-      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; height: 100vh; width: 100vw;">
-        <h1 style="color: white; font-size: 24px; font-weight: bold; text-align: center; margin: 0px;">Ledger Connect</h1>
-        <button id="connect" style="background-color: white; color: black; font-size: 16px; font-weight: bold; padding: 12px 16px; border-radius: 12px; cursor: pointer;">Connect</button>
-      </div>
-    `;
+export const serializeLedgerNEP413Payload = (ledgerPayload: LedgerPayload): Buffer => {
+  const payload = new LedgerPayload({ ...ledgerPayload });
+  return Buffer.from(serialize(ledgerPayloadSchema, payload));
+};
 
-    return new Promise(async (resolve, reject) => {
-      const button = document.getElementById("connect");
-      button?.addEventListener("click", async () => {
+class Wallet {
+  private hdPathIndex = 1;
+
+  private get hdPath() {
+    return `${NEAR_DEFAULT_PATH}${this.hdPathIndex}'`;
+  }
+
+  getAccounts = async () => {
+    const ledgerAccount = await window.selector.storage.get("ledger-account");
+    if (ledgerAccount) return JSON.parse(ledgerAccount);
+    return [];
+  };
+
+  private renderProcessInLedger = async () => {
+    console.log("renderProcessInLedger");
+    const [{ h, render }, htm] = await Promise.all([
+      import("https://esm.sh/preact@10.19.3" as any),
+      import("https://unpkg.com/htm@3.1.1?module" as any),
+    ]);
+
+    const htmlBinded = htm.default.bind(h);
+
+    render(
+      htmlBinded`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:1rem">Process in Ledger</div>`,
+      document.body
+    );
+  };
+
+  async signIn() {
+    const [{ h, render }, htm] = await Promise.all([
+      import("https://esm.sh/preact@10.19.3" as any),
+      import("https://unpkg.com/htm@3.1.1?module" as any),
+    ]);
+
+    const htmlBinded = htm.default.bind(h);
+
+    return new Promise((resolve, reject) => {
+      const tryConnect = async () => {
         try {
           await client.connect();
-          const derivationPath = "44'/397'/0'/0'/1'";
-          const publicKey = await client.getPublicKey({ derivationPath });
-
-          resolve([{ accountId: publicKey, publicKey }]);
+          const publicKey = await new Promise(async (resolve) => {
+            console.log("renderProcessInLedger");
+            await this.renderProcessInLedger();
+            const publicKey = await client.getPublicKey({ derivationPath: this.hdPath });
+            resolve(publicKey);
+          });
+          const accountId = await renderManuallyProviderAccountId(publicKey as string);
+          window.selector.storage.set("ledger-account", JSON.stringify([{ accountId, publicKey }]));
+          resolve([{ accountId, publicKey }]);
         } catch (err) {
           reject(err);
         }
-      });
+      };
+
+      const renderSignIn = () => {
+        render(
+          htmlBinded`
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:1rem">
+              <h1>Ledger Connect</h1>
+              <button style="background-color: #fff; color: #000; padding: 10px 20px; border-radius: 5px; height: 40px;" onClick=${renderSpecifyHDPath}>Specify HD Path</button>
+              <button style="background-color: #fff; color: #000; padding: 10px 20px; border-radius: 5px; height: 40px;" onClick=${tryConnect}>Connect</button>
+            </div>
+          `,
+          document.body
+        );
+      };
+
+      const renderManuallyProviderAccountId = (publicKey: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          let accountId = "";
+          let error = false;
+
+          const update = () => {
+            render(
+              htmlBinded`
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:1rem;padding: 0 1rem;">
+                  <h1 style="text-align: center;font-size: 16px;">Failed to automatically find account id. Provide it manually:</h1>
+                  <input
+                    style="background-color: #fff; color: #000; padding: 10px 20px; border-radius: 5px; width: 200px; height: 40px; box-sizing: border-box;"
+                    type="text"
+                    value=${accountId}
+                    onInput=${(e: any) => {
+                      accountId = e.target.value;
+                      error = false;
+                      update(); // перерендер без ошибок
+                    }}
+                  />
+                  <button
+                    style="background-color: #fff; color: #000; padding: 10px 20px; border-radius: 5px; height: 40px;"
+                    onClick=${async () => {
+                      try {
+                        await nearProvider.checkAccessKey(accountId, publicKey);
+                        resolve(accountId);
+                      } catch {
+                        error = true;
+                        update(); // перерендер с ошибкой
+                      }
+                    }}
+                  >
+                    Submit
+                  </button>
+                  ${error ? htmlBinded`<span style="color: red;">Invalid account id</span>` : null}
+                </div>
+              `,
+              document.body
+            );
+          };
+
+          update();
+        });
+      };
+
+      const renderSpecifyHDPath = () => {
+        render(
+          htmlBinded`
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:1rem">
+              <h1>Specify HD Path</h1>
+              <div style="display:flex;gap:0.5rem">
+                <span style="background-color: #fff; color: #000; padding: 10px 20px; border-radius: 5px; height: 40px; box-sizing: border-box;">${NEAR_DEFAULT_PATH}</span>
+                <input
+                  style="background-color: #fff; color: #000; padding: 10px 20px; border-radius: 5px; width: 100px; height: 40px; box-sizing: border-box;"
+                  type="number"
+                  min="0"
+                  value=${this.hdPathIndex}
+                  onInput=${(e: any) => (this.hdPathIndex = parseInt(e.target.value))}
+                />
+              </div>
+              <button style="background-color: #fff; color: #000; padding: 10px 20px; border-radius: 5px; height: 40px;" onClick=${renderSignIn}>Back</button>
+            </div>
+          `,
+          document.body
+        );
+      };
+
+      renderSignIn();
     });
-  },
+  }
 
-  signOut: async () => {
+  signOut = async () => {
     return [];
-  },
+  };
 
-  signMessage: async ({ message }: { message: string }) => {
-    const derivationPath = "44'/397'/0'/0'/1'";
-    const encoder = new TextEncoder();
-    const messageBuffer = encoder.encode(message);
+  signMessage = async ({ message }: { message: string }) => {
+    if (!client.isConnected()) {
+      await client.connect();
+    }
 
     try {
-      const signatureBuffer = await client.signMessage({
-        data: Buffer.from(messageBuffer),
-        derivationPath,
+      const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(32)));
+
+      const serializedPayload = serializeLedgerNEP413Payload({
+        message,
+        nonce,
+        recipient: "uuint.near",
       });
 
-      const publicKey = await client.getPublicKey({ derivationPath });
+      const signatureBuffer = await client.signMessage({
+        data: serializedPayload,
+        derivationPath: this.hdPath,
+      });
 
       return {
         signature: nearAPI.utils.serialize.base_encode(signatureBuffer),
-        publicKey,
       };
     } catch (err) {
       console.error("Failed to sign message with Ledger:", err);
       throw err;
     }
-  },
+  };
 
-  signAndSendTransaction: async ({ receiverId, actions }: { receiverId: string; actions: any[] }) => {
-    const derivationPath = "44'/397'/0'/0'/1'";
-    const publicKey = await client.getPublicKey({ derivationPath });
-    const accountId = "uuint.near";
+  signAndSendTransaction = async ({ receiverId, actions }: { receiverId: string; actions: any[] }) => {
+    await this.renderProcessInLedger();
+
+    if (!client.isConnected()) {
+      await new Promise(async (resolve) => {
+        await this.renderProcessInLedger();
+        await client.connect();
+        resolve(undefined);
+      });
+    }
+
+    const publicKey = await client.getPublicKey({ derivationPath: this.hdPath });
+    const accountId = (await this.getAccounts())[0].accountId;
 
     const provider = new providers.JsonRpcProvider({ url: "https://rpc.mainnet.near.org" });
 
@@ -306,7 +487,7 @@ const wallet = {
 
     const signature = await client.sign({
       data: Buffer.from(serializedTx),
-      derivationPath,
+      derivationPath: this.hdPath,
     });
 
     const signedTx = new nearAPI.transactions.SignedTransaction({
@@ -324,16 +505,18 @@ const wallet = {
     ]);
 
     return result;
-  },
+  };
 
-  signAndSendTransactions: async () => {
+  signAndSendTransactions = async () => {
     return [
       {
         transaction: "transaction",
       },
     ];
-  },
-};
+  };
+}
+
+const wallet = new Wallet();
 
 console.log("Ledger wallet ready", window.selector);
 window.selector.ready(wallet);

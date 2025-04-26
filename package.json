@@ -24,6 +24,7 @@
     "@near-wallet-selector/ledger": "^8.10.1",
     "@near-wallet-selector/modal-ui-js": "^8.9.12",
     "@vitejs/plugin-react": "^4.3.4",
+    "borsh": "^2.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "typescript": "^5.2.2",
