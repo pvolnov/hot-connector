@@ -56,7 +56,7 @@ interface NearSelector {
 ## Manifest permissions
 
 - `{ name: "storage" }`: Use window.selector.storage in execution script
-- `{ name: "open", allow: ["https://wallet.app"] }` Use window.selector.redirect for `allow` domains
+- `{ name: "open", allow: ["https://wallet.app"] }` Use window.selector.open for `allow` domains
 - `{ name: "location" }`: Use window.selector.location for initial url from dapp
 - `{ name: "usb" }`: Use usb in execution script (use for Ledger)
 

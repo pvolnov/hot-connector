@@ -36,15 +36,6 @@ export class RequestFailed extends Error {
 class HOT {
   static shared = new HOT();
 
-  walletId = "https://t.me/herewalletbot/app";
-  ancestorOrigins = [
-    "http://localhost:1234",
-    "https://my.herewallet.app",
-    "https://tgapp-dev.herewallet.app",
-    "https://tgapp.herewallet.app",
-    "https://beta.herewallet.app",
-  ];
-
   async getResponse(id: string) {
     const res = await fetch(`${proxyApi}/${id}/response`, {
       headers: { "content-type": "application/json" },
