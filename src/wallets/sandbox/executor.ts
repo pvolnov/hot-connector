@@ -5,10 +5,10 @@ import getIframeCode from "./getIframeCode";
 import { Middleware, MiddlewareContext } from "./types";
 
 class SandboxExecutor {
-  iframe?: HTMLIFrameElement;
-  _initializeTask: Promise<HTMLIFrameElement> | null = null;
+  private iframe?: HTMLIFrameElement;
+  private _initializeTask: Promise<HTMLIFrameElement> | null = null;
   private middlewares: Middleware[] = [];
-  origin = uuid4();
+  readonly origin = uuid4();
 
   constructor(readonly id: string, readonly endpoint: string, readonly events: EventEmitter<EventMap>) {
     this.id = id;
@@ -20,8 +20,9 @@ class SandboxExecutor {
 
   async _initialize() {
     this.iframe = document.createElement("iframe");
-    this.iframe.setAttribute("sandbox", "allow-scripts allow-popups");
-    this.iframe.allow = "usb *; hid *;";
+    this.iframe.setAttribute("sandbox", "allow-scripts");
+
+    this.iframe.allow = "usb *; hid *;"; // TODO: Add permissions for use usb and hid
     this.iframe.srcdoc = await this.code();
 
     const content = document.querySelector(".wallet-selector__modal-content");
@@ -40,31 +41,41 @@ class SandboxExecutor {
       if (event.data.origin !== this.origin) return;
 
       if (event.data.method === "setStorage") {
+        // TODO: Add permissions for use storage
         localStorage.setItem(`${this.id}:${event.data.params.key}`, event.data.params.value);
         this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
         return;
       }
 
       if (event.data.method === "getStorage") {
+        // TODO: Add permissions for use storage
         const value = localStorage.getItem(`${this.id}:${event.data.params.key}`);
         this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: value }, "*");
         return;
       }
 
       if (event.data.method === "getStorageKeys") {
+        // TODO: Add permissions for use storage
         const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.id}:`));
         this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: keys }, "*");
         return;
       }
 
       if (event.data.method === "removeStorage") {
+        // TODO: Add permissions for use storage
         localStorage.removeItem(`${this.id}:${event.data.params.key}`);
         this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
         return;
       }
 
-      if (event.data.method === "redirect") {
-        window.location.href = event.data.params.url;
+      if (event.data.method === "open") {
+        // TODO: Add permissions for opening new tabs
+        if (event.data.params.newTab) {
+          window.open(event.data.params.url, "_blank");
+        } else {
+          window.location.href = event.data.params.url;
+        }
+
         this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
         return;
       }

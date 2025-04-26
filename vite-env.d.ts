@@ -4,7 +4,7 @@ interface Window {
   selector: {
     location: string;
     ready: (wallet: any) => void;
-    redirect: (url: string) => void;
+    open: (url: string, newTab?: boolean) => void;
     storage: {
       set: (key: string, value: string) => Promise<void>;
       get: (key: string) => Promise<string>;

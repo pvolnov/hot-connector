@@ -4,7 +4,7 @@ export const manifest: { wallets: WalletManifest[] } = {
   wallets: [
     {
       id: "hot-wallet",
-      platform: ["android", "ios", "web"],
+      platform: ["android", "ios", "web", "tga"],
       name: "Hot Wallet",
       icon: "https://app.hot-labs.org/images/hot/hot-icon.png",
       description: "Hot Wallet is a wallet that allows you to send and receive NEAR.",
@@ -12,6 +12,7 @@ export const manifest: { wallets: WalletManifest[] } = {
       version: "1.0.0",
       executor: "/hotwallet.js",
       type: "sandbox",
+      permissions: [{ name: "storage" }, { name: "open", allow: ["https://hot-labs.org/wallet"] }],
     },
     {
       id: "mynearwallet",
@@ -23,6 +24,7 @@ export const manifest: { wallets: WalletManifest[] } = {
       version: "1.0.0",
       executor: "/mnw.js",
       type: "sandbox",
+      permissions: [{ name: "storage" }, { name: "open", allow: ["https://mynearwallet.com"] }],
     },
     {
       id: "ledger",
@@ -34,6 +36,7 @@ export const manifest: { wallets: WalletManifest[] } = {
       version: "1.0.0",
       executor: "/ledger.js",
       type: "sandbox",
+      permissions: [{ name: "storage" }, { name: "usb" }],
     },
   ],
 };
