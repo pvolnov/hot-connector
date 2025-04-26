@@ -1,19 +1,24 @@
 import { NearWallet, EventNearWalletInjected, WalletManifest } from "./types/wallet";
 import { LocalStorage, DataStorage } from "./storage";
-import { SandboxWallet } from "./wallet";
+import { SandboxWallet } from "./wallets/sandbox";
 import { manifest } from "./manifest";
 import { EventEmitter } from "./events";
+import { EventMap } from "./types/wallet-events";
 
 export class WalletSelector {
   private storage: DataStorage;
-  private events: EventEmitter;
+  private events: EventEmitter<EventMap>;
 
   manifest: { wallets: WalletManifest[] };
   wallets: NearWallet[] = [];
 
-  constructor(options?: { storage?: DataStorage; events?: EventEmitter; manifest?: { wallets: WalletManifest[] } }) {
+  constructor(options?: {
+    storage?: DataStorage;
+    events?: EventEmitter<EventMap>;
+    manifest?: { wallets: WalletManifest[] };
+  }) {
     this.storage = options?.storage ?? new LocalStorage();
-    this.events = options?.events ?? new EventEmitter();
+    this.events = options?.events ?? new EventEmitter<EventMap>();
     this.manifest = options?.manifest ?? manifest;
 
     this.manifest.wallets.forEach((wallet) => this.registerWallet(wallet));
@@ -25,7 +30,7 @@ export class WalletSelector {
 
   async registerWallet(wallet: WalletManifest) {
     if (wallet.type !== "sandbox") throw new Error("Only sandbox wallets are supported");
-    this.wallets.push(new SandboxWallet(wallet));
+    this.wallets.push(new SandboxWallet(wallet, this.events));
   }
 
   async connect(id: string) {
@@ -34,7 +39,7 @@ export class WalletSelector {
 
     const accounts = await wallet?.signIn({ contractId: "" });
     if (!accounts?.length) throw new Error("Failed to sign in");
-    this.events.emit("signedIn", { wallet, accounts });
+    this.events.emit("wallet:signIn", { wallet, accounts, success: true });
     return wallet;
   }
 
@@ -43,10 +48,10 @@ export class WalletSelector {
     await wallet.signOut();
 
     await this.storage.remove("selected-wallet");
-    this.events.emit("signedOut");
+    this.events.emit("wallet:signOut", { success: true });
   }
 
-  async wallet(id?: string | null) {
+  async wallet(id?: string | null): Promise<NearWallet> {
     if (!id) {
       const id = await this.storage.get("selected-wallet");
       const wallet = this.wallets.find((wallet) => wallet.manifest.id === id);
@@ -66,19 +71,19 @@ export class WalletSelector {
     return wallet;
   }
 
-  on(event: string, callback: (...args: any[]) => void) {
+  on<K extends keyof EventMap>(event: K, callback: (payload: EventMap[K]) => void): void {
     this.events.on(event, callback);
   }
 
-  once(event: string, callback: (...args: any[]) => void) {
+  once<K extends keyof EventMap>(event: K, callback: (payload: EventMap[K]) => void): void {
     this.events.once(event, callback);
   }
 
-  off(event: string, callback: (...args: any[]) => void) {
+  off<K extends keyof EventMap>(event: K, callback: (payload: EventMap[K]) => void): void {
     this.events.off(event, callback);
   }
 
-  removeAllListeners(event?: string) {
+  removeAllListeners<K extends keyof EventMap>(event?: K): void {
     this.events.removeAllListeners(event);
   }
 }

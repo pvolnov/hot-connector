@@ -1,6 +1,7 @@
 import TransportWebHID from "@ledgerhq/hw-transport-webhid";
 import type Transport from "@ledgerhq/hw-transport";
 import * as nearAPI from "near-api-js";
+import { providers } from "near-api-js";
 
 // Further reading regarding APDU Ledger API:
 // - https://gist.github.com/Wollac/49f0c4e318e42f463b8306298dfb4f4a
@@ -214,11 +215,18 @@ const wallet = {
       </div>
     `;
 
-    return new Promise((resolve) => {
+    return new Promise(async (resolve, reject) => {
       const button = document.getElementById("connect");
       button?.addEventListener("click", async () => {
-        await client.connect();
-        resolve({ accountId: "hot-wallet" });
+        try {
+          await client.connect();
+          const derivationPath = "44'/397'/0'/0'/1'";
+          const publicKey = await client.getPublicKey({ derivationPath });
+
+          resolve([{ accountId: publicKey, publicKey }]);
+        } catch (err) {
+          reject(err);
+        }
       });
     });
   },
@@ -227,17 +235,95 @@ const wallet = {
     return [];
   },
 
-  signMessage: async () => {
-    return {
-      signature: "signature",
-      publicKey: "publicKey",
-    };
+  signMessage: async ({ message }: { message: string }) => {
+    const derivationPath = "44'/397'/0'/0'/1'";
+    const encoder = new TextEncoder();
+    const messageBuffer = encoder.encode(message);
+
+    try {
+      const signatureBuffer = await client.signMessage({
+        data: Buffer.from(messageBuffer),
+        derivationPath,
+      });
+
+      const publicKey = await client.getPublicKey({ derivationPath });
+
+      return {
+        signature: nearAPI.utils.serialize.base_encode(signatureBuffer),
+        publicKey,
+      };
+    } catch (err) {
+      console.error("Failed to sign message with Ledger:", err);
+      throw err;
+    }
   },
 
-  signAndSendTransaction: async () => {
-    return {
-      transaction: "transaction",
-    };
+  signAndSendTransaction: async ({ receiverId, actions }: { receiverId: string; actions: any[] }) => {
+    const derivationPath = "44'/397'/0'/0'/1'";
+    const publicKey = await client.getPublicKey({ derivationPath });
+    const accountId = "uuint.near";
+
+    const provider = new providers.JsonRpcProvider({ url: "https://rpc.mainnet.near.org" });
+
+    const block = await provider.block({ finality: "final" });
+    const blockHash = nearAPI.utils.serialize.base_decode(block.header.hash);
+
+    const accessKey: any = await provider.query({
+      request_type: "view_access_key",
+      finality: "final",
+      account_id: accountId,
+      public_key: `ed25519:${publicKey}`,
+    });
+
+    const nonce = accessKey.nonce + 1;
+
+    const mappedActions = actions.map((a: any) => {
+      switch (a.type) {
+        case "Transfer":
+          return nearAPI.transactions.transfer(a.params.deposit);
+        case "FunctionCall":
+          return nearAPI.transactions.functionCall(
+            a.params.methodName,
+            Buffer.from(JSON.stringify(a.params.args)),
+            a.params.gas,
+            a.params.deposit
+          );
+        default:
+          throw new Error(`Unsupported action type: ${a.type}`);
+      }
+    });
+
+    const tx = nearAPI.transactions.createTransaction(
+      accountId,
+      nearAPI.utils.PublicKey.from(publicKey),
+      receiverId,
+      nonce,
+      mappedActions,
+      blockHash
+    );
+
+    const serializedTx = nearAPI.utils.serialize.serialize(nearAPI.transactions.SCHEMA.Transaction, tx);
+
+    const signature = await client.sign({
+      data: Buffer.from(serializedTx),
+      derivationPath,
+    });
+
+    const signedTx = new nearAPI.transactions.SignedTransaction({
+      transaction: tx,
+      signature: new nearAPI.transactions.Signature({
+        keyType: 0,
+        data: signature,
+      }),
+    });
+
+    const signedSerialized = nearAPI.utils.serialize.serialize(nearAPI.transactions.SCHEMA.SignedTransaction, signedTx);
+
+    const result = await provider.sendJsonRpc("broadcast_tx_commit", [
+      Buffer.from(signedSerialized).toString("base64"),
+    ]);
+
+    return result;
   },
 
   signAndSendTransactions: async () => {

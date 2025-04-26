@@ -15,7 +15,9 @@
     "build:ledger": "PACKAGE=ledger vite build --config ./wallets/vite.config.ts",
     "build:mnw": "PACKAGE=mnw vite build --config ./wallets/vite.config.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "preact": "^10.26.5"
+  },
   "devDependencies": {
     "@hot-wallet/sdk": "^1.0.11",
     "@near-wallet-selector/core": "^8.9.12",
