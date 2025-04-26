@@ -12,6 +12,7 @@ export const ExampleNEAR: FC = () => {
   useEffect(() => {
     selector.wallet().then((wallet) => {
       wallet.getAccounts().then((t) => {
+        console.log(t, "t");
         setWalletId(t[0].accountId);
         setWallet(wallet);
       });
