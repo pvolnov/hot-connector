@@ -355,7 +355,7 @@ class Wallet {
                         resolve(accountId);
                       } catch {
                         error = true;
-                        update(); // перерендер с ошибкой
+                        update();
                       }
                     }}
                   >
