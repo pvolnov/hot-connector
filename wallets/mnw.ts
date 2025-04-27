@@ -229,7 +229,7 @@ const MyNearWallet = async () => {
         });
       }
 
-      await window.selector.redirect(newUrl.toString());
+      window.selector.open(newUrl.toString());
     },
 
     async signOut() {},
@@ -254,7 +254,7 @@ const MyNearWallet = async () => {
       href.searchParams.append("callbackUrl", url);
       if (state) href.searchParams.append("state", state);
 
-      await window.selector.redirect(href.toString());
+      window.selector.open(href.toString());
       return;
     },
 
@@ -280,7 +280,7 @@ const MyNearWallet = async () => {
           .join(",")
       );
 
-      await window.selector.redirect(newUrl.toString());
+      window.selector.open(newUrl.toString());
     },
   };
 };

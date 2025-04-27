@@ -11,7 +11,7 @@ export default defineConfig({
     outDir: "./example/public",
     rollupOptions: {
       input: {
-        main: `./wallets/${pkg}.ts`,
+        main: `./wallets/${pkg}`,
       },
       output: {
         entryFileNames: `${pkg}.js`,

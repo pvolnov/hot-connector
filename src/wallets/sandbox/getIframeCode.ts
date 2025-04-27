@@ -56,11 +56,11 @@ async function getIframeCode(endpoint: string, origin: string) {
             window.addEventListener("message", handler);
           });
         },
-  
-        async redirect(url) {
-          await window.selector.call("redirect", { url });
+
+        async open(url, newTab = false) {
+          await window.selector.call("open", { url, newTab });
         },
-      
+
         storage: {
           async set(key, value) {
             await window.selector.call("setStorage", { key, value });

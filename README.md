@@ -41,7 +41,7 @@ The `window.selector` implements some features for this:
 interface NearSelector {
   location: string; // initial dapp location href
   ready: (wallet: any) => void; // must call executor script for register wallet
-  redirect: (url: string) => void; // used for my-near-wallet
+  open: (url: string, newTab = false) => void; // used for my-near-wallet
 
   // use instead of localStorage
   storage: {
@@ -52,6 +52,13 @@ interface NearSelector {
   };
 }
 ```
+
+## Manifest permissions
+
+- `{ name: "storage" }`: Use window.selector.storage in execution script
+- `{ name: "open", allow: ["https://wallet.app"] }` Use window.selector.open for `allow` domains
+- `{ name: "location" }`: Use window.selector.location for initial url from dapp
+- `{ name: "usb" }`: Use usb in execution script (use for Ledger)
 
 ## Injected wallets
 
