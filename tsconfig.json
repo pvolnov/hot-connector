@@ -13,7 +13,9 @@
     "target": "ESNext",
     "skipLibCheck": true,
     "module": "CommonJS",
-    "lib": ["ESNext", "dom"]
+    "lib": ["ESNext", "dom"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
   },
   "include": ["./src", "./wallets", "./vite-env.d.ts"]
 }

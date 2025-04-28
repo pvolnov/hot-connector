@@ -30,6 +30,8 @@ class SandboxExecutor {
     if (content) {
       content.innerHTML = ``;
       content.appendChild(this.iframe);
+    } else {
+      throw new Error("No iframe content found");
     }
 
     let readyPromiseResolve: (value: void) => void;
