@@ -34,7 +34,13 @@ class SandboxExecutor {
       const config = this.walletManifest.permissions[action];
       const openUrl = params?.url;
 
-      if (!openUrl || (typeof config === "object" && !config.allows?.includes(openUrl))) {
+      if (!openUrl || typeof config !== "object" || !config.allows) {
+        return false;
+      }
+
+      const allowsHostnames = config.allows.map((allow) => new URL(allow).hostname);
+
+      if (!allowsHostnames.includes(openUrl)) {
         return false;
       }
 

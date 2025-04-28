@@ -1,6 +1,6 @@
 import { FC, useEffect, useState } from "react";
 import { WalletSelector, WalletSelectorUI, NearWallet } from "../../src";
-import "../../src/styles.css";
+import "./index.css";
 
 const selector = new WalletSelector();
 const modal = new WalletSelectorUI(selector);

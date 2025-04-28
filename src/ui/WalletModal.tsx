@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { WalletSelector } from "../selector";
 import { SandboxWallet } from "../wallets/sandbox";
+import "./styles.css";
 
 type Props = {
   opened: boolean;
@@ -11,6 +12,15 @@ type Props = {
 };
 
 export function WalletModal({ opened, selector, onClose, onOpen, withoutSidebar }: Props) {
+  const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+
+  useEffect(() => {
+    selector.wallet().then((wallet) => {
+      console.log("wallet", wallet);
+      if (wallet) setSelectedWallet(wallet.manifest.id);
+    });
+  }, []);
+
   useEffect(() => {
     const addMiddleware = async () => {
       const wallet = await selector.wallet();
@@ -47,6 +57,7 @@ export function WalletModal({ opened, selector, onClose, onOpen, withoutSidebar 
 
   const handleWalletSelect = async (id: string) => {
     try {
+      setSelectedWallet(id);
       await selector.connect(id);
       onClose();
     } catch (error) {
@@ -76,7 +87,10 @@ export function WalletModal({ opened, selector, onClose, onOpen, withoutSidebar 
               </div>
               <div class="wallet-selector__options">
                 {selector.wallets.map((wallet) => (
-                  <button class="wallet-selector__option" onClick={() => handleWalletSelect(wallet.manifest.id)}>
+                  <button
+                    class={`wallet-selector__option ${selectedWallet === wallet.manifest.id ? "--selected" : ""}`}
+                    onClick={() => handleWalletSelect(wallet.manifest.id)}
+                  >
                     <img src={wallet.manifest.icon} />
                     <div>
                       <h2>{wallet.manifest.name}</h2>
@@ -90,9 +104,11 @@ export function WalletModal({ opened, selector, onClose, onOpen, withoutSidebar 
         )}
 
         <div class="wallet-selector__modal-content">
-          <h2>What is a Wallet?</h2>
-          <p>Secure & Manage Your Digital Assets</p>
-          <p>Log In to Any NEAR App</p>
+          <div style={{ padding: "16px" }}>
+            <h2>What is a Wallet?</h2>
+            <p>Secure & Manage Your Digital Assets</p>
+            <p>Log In to Any NEAR App</p>
+          </div>
         </div>
       </div>
     </div>

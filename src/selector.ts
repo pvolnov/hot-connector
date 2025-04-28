@@ -52,8 +52,8 @@ export class WalletSelector {
 
   async connect(id: string) {
     const wallet = await this.wallet(id);
-    await this.storage.set("selected-wallet", id);
 
+    await this.storage.set("selected-wallet", id);
     const accounts = await wallet?.signIn({ contractId: "" });
     if (!accounts?.length) throw new Error("Failed to sign in");
     this.events.emit("wallet:signIn", { wallet, accounts, success: true });

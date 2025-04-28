@@ -207,10 +207,12 @@ const MyNearWallet = async () => {
 
   return {
     async signIn({ contractId, methodNames, successUrl, failureUrl }: any) {
+      console.log("signIn", contractId, methodNames, successUrl, failureUrl);
       const existingAccounts = await getAccounts();
       if (existingAccounts.length) return existingAccounts;
 
       const currentUrl = new URL(window.selector.location);
+      console.log("currentUrl", currentUrl);
       const newUrl = new URL("https://app.mynearwallet.com/login/");
 
       newUrl.searchParams.set("success_url", successUrl || currentUrl.href);
