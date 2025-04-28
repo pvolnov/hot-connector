@@ -27,7 +27,11 @@ export class WalletSelector {
 
     new Promise(async () => {
       // @ts-ignore
-      this.manifest = options?.manifest ?? (await import("./manifest.json")).default;
+      this.manifest =
+        options?.manifest ??
+        ((await (
+          await fetch("https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/src/manifest.json")
+        ).json()) as { wallets: WalletManifest[] });
 
       this.manifest.wallets.forEach((wallet) => this.registerWallet(wallet));
 
