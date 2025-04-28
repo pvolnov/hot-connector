@@ -10,7 +10,12 @@
       "version": "1.0.0",
       "executor": "/hotwallet.js",
       "type": "sandbox",
-      "permissions": [{ "name": "storage" }, { "name": "open", "allow": ["https://hot-labs.org/wallet"] }]
+      "permissions": {
+        "storage": true,
+        "open": {
+          "allow": ["https://hot-labs.org/wallet"]
+        }
+      }
     },
     {
       "id": "mynearwallet",
@@ -22,7 +27,12 @@
       "version": "1.0.0",
       "executor": "/mnw.js",
       "type": "sandbox",
-      "permissions": [{ "name": "storage" }, { "name": "open", "allow": ["https://mynearwallet.com"] }]
+      "permissions": {
+        "storage": true,
+        "open": {
+          "allow": ["https://mynearwallet.com"]
+        }
+      }
     },
     {
       "id": "ledger",
@@ -34,7 +44,11 @@
       "version": "1.0.0",
       "executor": "/ledger.js",
       "type": "sandbox",
-      "permissions": [{ "name": "storage" }, { "name": "usb" }, { "name": "hid" }]
+      "permissions": {
+        "storage": true,
+        "usb": true,
+        "hid": true
+      }
     }
   ]
 }
