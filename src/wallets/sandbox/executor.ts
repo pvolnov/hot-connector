@@ -30,30 +30,18 @@ class SandboxExecutor {
       url?: string;
     }
   ) {
-    switch (action) {
-      case "storage":
-        return this.walletManifest.permissions.some((permission) => permission.name === "storage");
+    if (action === "open") {
+      const config = this.walletManifest.permissions[action];
+      const openUrl = params?.url;
 
-      case "open":
-        const url = params?.url;
-
-        if (!url) {
-          return false;
-        }
-
-        return this.walletManifest.permissions.some(
-          (permission) => permission.name === "open" && permission.allow?.includes(url)
-        );
-
-      case "usb":
-        return this.walletManifest.permissions.some((permission) => permission.name === "usb");
-
-      case "hid":
-        return this.walletManifest.permissions.some((permission) => permission.name === "hid");
-
-      default:
+      if (!openUrl || (typeof config === "object" && !config.allows?.includes(openUrl))) {
         return false;
+      }
+
+      return true;
     }
+
+    return this.walletManifest.permissions[action];
   }
 
   async _initialize() {

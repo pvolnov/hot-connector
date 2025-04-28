@@ -92,6 +92,12 @@ export interface SignAndSendTransactionsParams {
 
 export type EventNearWalletInjected = CustomEvent<{ wallet: NearWallet }>;
 
+type Permission =
+  | {
+      allows?: string[];
+    }
+  | boolean;
+
 export interface WalletManifest {
   id: string;
   platform: string[];
@@ -102,13 +108,7 @@ export interface WalletManifest {
   version: string;
   executor: string;
   type: "sandbox" | "injected";
-  permissions: (
-    | { name: "open"; allow?: string[] }
-    | { name: "storage" }
-    | { name: "usb" }
-    | { name: "location" }
-    | { name: "hid" }
-  )[];
+  permissions: Record<string, Permission>;
 }
 
 export interface NearWallet {
