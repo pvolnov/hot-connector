@@ -10,7 +10,9 @@ export class WalletSelectorUI {
     this.container = document.createElement("div");
     document.body.appendChild(this.container);
 
-    this.render();
+    this.selector.on("wallet:ready", () => {
+      this.render();
+    });
   }
 
   open() {

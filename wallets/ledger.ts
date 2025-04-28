@@ -268,7 +268,8 @@ class Wallet {
   }
 
   getAccounts = async () => {
-    const ledgerAccount = await window.selector.storage.get("ledger:ledger-account");
+    const ledgerAccount = await window.selector.storage.get("ledger-account");
+
     if (ledgerAccount) return JSON.parse(ledgerAccount);
     return [];
   };

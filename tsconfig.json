@@ -15,7 +15,8 @@
     "module": "CommonJS",
     "lib": ["ESNext", "dom"],
     "jsx": "react-jsx",
-    "jsxImportSource": "preact"
+    "jsxImportSource": "preact",
+    "resolveJsonModule": true
   },
   "include": ["./src", "./wallets", "./vite-env.d.ts"]
 }
