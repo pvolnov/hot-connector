@@ -8,7 +8,6 @@ pnpm-debug.log*
 lerna-debug.log*
 build
 public
-
 .vite
 
 node_modules

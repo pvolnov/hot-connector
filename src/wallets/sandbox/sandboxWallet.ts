@@ -20,7 +20,7 @@ export class SandboxWallet implements NearWallet {
   private executor: SandboxExecutor;
 
   constructor(readonly manifest: WalletManifest, readonly events: EventEmitter<EventMap>) {
-    this.executor = new SandboxExecutor(manifest.id, manifest.executor, events);
+    this.executor = new SandboxExecutor(manifest, manifest.executor, events);
   }
 
   use(middleware: Middleware) {

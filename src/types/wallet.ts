@@ -102,7 +102,13 @@ export interface WalletManifest {
   version: string;
   executor: string;
   type: "sandbox" | "injected";
-  permissions: ({ name: "open"; allow?: string[] } | { name: "storage" } | { name: "usb" } | { name: "location" })[];
+  permissions: (
+    | { name: "open"; allow?: string[] }
+    | { name: "storage" }
+    | { name: "usb" }
+    | { name: "location" }
+    | { name: "hid" }
+  )[];
 }
 
 export interface NearWallet {

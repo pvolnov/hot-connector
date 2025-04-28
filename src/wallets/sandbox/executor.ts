@@ -3,26 +3,75 @@ import { EventEmitter } from "../../events";
 import { uuid4 } from "../../utils/uuid";
 import getIframeCode from "./getIframeCode";
 import { Middleware, MiddlewareContext } from "./types";
+import { WalletManifest } from "../../types/wallet";
 
 class SandboxExecutor {
   private iframe?: HTMLIFrameElement;
   private _initializeTask: Promise<HTMLIFrameElement> | null = null;
   private middlewares: Middleware[] = [];
   readonly origin = uuid4();
+  readonly id: string;
 
-  constructor(readonly id: string, readonly endpoint: string, readonly events: EventEmitter<EventMap>) {
-    this.id = id;
+  constructor(
+    readonly walletManifest: WalletManifest,
+    readonly endpoint: string,
+    readonly events: EventEmitter<EventMap>
+  ) {
+    this.id = walletManifest.id;
   }
 
   use(middleware: Middleware) {
     this.middlewares.push(middleware);
   }
 
+  private checkPermissions(
+    action: "storage" | "open" | "usb" | "hid",
+    params?: {
+      url?: string;
+    }
+  ) {
+    switch (action) {
+      case "storage":
+        return this.walletManifest.permissions.some((permission) => permission.name === "storage");
+
+      case "open":
+        const url = params?.url;
+
+        if (!url) {
+          return false;
+        }
+
+        return this.walletManifest.permissions.some(
+          (permission) => permission.name === "open" && permission.allow?.includes(url)
+        );
+
+      case "usb":
+        return this.walletManifest.permissions.some((permission) => permission.name === "usb");
+
+      case "hid":
+        return this.walletManifest.permissions.some((permission) => permission.name === "hid");
+
+      default:
+        return false;
+    }
+  }
+
   async _initialize() {
     this.iframe = document.createElement("iframe");
     this.iframe.setAttribute("sandbox", "allow-scripts");
 
-    this.iframe.allow = "usb *; hid *;"; // TODO: Add permissions for use usb and hid
+    const iframeAllowedPersimissions = [];
+
+    if (this.checkPermissions("usb")) {
+      iframeAllowedPersimissions.push("usb *;");
+    }
+
+    if (this.checkPermissions("hid")) {
+      iframeAllowedPersimissions.push("hid *;");
+    }
+
+    this.iframe.allow = iframeAllowedPersimissions.join(" ");
+
     this.iframe.srcdoc = await this.code();
 
     const content = document.querySelector(".wallet-selector__modal-content");
@@ -30,6 +79,8 @@ class SandboxExecutor {
     if (content) {
       content.innerHTML = ``;
       content.appendChild(this.iframe);
+    } else {
+      throw new Error("No iframe content found");
     }
 
     let readyPromiseResolve: (value: void) => void;
@@ -37,39 +88,34 @@ class SandboxExecutor {
       readyPromiseResolve = resolve;
     });
 
-    window.addEventListener("message", (event) => {
+    window.addEventListener("message", async (event) => {
       if (event.data.origin !== this.origin) return;
 
-      if (event.data.method === "setStorage") {
-        // TODO: Add permissions for use storage
+      if (event.data.method === "setStorage" && this.checkPermissions("storage")) {
         localStorage.setItem(`${this.id}:${event.data.params.key}`, event.data.params.value);
         this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
         return;
       }
 
-      if (event.data.method === "getStorage") {
-        // TODO: Add permissions for use storage
+      if (event.data.method === "getStorage" && this.checkPermissions("storage")) {
         const value = localStorage.getItem(`${this.id}:${event.data.params.key}`);
         this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: value }, "*");
         return;
       }
 
-      if (event.data.method === "getStorageKeys") {
-        // TODO: Add permissions for use storage
+      if (event.data.method === "getStorageKeys" && this.checkPermissions("storage")) {
         const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.id}:`));
         this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: keys }, "*");
         return;
       }
 
-      if (event.data.method === "removeStorage") {
-        // TODO: Add permissions for use storage
+      if (event.data.method === "removeStorage" && this.checkPermissions("storage")) {
         localStorage.removeItem(`${this.id}:${event.data.params.key}`);
         this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
         return;
       }
 
-      if (event.data.method === "open") {
-        // TODO: Add permissions for opening new tabs
+      if (event.data.method === "open" && this.checkPermissions("open", { url: event.data.params.url })) {
         if (event.data.params.newTab) {
           window.open(event.data.params.url, "_blank");
         } else {
@@ -99,8 +145,9 @@ class SandboxExecutor {
   }
 
   async call<T>(method: keyof EventMap, params: any): Promise<T> {
-    if (!this._initializeTask) this._initializeTask = this._initialize();
+    if (!this._initializeTask || method === "wallet:signIn") this._initializeTask = this._initialize();
     const iframe = await this._initializeTask;
+
     const id = uuid4();
 
     const ctx: MiddlewareContext = {

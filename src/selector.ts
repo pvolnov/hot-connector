@@ -1,7 +1,6 @@
 import { NearWallet, EventNearWalletInjected, WalletManifest } from "./types/wallet";
 import { LocalStorage, DataStorage } from "./storage";
 import { SandboxWallet } from "./wallets/sandbox";
-import { manifest } from "./manifest";
 import { EventEmitter } from "./events";
 import { EventMap } from "./types/wallet-events";
 
@@ -9,8 +8,14 @@ export class WalletSelector {
   private storage: DataStorage;
   private events: EventEmitter<EventMap>;
 
-  manifest: { wallets: WalletManifest[] };
+  manifest: { wallets: WalletManifest[] } = { wallets: [] };
   wallets: NearWallet[] = [];
+
+  private _ready: boolean = false;
+
+  get ready() {
+    return this._ready;
+  }
 
   constructor(options?: {
     storage?: DataStorage;
@@ -19,12 +24,24 @@ export class WalletSelector {
   }) {
     this.storage = options?.storage ?? new LocalStorage();
     this.events = options?.events ?? new EventEmitter<EventMap>();
-    this.manifest = options?.manifest ?? manifest;
 
-    this.manifest.wallets.forEach((wallet) => this.registerWallet(wallet));
-    window.addEventListener<any>("near-wallet-injected", (event: EventNearWalletInjected) => {
-      console.log("near-wallet-injected", event);
-      this.wallets.push(event.detail.wallet);
+    new Promise(async () => {
+      // @ts-ignore
+      this.manifest =
+        options?.manifest ??
+        ((await (
+          await fetch("https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/src/manifest.json")
+        ).json()) as { wallets: WalletManifest[] });
+
+      this.manifest.wallets.forEach((wallet) => this.registerWallet(wallet));
+
+      window.addEventListener<any>("near-wallet-injected", (event: EventNearWalletInjected) => {
+        console.log("near-wallet-injected", event);
+        this.wallets.push(event.detail.wallet);
+      });
+
+      this._ready = true;
+      this.events.emit("wallet:ready", { success: true });
     });
   }
 
