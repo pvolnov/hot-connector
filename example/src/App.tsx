@@ -10,22 +10,23 @@ export const ExampleNEAR: FC = () => {
   const [walletId, setWalletId] = useState<string>();
 
   useEffect(() => {
-    selector.wallet().then((wallet) => {
+    selector.on("wallet:ready", async () => {
+      const wallet = await selector.wallet();
+
       wallet.getAccounts().then((t) => {
-        console.log(t, "t");
         setWalletId(t[0].accountId);
         setWallet(wallet);
       });
-    });
 
-    selector.on("wallet:signIn", async (t) => {
-      setWallet(await selector.wallet());
-      setWalletId(t.accounts[0].accountId);
-    });
+      selector.on("wallet:signIn", async (t) => {
+        setWallet(await selector.wallet());
+        setWalletId(t.accounts[0].accountId);
+      });
 
-    selector.on("wallet:signOut", async () => {
-      setWallet(undefined);
-      setWalletId(undefined);
+      selector.on("wallet:signOut", async () => {
+        setWallet(undefined);
+        setWalletId(undefined);
+      });
     });
   }, []);
 

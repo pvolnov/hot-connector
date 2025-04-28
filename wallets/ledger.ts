@@ -269,12 +269,12 @@ class Wallet {
 
   getAccounts = async () => {
     const ledgerAccount = await window.selector.storage.get("ledger-account");
+
     if (ledgerAccount) return JSON.parse(ledgerAccount);
     return [];
   };
 
   private renderProcessInLedger = async () => {
-    console.log("renderProcessInLedger");
     const [{ h, render }, htm] = await Promise.all([
       import("https://esm.sh/preact@10.19.3" as any),
       import("https://unpkg.com/htm@3.1.1?module" as any),
@@ -301,7 +301,6 @@ class Wallet {
         try {
           await client.connect();
           const publicKey = await new Promise(async (resolve) => {
-            console.log("renderProcessInLedger");
             await this.renderProcessInLedger();
             const publicKey = await client.getPublicKey({ derivationPath: this.hdPath });
             resolve(publicKey);

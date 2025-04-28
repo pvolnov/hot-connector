@@ -4,8 +4,6 @@ export { type DataStorage, LocalStorage } from "./storage";
 export { EventEmitter } from "./events";
 export { WalletSelectorUI } from "./ui";
 
-export { manifest } from "./manifest";
-
 export type {
   NearWallet,
   WalletManifest,

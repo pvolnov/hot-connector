@@ -109,7 +109,7 @@ class HOT {
     qr?.appendChild(qrcode.canvas);
 
     // @ts-ignore
-    window.openWallet = () => window.selector.open(`https://t.me/hot_wallet/app?startapp=${link}`, true); // @ts-ignore
+    window.openTelegram = () => window.selector.open(`https://t.me/hot_wallet/app?startapp=${link}`, true); // @ts-ignore
     window.openMobile = () => window.selector.open(`hotwallet://${link}`, true);
 
     const poolResponse = async () => {
