@@ -30,7 +30,7 @@
       "permissions": {
         "storage": true,
         "open": {
-          "allow": ["https://app.mynearwallet.com"]
+          "allows": ["https://app.mynearwallet.com"]
         }
       }
     },

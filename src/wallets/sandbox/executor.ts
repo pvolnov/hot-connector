@@ -40,7 +40,7 @@ class SandboxExecutor {
 
       const allowsHostnames = config.allows.map((allow) => new URL(allow).hostname);
 
-      if (!allowsHostnames.includes(openUrl)) {
+      if (!allowsHostnames.some((hostname) => new URL(openUrl).hostname === hostname)) {
         return false;
       }
 
