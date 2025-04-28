@@ -7,8 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 build
-public/*
-!public/manifest.json
+public
 .vite
 
 node_modules
