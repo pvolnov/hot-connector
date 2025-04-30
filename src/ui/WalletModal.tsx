@@ -22,6 +22,13 @@ export function WalletModal({ opened, selector, onClose, onOpen, withoutSidebar 
   }, []);
 
   useEffect(() => {
+    const selectedWallet = localStorage.getItem("selected-wallet");
+    if (selectedWallet) {
+      setSelectedWallet(selectedWallet);
+    }
+  }, []);
+
+  useEffect(() => {
     const addMiddleware = async () => {
       const wallet = await selector.wallet();
 
@@ -76,7 +83,7 @@ export function WalletModal({ opened, selector, onClose, onOpen, withoutSidebar 
         }
       }}
     >
-      <div class="wallet-selector__modal">
+      <div class="wallet-selector__modal" style={{ visibility: opened ? "visible" : "hidden" }}>
         <button class="wallet-selector__close">✕</button>
 
         {!withoutSidebar && (
@@ -86,18 +93,28 @@ export function WalletModal({ opened, selector, onClose, onOpen, withoutSidebar 
                 <p>Select a wallet</p>
               </div>
               <div class="wallet-selector__options">
-                {selector.wallets.map((wallet) => (
-                  <button
-                    class={`wallet-selector__option ${selectedWallet === wallet.manifest.id ? "--selected" : ""}`}
-                    onClick={() => handleWalletSelect(wallet.manifest.id)}
-                  >
-                    <img src={wallet.manifest.icon} />
-                    <div>
-                      <h2>{wallet.manifest.name}</h2>
-                      <p>{new URL(wallet.manifest.website).hostname}</p>
-                    </div>
-                  </button>
-                ))}
+                {selector.wallets.map((wallet) => {
+                  let url = "Unknown website";
+
+                  try {
+                    url = new URL(wallet.manifest.website).hostname;
+                  } catch (error) {
+                    console.error("Invalid website", error);
+                  }
+
+                  return (
+                    <button
+                      class={`wallet-selector__option ${selectedWallet === wallet.manifest.id ? "--selected" : ""}`}
+                      onClick={() => handleWalletSelect(wallet.manifest.id)}
+                    >
+                      <img src={wallet.manifest.icon} />
+                      <div>
+                        <h2>{wallet.manifest.name}</h2>
+                        <p>{url}</p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

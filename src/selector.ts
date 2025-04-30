@@ -17,32 +17,36 @@ export class WalletSelector {
     return this._ready;
   }
 
-  constructor(options?: {
-    storage?: DataStorage;
-    events?: EventEmitter<EventMap>;
-    manifest?: { wallets: WalletManifest[] };
-  }) {
+  constructor(options?: { storage?: DataStorage; events?: EventEmitter<EventMap>; manifestUrl?: string }) {
+    window.addEventListener<any>("near-wallet-injected", this._handleNearWalletInjected);
+
     this.storage = options?.storage ?? new LocalStorage();
     this.events = options?.events ?? new EventEmitter<EventMap>();
 
     new Promise(async () => {
-      // @ts-ignore
-      this.manifest =
-        options?.manifest ??
-        ((await (
-          await fetch("https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/src/manifest.json")
-        ).json()) as { wallets: WalletManifest[] });
+      this.manifest = await this._loadManifest(options?.manifestUrl);
 
       this.manifest.wallets.forEach((wallet) => this.registerWallet(wallet));
 
-      window.addEventListener<any>("near-wallet-injected", (event: EventNearWalletInjected) => {
-        console.log("near-wallet-injected", event);
-        this.wallets.push(event.detail.wallet);
-      });
-
       this._ready = true;
-      this.events.emit("wallet:ready", { success: true });
+      this.events.emit("selector:manifestUpdated", { success: true });
     });
+  }
+
+  private _handleNearWalletInjected(event: EventNearWalletInjected) {
+    console.log("near-wallet-injected", event);
+    this.wallets.push(event.detail.wallet);
+    this.events.emit("selected:walletsChanged", { success: true, wallet: event.detail.wallet });
+  }
+
+  private async _loadManifest(manifestUrl?: string) {
+    let manifestEndpoint = manifestUrl
+      ? manifestUrl
+      : "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/src/manifest.json";
+
+    const manifest = (await (await fetch(manifestEndpoint)).json()) as { wallets: WalletManifest[] };
+
+    return manifest;
   }
 
   async registerWallet(wallet: WalletManifest) {

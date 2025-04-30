@@ -10,7 +10,7 @@ export const ExampleNEAR: FC = () => {
   const [walletId, setWalletId] = useState<string>();
 
   useEffect(() => {
-    selector.on("wallet:ready", async () => {
+    selector.on("selector:manifestUpdated", async () => {
       const wallet = await selector.wallet();
 
       wallet.getAccounts().then((t) => {

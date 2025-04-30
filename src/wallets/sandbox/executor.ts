@@ -4,6 +4,7 @@ import { uuid4 } from "../../utils/uuid";
 import getIframeCode from "./getIframeCode";
 import { Middleware, MiddlewareContext } from "./types";
 import { WalletManifest } from "../../types/wallet";
+import { loadingSvg } from "./loading.svg";
 
 class SandboxExecutor {
   private iframe?: HTMLIFrameElement;
@@ -66,16 +67,17 @@ class SandboxExecutor {
 
     this.iframe.allow = iframeAllowedPersimissions.join(" ");
 
-    this.iframe.srcdoc = await this.code();
-
     const content = document.querySelector(".wallet-selector__modal-content");
-
-    if (content) {
-      content.innerHTML = ``;
-      content.appendChild(this.iframe);
-    } else {
+    if (!content) {
       throw new Error("No iframe content found");
     }
+
+    content.innerHTML = loadingSvg;
+
+    this.iframe.srcdoc = await this.code();
+
+    content.innerHTML = ``;
+    content.appendChild(this.iframe);
 
     let readyPromiseResolve: (value: void) => void;
     const readyPromise = new Promise<void>((resolve, reject) => {

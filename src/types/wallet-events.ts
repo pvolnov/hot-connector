@@ -6,7 +6,9 @@ export interface EventMap {
   "wallet:signAndSendTransactions": any;
   "wallet:getAccounts": any;
   "wallet:verifyOwner": any;
-  "wallet:ready": any;
+
+  "selector:manifestUpdated": any;
+  "selected:walletsChanged": any;
 }
 
 export type EventType = keyof EventMap;
