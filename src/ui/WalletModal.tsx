@@ -83,7 +83,7 @@ export function WalletModal({ opened, selector, onClose, onOpen, withoutSidebar 
         }
       }}
     >
-      <div class="wallet-selector__modal" style={{ visibility: opened ? "visible" : "hidden" }}>
+      <div class="wallet-selector__modal">
         <button class="wallet-selector__close">✕</button>
 
         {!withoutSidebar && (
