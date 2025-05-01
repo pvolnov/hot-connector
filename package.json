@@ -10,8 +10,9 @@
   "scripts": {
     "build": "tsc",
     "example": "cd example && yarn start",
-    "build:wallets": "yarn build:hotwallet && yarn build:ledger && yarn build:mnw",
+    "build:wallets": "yarn build:hotwallet && yarn build:ledger && yarn build:mnw && yarn build:near-mobile",
     "build:hotwallet": "PACKAGE=hotwallet vite build --config ./wallets/vite.config.ts",
+    "build:near-mobile": "PACKAGE=near-mobile vite build --config ./wallets/vite.config.ts",
     "build:ledger": "PACKAGE=ledger vite build --config ./wallets/vite.config.ts",
     "build:mnw": "PACKAGE=mnw vite build --config ./wallets/vite.config.ts"
   },
@@ -19,13 +20,15 @@
     "preact": "^10.26.5"
   },
   "devDependencies": {
+    "@here-wallet/core": "^3.4.0",
     "@hot-wallet/sdk": "^1.0.11",
     "@near-wallet-selector/core": "^8.9.12",
     "@near-wallet-selector/ledger": "^8.10.1",
     "@near-wallet-selector/modal-ui-js": "^8.9.12",
-    "@here-wallet/core": "^3.4.0",
+    "@peersyst/near-mobile-signer": "^1.1.4",
     "@vitejs/plugin-react": "^4.3.4",
     "borsh": "^2.0.0",
+    "qr-code-styling": "^1.9.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "typescript": "^5.2.2",

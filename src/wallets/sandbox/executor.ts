@@ -1,15 +1,17 @@
 import { EventMap } from "../../types/wallet-events";
-import { EventEmitter } from "../../events";
-import { uuid4 } from "../../utils/uuid";
-import getIframeCode from "./getIframeCode";
-import { Middleware, MiddlewareContext } from "./types";
 import { WalletManifest } from "../../types/wallet";
-import { loadingSvg } from "./loading.svg";
+import { EventEmitter } from "../../events";
+import { parseUrl } from "../../utils/url";
+import { uuid4 } from "../../utils/uuid";
+
+import { Middleware, MiddlewareContext } from "./types";
+import getIframeCode from "./getIframeCode";
 
 class SandboxExecutor {
-  private iframe?: HTMLIFrameElement;
+  iframe?: HTMLIFrameElement;
   private _initializeTask: Promise<HTMLIFrameElement> | null = null;
   private middlewares: Middleware[] = [];
+
   readonly origin = uuid4();
   readonly id: string;
 
@@ -25,30 +27,23 @@ class SandboxExecutor {
     this.middlewares.push(middleware);
   }
 
-  private checkPermissions(
-    action: "storage" | "open" | "usb" | "hid",
-    params?: {
-      url?: string;
-    }
-  ) {
+  private checkPermissions(action: "storage" | "open" | "usb" | "hid", params?: { url?: string }) {
     if (action === "open") {
+      const openUrl = parseUrl(params?.url || "");
       const config = this.walletManifest.permissions[action];
-      const openUrl = params?.url;
 
-      if (!openUrl || typeof config !== "object" || !config.allows) {
-        return false;
-      }
-
-      const allowsHostnames = config.allows.map((allow) => new URL(allow).hostname);
-
-      if (!allowsHostnames.some((hostname) => new URL(openUrl).hostname === hostname)) {
-        return false;
-      }
-
-      return true;
+      if (!openUrl || typeof config !== "object" || !config.allows) return false;
+      const allowsHostnames = config.allows.map((allow) => parseUrl(allow)?.hostname);
+      return allowsHostnames.some((hostname) => openUrl?.hostname === hostname);
     }
 
     return this.walletManifest.permissions[action];
+  }
+
+  async initialize() {
+    if (!this._initializeTask) this._initializeTask = this._initialize();
+    const iframe = await this._initializeTask;
+    return iframe;
   }
 
   async _initialize() {
@@ -56,7 +51,6 @@ class SandboxExecutor {
     this.iframe.setAttribute("sandbox", "allow-scripts");
 
     const iframeAllowedPersimissions = [];
-
     if (this.checkPermissions("usb")) {
       iframeAllowedPersimissions.push("usb *;");
     }
@@ -66,18 +60,7 @@ class SandboxExecutor {
     }
 
     this.iframe.allow = iframeAllowedPersimissions.join(" ");
-
-    const content = document.querySelector(".wallet-selector__modal-content");
-    if (!content) {
-      throw new Error("No iframe content found");
-    }
-
-    content.innerHTML = loadingSvg;
-
     this.iframe.srcdoc = await this.code();
-
-    content.innerHTML = ``;
-    content.appendChild(this.iframe);
 
     let readyPromiseResolve: (value: void) => void;
     const readyPromise = new Promise<void>((resolve, reject) => {
@@ -111,7 +94,9 @@ class SandboxExecutor {
         return;
       }
 
-      if (event.data.method === "open" && this.checkPermissions("open", { url: event.data.params.url })) {
+      console.log("open", event.data.params);
+      if (event.data.method === "open" && this.checkPermissions("open", event.data.params)) {
+        console.log("open", event.data.params);
         if (event.data.params.newTab) {
           window.open(event.data.params.url, "_blank");
         } else {
@@ -141,16 +126,10 @@ class SandboxExecutor {
   }
 
   async call<T>(method: keyof EventMap, params: any): Promise<T> {
-    if (!this._initializeTask || method === "wallet:signIn") this._initializeTask = this._initialize();
-    const iframe = await this._initializeTask;
+    const iframe = await this.initialize();
 
     const id = uuid4();
-
-    const ctx: MiddlewareContext = {
-      method,
-      params,
-      origin: this.origin,
-    };
+    const ctx: MiddlewareContext = { method, params, origin: this.origin };
 
     const runMiddlewares = async (i = 0): Promise<any> => {
       const middleware = this.middlewares[i];

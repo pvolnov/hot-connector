@@ -55,10 +55,11 @@ interface NearSelector {
 
 ## Manifest permissions
 
-- `{ name: "storage" }`: Use window.selector.storage in execution script
-- `{ name: "open", allow: ["https://wallet.app"] }` Use window.selector.open for `allow` domains
-- `{ name: "location" }`: Use window.selector.location for initial url from dapp
-- `{ name: "usb" }`: Use usb in execution script (use for Ledger)
+- `{ "storage": true  }`: Use window.selector.storage in execution script
+- `{ "open": { allows: ["https://wallet.app"] } }` Use window.selector.open for `allow` domains
+- `{ "location": true }`: Use window.selector.location for initial url from dapp
+- `{ "usb": true }`: Use usb in execution script (use for Ledger)
+- `{ "hid": true }`: Use hid in execution script (use for Ledger)
 
 ## Injected wallets
 

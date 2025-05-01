@@ -11,41 +11,42 @@ export class WalletSelector {
   manifest: { wallets: WalletManifest[] } = { wallets: [] };
   wallets: NearWallet[] = [];
 
-  private _ready: boolean = false;
+  readonly whenManifestLoaded: Promise<void>;
 
-  get ready() {
-    return this._ready;
-  }
-
-  constructor(options?: { storage?: DataStorage; events?: EventEmitter<EventMap>; manifestUrl?: string }) {
-    window.addEventListener<any>("near-wallet-injected", this._handleNearWalletInjected);
-
+  constructor(options?: {
+    storage?: DataStorage;
+    events?: EventEmitter<EventMap>;
+    manifest?: string | { wallets: WalletManifest[] };
+  }) {
     this.storage = options?.storage ?? new LocalStorage();
     this.events = options?.events ?? new EventEmitter<EventMap>();
+    window.addEventListener<any>("near-wallet-injected", this._handleNearWalletInjected);
 
-    new Promise(async () => {
-      this.manifest = await this._loadManifest(options?.manifestUrl);
+    this.whenManifestLoaded = new Promise(async (resolve) => {
+      if (options?.manifest == null || typeof options.manifest === "string") {
+        this.manifest = await this._loadManifest(options?.manifest);
+      } else {
+        this.manifest = options?.manifest ?? { wallets: [] };
+      }
 
       this.manifest.wallets.forEach((wallet) => this.registerWallet(wallet));
-
-      this._ready = true;
-      this.events.emit("selector:manifestUpdated", { success: true });
+      this.events.emit("selector:manifestUpdated", {});
+      this.events.emit("selected:walletsChanged", {});
+      resolve();
     });
   }
 
   private _handleNearWalletInjected(event: EventNearWalletInjected) {
-    console.log("near-wallet-injected", event);
     this.wallets.push(event.detail.wallet);
-    this.events.emit("selected:walletsChanged", { success: true, wallet: event.detail.wallet });
+    this.events.emit("selected:walletsChanged", {});
   }
 
   private async _loadManifest(manifestUrl?: string) {
     let manifestEndpoint = manifestUrl
       ? manifestUrl
-      : "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/src/manifest.json";
+      : "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/manifest.json";
 
     const manifest = (await (await fetch(manifestEndpoint)).json()) as { wallets: WalletManifest[] };
-
     return manifest;
   }
 
@@ -79,12 +80,10 @@ export class WalletSelector {
       if (!wallet) throw new Error("No wallet selected");
 
       const accounts = await wallet.getAccounts().catch(() => null);
-      if (!accounts?.length) {
-        await this.disconnect(wallet);
-        throw new Error("No accounts found");
-      }
+      if (accounts?.length) return wallet;
 
-      return wallet;
+      await this.disconnect(wallet);
+      throw new Error("No accounts found");
     }
 
     const wallet = this.wallets.find((wallet) => wallet.manifest.id === id);

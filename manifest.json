@@ -3,9 +3,9 @@
     {
       "id": "hot-wallet",
       "platform": ["android", "ios", "web", "tga"],
-      "name": "Hot Wallet",
+      "name": "HOT Wallet",
       "icon": "https://app.hot-labs.org/images/hot/hot-icon.png",
-      "description": "Hot Wallet is a wallet that allows you to send and receive NEAR.",
+      "description": "Secure Multichain wallet. Manage assets, refuel gas, and mine $HOT on any device with HOT Wallet",
       "website": "https://hot-labs.org/wallet",
       "version": "1.0.0",
       "executor": "/hotwallet.js",
@@ -13,7 +13,29 @@
       "permissions": {
         "storage": true,
         "open": {
-          "allow": ["https://hot-labs.org/wallet"]
+          "allows": [
+            "https://hot-labs.org/wallet",
+            "hotwallet://",
+            "https://play.google.com/",
+            "https://apps.apple.com/"
+          ]
+        }
+      }
+    },
+    {
+      "id": "near-mobile",
+      "platform": ["android", "ios", "web", "tga"],
+      "name": "NEAR Mobile",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/08/28/af/0828af98-0077-02ae-e1c7-cbaa94389179/AppIcon-0-0-1x_U007ephone-0-85-220.png/246x0w.webp",
+      "description": "Discover the only NEAR wallet you will need: NEAR Mobile, the most secure and comprehensive mobile wallet designed exclusively for the NEAR Blockchain",
+      "website": "https://nearmobile.app",
+      "version": "1.0.0",
+      "executor": "/near-mobile.js",
+      "type": "sandbox",
+      "permissions": {
+        "storage": true,
+        "open": {
+          "allows": ["https://nearmobile.app/", "https://play.google.com/", "https://apps.apple.com/"]
         }
       }
     },

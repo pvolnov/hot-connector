@@ -17,7 +17,7 @@ import SandboxExecutor from "./executor";
 import { Middleware } from "./types";
 
 export class SandboxWallet implements NearWallet {
-  private executor: SandboxExecutor;
+  executor: SandboxExecutor;
 
   constructor(readonly manifest: WalletManifest, readonly events: EventEmitter<EventMap>) {
     this.executor = new SandboxExecutor(manifest, manifest.executor, events);

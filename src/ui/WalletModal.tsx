@@ -1,75 +1,47 @@
 import { useEffect, useState } from "preact/hooks";
-import { WalletSelector } from "../selector";
 import { SandboxWallet } from "../wallets/sandbox";
+import { WalletSelector } from "../selector";
+import { parseUrl } from "../utils/url";
+import { NearWallet } from "../types/wallet";
+
 import "./styles.css";
 
 type Props = {
   opened: boolean;
   selector: WalletSelector;
+  withoutSidebar?: boolean;
   onClose: () => void;
   onOpen: () => void;
-  withoutSidebar?: boolean;
 };
 
 export function WalletModal({ opened, selector, onClose, onOpen, withoutSidebar }: Props) {
-  const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<NearWallet | null>(null);
 
   useEffect(() => {
-    selector.wallet().then((wallet) => {
-      console.log("wallet", wallet);
-      if (wallet) setSelectedWallet(wallet.manifest.id);
-    });
-  }, []);
-
-  useEffect(() => {
-    const selectedWallet = localStorage.getItem("selected-wallet");
-    if (selectedWallet) {
-      setSelectedWallet(selectedWallet);
-    }
-  }, []);
-
-  useEffect(() => {
-    const addMiddleware = async () => {
-      const wallet = await selector.wallet();
-
+    return () => {
       if (wallet instanceof SandboxWallet) {
-        wallet.use((ctx, next) => {
-          switch (ctx.method) {
-            case "wallet:signMessage":
-              onOpen();
-              return next();
-
-            case "wallet:signAndSendTransaction":
-              onOpen();
-              return next();
-
-            case "wallet:signAndSendTransactions":
-              onOpen();
-              return next();
-          }
-
-          return next();
-        });
+        wallet.executor.iframe?.remove();
+        const iframe = document.querySelector(".wallet-selector__modal-content.selector__iframe") as HTMLDivElement;
+        const view = document.querySelector(".wallet-selector__modal-content.selector__view") as HTMLDivElement;
+        iframe.style.display = "none";
+        view.style.display = "block";
       }
     };
+  }, [wallet]);
 
-    selector.on("wallet:signIn", async (data) => {
-      const id = data.accounts[0].accountId;
-      await addMiddleware();
-      onClose();
-    });
+  const handleWalletSelect = async (wallet: NearWallet) => {
+    if (wallet instanceof SandboxWallet) {
+      const iframeView = document.querySelector(".wallet-selector__modal-content.selector__iframe") as HTMLDivElement;
+      const view = document.querySelector(".wallet-selector__modal-content.selector__view") as HTMLDivElement;
 
-    addMiddleware().catch(console.error);
-  }, [selector]);
-
-  const handleWalletSelect = async (id: string) => {
-    try {
-      setSelectedWallet(id);
-      await selector.connect(id);
-      onClose();
-    } catch (error) {
-      console.error("Connection error", error);
+      wallet.executor.initialize();
+      iframeView.appendChild(wallet.executor.iframe!);
+      iframeView.style.display = "block";
+      view.style.display = "none";
     }
+
+    await selector.connect(wallet.manifest.id);
+    onClose();
   };
 
   return (
@@ -93,24 +65,16 @@ export function WalletModal({ opened, selector, onClose, onOpen, withoutSidebar 
                 <p>Select a wallet</p>
               </div>
               <div class="wallet-selector__options">
-                {selector.wallets.map((wallet) => {
-                  let url = "Unknown website";
-
-                  try {
-                    url = new URL(wallet.manifest.website).hostname;
-                  } catch (error) {
-                    console.error("Invalid website", error);
-                  }
-
+                {selector.wallets.map((w) => {
                   return (
                     <button
-                      class={`wallet-selector__option ${selectedWallet === wallet.manifest.id ? "--selected" : ""}`}
-                      onClick={() => handleWalletSelect(wallet.manifest.id)}
+                      class={`wallet-selector__option ${wallet === w ? "--selected" : ""}`}
+                      onClick={() => setWallet(w)}
                     >
-                      <img src={wallet.manifest.icon} />
+                      <img src={w.manifest.icon} />
                       <div>
-                        <h2>{wallet.manifest.name}</h2>
-                        <p>{url}</p>
+                        <h2>{w.manifest.name}</h2>
+                        <p>{parseUrl(w.manifest.website)?.hostname}</p>
                       </div>
                     </button>
                   );
@@ -120,12 +84,23 @@ export function WalletModal({ opened, selector, onClose, onOpen, withoutSidebar 
           </div>
         )}
 
-        <div class="wallet-selector__modal-content">
-          <div style={{ padding: "16px" }}>
-            <h2>What is a Wallet?</h2>
-            <p>Secure & Manage Your Digital Assets</p>
-            <p>Log In to Any NEAR App</p>
-          </div>
+        <div class="wallet-selector__modal-content selector__iframe" style={{ display: "none" }}></div>
+
+        <div class="wallet-selector__modal-content selector__view">
+          {wallet ? (
+            <div class="wallet-intro">
+              <img src={wallet.manifest.icon} />
+              <h2>{wallet.manifest.name}</h2>
+              <p>{wallet.manifest.description}</p>
+              <button onClick={() => handleWalletSelect(wallet).catch(console.error)}>Connect</button>
+            </div>
+          ) : (
+            <div style={{ padding: "16px" }}>
+              <h2>What is a Wallet?</h2>
+              <p>Secure & Manage Your Digital Assets</p>
+              <p>Log In to Any NEAR App</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
