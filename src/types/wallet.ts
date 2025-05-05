@@ -3,6 +3,8 @@ import type { Transaction, Action } from "./transactions";
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
+export type Network = "mainnet" | "testnet";
+
 export interface Account {
   /**
    * NEAR account identifier.
@@ -23,6 +25,10 @@ export interface SignInParams {
    * Specify limited access to particular methods on the Smart Contract.
    */
   methodNames?: Array<string>;
+  /**
+   * Specify the network to sign in to.
+   */
+  network?: Network;
 }
 
 export interface VerifyOwnerParams {
@@ -38,6 +44,10 @@ export interface VerifyOwnerParams {
    * Applicable to browser wallets (e.g. MyNearWallet) extra data that will be passed to the callback url once the signing is approved.
    */
   meta?: string;
+  /**
+   * Specify the network to verify the owner on.
+   */
+  network?: Network;
 }
 
 export interface VerifiedOwner {
@@ -55,6 +65,10 @@ export interface SignMessageParams {
   nonce: Buffer;
   callbackUrl?: string;
   state?: string;
+  /**
+   * Specify the network to sign the message on.
+   */
+  network?: Network;
 }
 
 export interface SignedMessage {
@@ -81,6 +95,10 @@ export interface SignAndSendTransactionParams {
    * NEAR Action(s) to sign and send to the network (e.g. `FunctionCall`). You can find more information on `Action` {@link https://github.com/near/wallet-selector/blob/main/packages/core/docs/api/transactions.md | here}.
    */
   actions: Array<Action>;
+  /**
+   * Specify the network to sign and send the transaction on.
+   */
+  network?: Network;
 }
 
 export interface SignAndSendTransactionsParams {
@@ -88,6 +106,10 @@ export interface SignAndSendTransactionsParams {
    * NEAR Transactions(s) to sign and send to the network. You can find more information on `Transaction` {@link https://github.com/near/wallet-selector/blob/main/packages/core/docs/api/transactions.md | here}.
    */
   transactions: Array<Optional<Transaction, "signerId">>;
+  /**
+   * Specify the network to sign and send the transactions on.
+   */
+  network?: Network;
 }
 
 export type EventNearWalletInjected = CustomEvent<{ wallet: NearWallet }>;
@@ -121,13 +143,13 @@ export interface NearWallet {
   /**
    * Sign out from the wallet.
    */
-  signOut(): Promise<void>;
+  signOut(data?: { network?: Network }): Promise<void>;
   /**
    * Returns one or more accounts when signed in.
    * This method can be useful for wallets that support accounts at once such as WalletConnect.
    * In this case, you can use an `accountId` returned as the `signerId` for `signAndSendTransaction`.
    */
-  getAccounts(): Promise<Array<Account>>;
+  getAccounts(data?: { network?: Network }): Promise<Array<Account>>;
   /**
    * Signs the message and verifies the owner. Message is not sent to blockchain.
    */
@@ -146,13 +168,8 @@ export interface NearWallet {
 }
 
 export type WalletEvents = {
-  signedIn: {
-    contractId: string;
-    methodNames: Array<string>;
-    accounts: Array<Account>;
-  };
-  signedOut: null;
+  signedIn: { contractId: string; methodNames: Array<string>; accounts: Array<Account> };
   accountsChanged: { accounts: Array<Account> };
   networkChanged: { networkId: string };
-  uriChanged: { uri: string };
+  signedOut: null;
 };

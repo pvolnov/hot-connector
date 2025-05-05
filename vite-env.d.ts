@@ -2,9 +2,11 @@
 
 interface Window {
   selector: {
+    network: "testnet" | "mainnet";
     location: string;
     ready: (wallet: any) => void;
     open: (url: string, newTab?: boolean) => void;
+    showContent: () => void;
     storage: {
       set: (key: string, value: string) => Promise<void>;
       get: (key: string) => Promise<string>;

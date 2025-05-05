@@ -1,4 +1,5 @@
 {
+  "version": "1.0.0",
   "wallets": [
     {
       "id": "hot-wallet",
@@ -16,8 +17,9 @@
           "allows": [
             "https://hot-labs.org/wallet",
             "hotwallet://",
-            "https://play.google.com/",
-            "https://apps.apple.com/"
+            "https://t.me/hot_wallet",
+            "https://play.google.com",
+            "https://apps.apple.com"
           ]
         }
       }

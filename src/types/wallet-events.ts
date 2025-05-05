@@ -8,7 +8,7 @@ export interface EventMap {
   "wallet:verifyOwner": any;
 
   "selector:manifestUpdated": any;
-  "selected:walletsChanged": any;
+  "selector:walletsChanged": any;
 }
 
 export type EventType = keyof EventMap;

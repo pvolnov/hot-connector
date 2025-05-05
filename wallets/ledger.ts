@@ -406,27 +406,10 @@ class Wallet {
       await client.connect();
     }
 
-    try {
-      const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(32)));
-
-      const serializedPayload = serializeLedgerNEP413Payload({
-        message,
-        nonce,
-        recipient: "uuint.near",
-      });
-
-      const signatureBuffer = await client.signMessage({
-        data: serializedPayload,
-        derivationPath: this.hdPath,
-      });
-
-      return {
-        signature: nearAPI.utils.serialize.base_encode(signatureBuffer),
-      };
-    } catch (err) {
-      console.error("Failed to sign message with Ledger:", err);
-      throw err;
-    }
+    const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(32)));
+    const serializedPayload = serializeLedgerNEP413Payload({ message, nonce, recipient: "uuint.near" });
+    const signatureBuffer = await client.signMessage({ data: serializedPayload, derivationPath: this.hdPath });
+    return { signature: nearAPI.utils.serialize.base_encode(signatureBuffer) };
   };
 
   signAndSendTransaction = async ({ receiverId, actions }: { receiverId: string; actions: any[] }) => {
@@ -444,7 +427,6 @@ class Wallet {
     const accountId = (await this.getAccounts())[0].accountId;
 
     const provider = new providers.JsonRpcProvider({ url: "https://rpc.mainnet.near.org" });
-
     const block = await provider.block({ finality: "final" });
     const blockHash = nearAPI.utils.serialize.base_decode(block.header.hash);
 
@@ -456,7 +438,6 @@ class Wallet {
     });
 
     const nonce = accessKey.nonce + 1;
-
     const mappedActions = actions.map((a: any) => {
       switch (a.type) {
         case "Transfer":
@@ -484,21 +465,13 @@ class Wallet {
 
     const serializedTx = nearAPI.utils.serialize.serialize(nearAPI.transactions.SCHEMA.Transaction, tx);
 
-    const signature = await client.sign({
-      data: Buffer.from(serializedTx),
-      derivationPath: this.hdPath,
-    });
-
+    const signature = await client.sign({ data: Buffer.from(serializedTx), derivationPath: this.hdPath });
     const signedTx = new nearAPI.transactions.SignedTransaction({
+      signature: new nearAPI.transactions.Signature({ keyType: 0, data: signature }),
       transaction: tx,
-      signature: new nearAPI.transactions.Signature({
-        keyType: 0,
-        data: signature,
-      }),
     });
 
     const signedSerialized = nearAPI.utils.serialize.serialize(nearAPI.transactions.SCHEMA.SignedTransaction, signedTx);
-
     const result = await provider.sendJsonRpc("broadcast_tx_commit", [
       Buffer.from(signedSerialized).toString("base64"),
     ]);
@@ -507,11 +480,7 @@ class Wallet {
   };
 
   signAndSendTransactions = async () => {
-    return [
-      {
-        transaction: "transaction",
-      },
-    ];
+    return [{ transaction: "transaction" }];
   };
 }
 

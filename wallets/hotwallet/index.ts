@@ -126,34 +126,44 @@ class HOT {
 }
 
 class NearWallet {
-  getAccounts = async () => {
+  getAccounts = async (data: any) => {
+    if (data.network === "testnet") throw "HOT Wallet not";
     const hotAccount = await window.selector.storage.get("hot-account");
     if (hotAccount) return [JSON.parse(hotAccount)];
     return [];
   };
 
-  signIn = async () => {
+  signIn = async (data: any) => {
+    if (data.network === "testnet") throw "HOT Wallet not supported on testnet";
+    window.selector.showContent();
     const result = await HOT.shared.request("near:signIn", {});
     window.selector.storage.set("hot-account", JSON.stringify(result));
     return [result];
   };
 
-  signOut = async () => {
+  signOut = async (data: any) => {
+    if (data.network === "testnet") throw "HOT Wallet not supported on testnet";
     await window.selector.storage.remove("hot-account");
   };
 
   signMessage = async (payload: any) => {
+    if (payload.network === "testnet") throw "HOT Wallet not supported on testnet";
+    window.selector.showContent();
     const res = await HOT.shared.request("near:signMessage", payload);
     return res;
   };
 
   signAndSendTransaction = async (payload: any) => {
+    if (payload.network === "testnet") throw "HOT Wallet not supported on testnet";
+    window.selector.showContent();
     return await HOT.shared.request("near:signAndSendTransactions", {
       transactions: [payload],
     });
   };
 
   signAndSendTransactions = async (payload: any) => {
+    if (payload.network === "testnet") throw "HOT Wallet not supported on testnet";
+    window.selector.showContent();
     return await HOT.shared.request("near:signAndSendTransactions", payload);
   };
 }

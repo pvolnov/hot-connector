@@ -206,7 +206,9 @@ const MyNearWallet = async () => {
   };
 
   return {
-    async signIn({ contractId, methodNames, successUrl, failureUrl }: any) {
+    async signIn({ network, contractId, methodNames, successUrl, failureUrl }: any) {
+      if (network === "testnet") throw "MyNearWallet not supported on testnet";
+
       console.log("signIn", contractId, methodNames, successUrl, failureUrl);
       const existingAccounts = await getAccounts();
       if (existingAccounts.length) return existingAccounts;
@@ -234,9 +236,13 @@ const MyNearWallet = async () => {
       window.selector.open(newUrl.toString());
     },
 
-    async signOut() {},
+    async signOut(data: any) {
+      if (data.network === "testnet") throw "MyNearWallet not supported on testnet";
+      await _state.keyStore.clear();
+    },
 
-    async getAccounts() {
+    async getAccounts(data: any) {
+      if (data.network === "testnet") throw "MyNearWallet not supported on testnet";
       return getAccounts();
     },
 
@@ -244,7 +250,9 @@ const MyNearWallet = async () => {
       throw new Error(`Method not supported by MyNearWallet`);
     },
 
-    async signMessage({ message, nonce, recipient, callbackUrl, state }: any) {
+    async signMessage({ network, message, nonce, recipient, callbackUrl, state }: any) {
+      if (network === "testnet") throw "MyNearWallet not supported on testnet";
+
       const url = callbackUrl || window.selector.location;
       if (!url) throw new Error(`The callbackUrl is missing for MyNearWallet`);
 
@@ -260,13 +268,17 @@ const MyNearWallet = async () => {
       return;
     },
 
-    async signAndSendTransaction({ signerId, receiverId, actions, callbackUrl }: any) {
+    async signAndSendTransaction({ network, signerId, receiverId, actions, callbackUrl }: any) {
+      if (network === "testnet") throw "MyNearWallet not supported on testnet";
+
       const url = callbackUrl || window.selector.location;
       if (!url) throw new Error(`The callbackUrl is missing for MyNearWallet`);
       await this.signAndSendTransactions({ transactions: [{ signerId, receiverId, actions }], callbackUrl: url });
     },
 
-    async signAndSendTransactions({ transactions, callbackUrl }: any) {
+    async signAndSendTransactions({ network, transactions, callbackUrl }: any) {
+      if (network === "testnet") throw "MyNearWallet not supported on testnet";
+
       const url = callbackUrl || window.selector.location;
       if (!url) throw new Error(`The callbackUrl is missing for MyNearWallet`);
 

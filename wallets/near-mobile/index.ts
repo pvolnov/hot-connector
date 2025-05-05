@@ -64,9 +64,21 @@ export class SessionRepository {
   }
 
   async get() {
-    const sessionData = await window.selector.storage.get("session");
-    if (!sessionData) return {};
-    return JSON.parse(sessionData);
+    try {
+      const sessionData = await window.selector.storage.get("session");
+      if (!sessionData)
+        return {
+          mainnet: { activeAccount: null, accounts: {} },
+          testnet: { activeAccount: null, accounts: {} },
+        };
+
+      return JSON.parse(sessionData);
+    } catch {
+      return {
+        mainnet: { activeAccount: null, accounts: {} },
+        testnet: { activeAccount: null, accounts: {} },
+      };
+    }
   }
 
   async set(session: SessionState) {
@@ -133,20 +145,22 @@ export class SessionRepository {
 }
 
 export const initNearMobileWallet = async () => {
-  const nearMobileWallet = new NearMobileWallet({
-    sessionRepository: new SessionRepository() as any,
-    // TODO: Add custom strategy to handle widget
-  });
+  const wallet = {
+    mainnet: new NearMobileWallet({ network: "mainnet", sessionRepository: new SessionRepository() as any }),
+    testnet: new NearMobileWallet({ network: "testnet", sessionRepository: new SessionRepository() as any }),
+  };
 
   // @ts-ignore
-  nearMobileWallet.defaultStrategy = new WidgetStrategy();
+  wallet.mainnet.defaultStrategy = new WidgetStrategy();
+  // @ts-ignore
+  wallet.testnet.defaultStrategy = new WidgetStrategy();
 
-  async function getAccounts() {
-    const accountIds = await nearMobileWallet.getAccounts();
+  async function getAccounts(network: Network) {
+    const accountIds = await wallet[network].getAccounts();
     const accounts: { accountId: string; publicKey: string }[] = [];
 
     for (let i = 0; i < accountIds.length; i++) {
-      const publicKey = await nearMobileWallet.signer.getPublicKey(accountIds[i], "mainnet");
+      const publicKey = await wallet[network].signer.getPublicKey(accountIds[i], network);
       accounts.push({ accountId: accountIds[i], publicKey: publicKey.toString() });
     }
 
@@ -154,26 +168,25 @@ export const initNearMobileWallet = async () => {
   }
 
   return {
-    get network() {
-      return "mainnet";
-    },
-
-    async signIn(data: any) {
+    async signIn(data: { network: Network; contractId: string }) {
+      window.selector.showContent();
       const contractId = data.contractId !== "" ? data.contractId : undefined;
-      await nearMobileWallet.signIn({ ...data, contractId: contractId });
-      return await getAccounts();
+      await wallet[data.network].signIn({ ...data, contractId: contractId });
+      return await getAccounts(data.network);
     },
 
-    async signOut() {
-      await nearMobileWallet.signOut();
+    async signOut({ network }: { network: Network }) {
+      window.selector.showContent();
+      await wallet[network].signOut();
     },
 
-    async getAccounts() {
-      return getAccounts();
+    async getAccounts({ network }: { network: Network }) {
+      return getAccounts(network);
     },
 
-    async signAndSendTransaction(data: any) {
-      return await nearMobileWallet.signAndSendTransaction(data);
+    async signAndSendTransaction(data: { network: Network; actions: any[] }) {
+      window.selector.showContent();
+      return await wallet[data.network].signAndSendTransaction(data);
     },
 
     async verifyOwner() {
@@ -182,9 +195,10 @@ export const initNearMobileWallet = async () => {
       );
     },
 
-    async signMessage(data: any) {
+    async signMessage(data: { network: Network; recipient: string; message: string; nonce: number[] }) {
+      window.selector.showContent();
       const { recipient, nonce, ...rest } = data;
-      const result = await nearMobileWallet.signMessage({ ...rest, receiver: recipient, nonce: Array.from(nonce) });
+      const result = await wallet[data.network].signMessage({ ...rest, receiver: recipient, nonce: Array.from(nonce) });
       return {
         accountId: result.accountId,
         signature: result.signature.toString(),
@@ -192,8 +206,9 @@ export const initNearMobileWallet = async () => {
       };
     },
 
-    async signAndSendTransactions(data: any) {
-      return await nearMobileWallet.signAndSendTransactions(data);
+    async signAndSendTransactions(data: { network: Network; transactions: any[] }) {
+      window.selector.showContent();
+      return await wallet[data.network].signAndSendTransactions(data);
     },
   };
 };

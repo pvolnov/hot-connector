@@ -40,6 +40,11 @@ async function getIframeCode(endpoint: string, origin: string) {
           window.selector.wallet = wallet;
         },
     
+
+        showContent() {
+          window.parent.postMessage({ method: "showContent", origin: "${origin}" }, "*");
+        },
+
         async call(method, params) {
           const id = window.selector.uuid();
           window.parent.postMessage({ method, params, id, origin: "${origin}" }, "*");

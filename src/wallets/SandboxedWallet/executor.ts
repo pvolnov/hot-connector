@@ -3,41 +3,30 @@ import { WalletManifest } from "../../types/wallet";
 import { EventEmitter } from "../../events";
 import { parseUrl } from "../../utils/url";
 import { uuid4 } from "../../utils/uuid";
-
-import { Middleware, MiddlewareContext } from "./types";
-import getIframeCode from "./getIframeCode";
-
+import getIframeCode from "./iframe";
+import { WalletSelector } from "../../selector";
 class SandboxExecutor {
   iframe?: HTMLIFrameElement;
   private _initializeTask: Promise<HTMLIFrameElement> | null = null;
-  private middlewares: Middleware[] = [];
 
   readonly origin = uuid4();
   readonly id: string;
 
-  constructor(
-    readonly walletManifest: WalletManifest,
-    readonly endpoint: string,
-    readonly events: EventEmitter<EventMap>
-  ) {
-    this.id = walletManifest.id;
-  }
-
-  use(middleware: Middleware) {
-    this.middlewares.push(middleware);
+  constructor(readonly selector: WalletSelector, readonly manifest: WalletManifest) {
+    this.id = manifest.id;
   }
 
   private checkPermissions(action: "storage" | "open" | "usb" | "hid", params?: { url?: string }) {
     if (action === "open") {
       const openUrl = parseUrl(params?.url || "");
-      const config = this.walletManifest.permissions[action];
+      const config = this.manifest.permissions[action];
 
       if (!openUrl || typeof config !== "object" || !config.allows) return false;
       const allowsHostnames = config.allows.map((allow) => parseUrl(allow)?.hostname);
       return allowsHostnames.some((hostname) => openUrl?.hostname === hostname);
     }
 
-    return this.walletManifest.permissions[action];
+    return this.manifest.permissions[action];
   }
 
   async initialize() {
@@ -49,6 +38,8 @@ class SandboxExecutor {
   async _initialize() {
     this.iframe = document.createElement("iframe");
     this.iframe.setAttribute("sandbox", "allow-scripts");
+    this.iframe.style.display = "none";
+    document.body.appendChild(this.iframe);
 
     const iframeAllowedPersimissions = [];
     if (this.checkPermissions("usb")) {
@@ -94,7 +85,6 @@ class SandboxExecutor {
         return;
       }
 
-      console.log("open", event.data.params);
       if (event.data.method === "open" && this.checkPermissions("open", event.data.params)) {
         console.log("open", event.data.params);
         if (event.data.params.newTab) {
@@ -107,10 +97,6 @@ class SandboxExecutor {
         return;
       }
 
-      if (event.data.method === "event") {
-        this.events.emit(event.data.params.type, event.data.params.data);
-      }
-
       if (event.data.method === "wallet-ready") {
         readyPromiseResolve();
       }
@@ -121,37 +107,36 @@ class SandboxExecutor {
   }
 
   async code() {
-    const code = await getIframeCode(this.endpoint, this.origin);
+    const code = await getIframeCode(this.manifest.executor, this.origin);
     return code;
   }
 
   async call<T>(method: keyof EventMap, params: any): Promise<T> {
     const iframe = await this.initialize();
-
     const id = uuid4();
-    const ctx: MiddlewareContext = { method, params, origin: this.origin };
 
-    const runMiddlewares = async (i = 0): Promise<any> => {
-      const middleware = this.middlewares[i];
-      if (!middleware) {
-        return new Promise<T>((resolve, reject) => {
-          const handler = (event: MessageEvent) => {
-            if (event.data.id !== id || event.data.origin !== this.origin) return;
+    const methods = [
+      "wallet:signIn",
+      "wallet:signOut",
+      "wallet:signMessage",
+      "wallet:signAndSendTransaction",
+      "wallet:signAndSendTransactions",
+    ];
 
-            window.removeEventListener("message", handler);
-            if (event.data.status === "failed") reject(event.data.result);
-            else resolve(event.data.result);
-          };
+    return this.selector.executeIframe(iframe, methods.includes(method), () => {
+      return new Promise<T>((resolve, reject) => {
+        const handler = (event: MessageEvent) => {
+          if (event.data.id !== id || event.data.origin !== this.origin) return;
 
-          window.addEventListener("message", handler);
-          iframe.contentWindow?.postMessage({ method, params, id, origin: this.origin }, "*");
-        });
-      }
+          window.removeEventListener("message", handler);
+          if (event.data.status === "failed") reject(event.data.result);
+          else resolve(event.data.result);
+        };
 
-      return middleware(ctx, () => runMiddlewares(i + 1));
-    };
-
-    return runMiddlewares();
+        window.addEventListener("message", handler);
+        iframe.contentWindow?.postMessage({ method, params, id, origin: this.origin }, "*");
+      });
+    });
   }
 
   async clearStorage() {

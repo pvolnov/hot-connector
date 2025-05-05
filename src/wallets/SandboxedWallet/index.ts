@@ -1,5 +1,4 @@
 import { FinalExecutionOutcome } from "@near-wallet-selector/core";
-import { EventEmitter } from "../../events";
 import {
   Account,
   NearWallet,
@@ -12,48 +11,47 @@ import {
   VerifyOwnerParams,
   WalletManifest,
 } from "../../types/wallet";
-import { EventMap } from "../../types/wallet-events";
+
+import { WalletSelector } from "../../selector";
 import SandboxExecutor from "./executor";
-import { Middleware } from "./types";
 
 export class SandboxWallet implements NearWallet {
   executor: SandboxExecutor;
 
-  constructor(readonly manifest: WalletManifest, readonly events: EventEmitter<EventMap>) {
-    this.executor = new SandboxExecutor(manifest, manifest.executor, events);
-  }
-
-  use(middleware: Middleware) {
-    this.executor.use(middleware);
+  constructor(readonly selector: WalletSelector, readonly manifest: WalletManifest) {
+    this.executor = new SandboxExecutor(selector, manifest);
   }
 
   async signIn(params: SignInParams): Promise<Array<Account>> {
-    return this.executor.call("wallet:signIn", params);
+    return this.executor.call("wallet:signIn", { ...params, network: params.network || this.selector.network });
   }
 
   async signOut(): Promise<void> {
-    await this.executor.call("wallet:signOut", {});
+    await this.executor.call("wallet:signOut", { network: this.selector.network });
     await this.executor.clearStorage();
   }
 
   async getAccounts(): Promise<Array<Account>> {
-    return this.executor.call("wallet:getAccounts", {});
+    return this.executor.call("wallet:getAccounts", { network: this.selector.network });
   }
 
   async verifyOwner(params: VerifyOwnerParams): Promise<VerifiedOwner | void> {
-    return this.executor.call("wallet:verifyOwner", params);
+    return this.executor.call("wallet:verifyOwner", { ...params, network: params.network || this.selector.network });
   }
 
   async signAndSendTransaction(params: SignAndSendTransactionParams): Promise<FinalExecutionOutcome> {
-    return this.executor.call("wallet:signAndSendTransaction", params);
+    const network = params.network || this.selector.network;
+    return this.executor.call("wallet:signAndSendTransaction", { ...params, network });
   }
 
   async signAndSendTransactions(params: SignAndSendTransactionsParams): Promise<Array<FinalExecutionOutcome>> {
-    return this.executor.call("wallet:signAndSendTransactions", params);
+    const network = params.network || this.selector.network;
+    return this.executor.call("wallet:signAndSendTransactions", { ...params, network });
   }
 
   async signMessage?(params: SignMessageParams): Promise<SignedMessage | void> {
-    return this.executor.call("wallet:signMessage", params);
+    const network = params.network || this.selector.network;
+    return this.executor.call("wallet:signMessage", { ...params, network });
   }
 }
 

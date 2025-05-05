@@ -4,40 +4,26 @@ import { WalletModal } from "./WalletModal";
 
 export class WalletSelectorUI {
   private container: HTMLElement;
-  private opened = false;
 
   constructor(readonly selector: WalletSelector) {
     this.container = document.createElement("div");
     document.body.appendChild(this.container);
+    this.render();
 
     this.selector.on("selector:manifestUpdated", () => {
       this.render();
     });
 
-    this.selector.on("selected:walletsChanged", () => {
+    this.selector.on("selector:walletsChanged", () => {
       this.render();
     });
   }
 
-  open() {
-    this.opened = true;
-    this.render();
-  }
+  open() {}
 
-  close() {
-    this.opened = false;
-    this.render();
-  }
+  close() {}
 
   private render() {
-    render(
-      h(WalletModal, {
-        opened: this.opened,
-        selector: this.selector,
-        onClose: () => this.close(),
-        onOpen: () => this.open(),
-      }),
-      this.container
-    );
+    render(h(WalletModal, { selector: this.selector, modal: this }), this.container);
   }
 }
