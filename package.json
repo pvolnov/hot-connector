@@ -1,6 +1,6 @@
 {
   "name": "@hot-labs/near-connect",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "commonjs",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
@@ -10,6 +10,7 @@
   "scripts": {
     "build": "tsc",
     "example": "cd example && yarn start",
+    "build:example": "cd example && yarn build",
     "build:wallets": "yarn build:hotwallet && yarn build:ledger && yarn build:mnw && yarn build:near-mobile",
     "build:hotwallet": "PACKAGE=hotwallet vite build --config ./wallets/vite.config.ts",
     "build:near-mobile": "PACKAGE=near-mobile vite build --config ./wallets/vite.config.ts",

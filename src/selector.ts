@@ -63,7 +63,7 @@ export class WalletSelector {
   private async _loadManifest(manifestUrl?: string) {
     let manifestEndpoint = manifestUrl
       ? manifestUrl
-      : "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/manifest.json";
+      : "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/manifest.json";
 
     const manifest = (await (await fetch(manifestEndpoint)).json()) as { wallets: WalletManifest[]; version: string };
     return manifest;

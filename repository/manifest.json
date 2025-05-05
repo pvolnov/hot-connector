@@ -8,7 +8,7 @@
       "description": "Secure Multichain wallet. Manage assets, refuel gas, and mine $HOT on any device with HOT Wallet",
       "website": "https://hot-labs.org/wallet",
       "version": "1.0.0",
-      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/example/public/hotwallet.js",
+      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/hotwallet.js",
       "type": "sandbox",
 
       "platform": {
@@ -39,7 +39,7 @@
       "description": "Discover the only NEAR wallet you will need: NEAR Mobile, the most secure and comprehensive mobile wallet designed exclusively for the NEAR Blockchain",
       "website": "https://nearmobile.app",
       "version": "1.0.0",
-      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/example/public/near-mobile.js",
+      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/near-mobile.js",
       "type": "sandbox",
 
       "platform": {
@@ -61,7 +61,7 @@
       "description": "Web wallet for NEAR.",
       "website": "https://mynearwallet.com",
       "version": "1.0.0",
-      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/example/public/mnw.js",
+      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/mnw.js",
       "type": "sandbox",
 
       "platform": {
@@ -82,7 +82,7 @@
       "description": "Ledger is a wallet that allows you to send and receive NEAR.",
       "website": "https://ledger.com",
       "version": "1.0.0",
-      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/example/public/ledger.js",
+      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/ledger.js",
       "type": "sandbox",
       "permissions": {
         "storage": true,
