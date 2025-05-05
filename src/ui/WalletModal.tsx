@@ -10,6 +10,15 @@ type Props = {
   modal: { open: () => void; close: () => void };
 };
 
+const platformLabel = {
+  android: "Android",
+  ios: "iOS",
+  web: "Web App",
+  tga: "Telegram Mini App",
+  firefox: "Firefox Extension",
+  chrome: "Chrome Extension",
+};
+
 export function WalletModal({ selector, modal }: Props) {
   const [wallet, setWallet] = useState<NearWallet | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +27,7 @@ export function WalletModal({ selector, modal }: Props) {
   const handleWalletSelect = async (wallet: NearWallet) => {
     setOpened(false);
     setError(null);
-    await selector.connect(wallet.manifest.id);
+    await selector.connect(wallet.manifest.id).catch(() => setOpened(true));
   };
 
   const selectWallet = (newWallet: NearWallet) => {
@@ -50,7 +59,6 @@ export function WalletModal({ selector, modal }: Props) {
             setError("User rejected");
             iframe.style.display = "none";
             wrapper.remove();
-            setOpened(true);
           };
 
           iframe.classList.add("wallet-selector__modal");
@@ -74,17 +82,14 @@ export function WalletModal({ selector, modal }: Props) {
     <div
       class="wallet-selector__container"
       style={{ visibility: opened ? "visible" : "hidden" }}
-      onClick={(e) => {
-        const el = e.target as HTMLElement;
-        if (el.classList.contains("wallet-selector__container") || el.classList.contains("wallet-selector__close")) {
-          handleClose();
-        }
-      }}
+      onClick={(e) => [e.stopPropagation(), handleClose()]}
     >
       <div class="wallet-selector__modal">
-        <button class="wallet-selector__close">✕</button>
+        <button class="wallet-selector__close" onClick={handleClose}>
+          ✕
+        </button>
 
-        <div class="wallet-selector__modal-sidebar">
+        <div class="wallet-selector__modal-sidebar" onClick={(e) => e.stopPropagation()}>
           <div class="wallet-selector__header">
             <p>Select a wallet</p>
           </div>
@@ -106,16 +111,26 @@ export function WalletModal({ selector, modal }: Props) {
           </div>
         </div>
 
-        <div class="wallet-selector__modal-content selector__view">
+        <div class="wallet-selector__modal-content selector__view" onClick={(e) => e.stopPropagation()}>
           {wallet ? (
             <div class="wallet-intro">
-              <img src={wallet.manifest.icon} />
-              <h2>{wallet.manifest.name}</h2>
-              <p>{wallet.manifest.description}</p>
+              <div>
+                <img src={wallet.manifest.icon} />
+                <h2>{wallet.manifest.name}</h2>
+                <p>{wallet.manifest.description}</p>
 
-              {error && <p class="wallet-selector__error">{error}</p>}
+                {error && <p class="wallet-selector__error">{error}</p>}
 
-              <button onClick={() => handleWalletSelect(wallet).catch(console.error)}>Connect</button>
+                <button onClick={() => handleWalletSelect(wallet).catch(console.error)}>Connect</button>
+              </div>
+
+              <div class="wallet-selector__platforms">
+                {Object.entries(wallet.manifest.platform || {}).map(([platform, url]) => {
+                  return <a href={url}>{platformLabel[platform as keyof typeof platformLabel] || platform}</a>;
+                })}
+
+                <a href={wallet.manifest.website}>Website</a>
+              </div>
             </div>
           ) : (
             <div style={{ padding: "16px" }} class="selector-intro">

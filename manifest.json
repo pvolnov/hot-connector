@@ -3,7 +3,6 @@
   "wallets": [
     {
       "id": "hot-wallet",
-      "platform": ["android", "ios", "web", "tga"],
       "name": "HOT Wallet",
       "icon": "https://app.hot-labs.org/images/hot/hot-icon.png",
       "description": "Secure Multichain wallet. Manage assets, refuel gas, and mine $HOT on any device with HOT Wallet",
@@ -11,6 +10,15 @@
       "version": "1.0.0",
       "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/example/public/hotwallet.js",
       "type": "sandbox",
+
+      "platform": {
+        "android": "https://play.google.com/store/apps/details?id=app.herewallet.hot&hl=en",
+        "ios": "https://apps.apple.com/us/app/hot-wallet/id6740916148",
+        "chrome": "https://chromewebstore.google.com/detail/hot-wallet/mpeengabcnhhjjgleiodimegnkpcenbk",
+        "firefox": "https://addons.mozilla.org/en-US/firefox/addon/hot-wallet",
+        "tga": "https://t.me/hot_wallet"
+      },
+
       "permissions": {
         "storage": true,
         "open": {
@@ -26,7 +34,6 @@
     },
     {
       "id": "near-mobile",
-      "platform": ["android", "ios", "web", "tga"],
       "name": "NEAR Mobile",
       "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/08/28/af/0828af98-0077-02ae-e1c7-cbaa94389179/AppIcon-0-0-1x_U007ephone-0-85-220.png/246x0w.webp",
       "description": "Discover the only NEAR wallet you will need: NEAR Mobile, the most secure and comprehensive mobile wallet designed exclusively for the NEAR Blockchain",
@@ -34,6 +41,12 @@
       "version": "1.0.0",
       "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/example/public/near-mobile.js",
       "type": "sandbox",
+
+      "platform": {
+        "android": "https://play.google.com/store/apps/details?id=com.peersyst.nearmobilewallet",
+        "ios": "https://apps.apple.com/us/app/near-mobile-crypto-wallet/id6443501225"
+      },
+
       "permissions": {
         "storage": true,
         "open": {
@@ -43,7 +56,6 @@
     },
     {
       "id": "mynearwallet",
-      "platform": ["android", "ios", "web"],
       "name": "MyNearWallet",
       "icon": "https://www.mynearwallet.com/images/webclip.png",
       "description": "Web wallet for NEAR.",
@@ -51,6 +63,11 @@
       "version": "1.0.0",
       "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/example/public/mnw.js",
       "type": "sandbox",
+
+      "platform": {
+        "web": "https://app.mynearwallet.com"
+      },
+
       "permissions": {
         "storage": true,
         "open": {
@@ -60,7 +77,6 @@
     },
     {
       "id": "ledger",
-      "platform": ["android", "ios", "web"],
       "name": "Ledger",
       "icon": "https://img.cryptorank.io/coins/ledger1673447427161.png",
       "description": "Ledger is a wallet that allows you to send and receive NEAR.",
