@@ -1,10 +1,10 @@
 import { EventMap } from "../../types/wallet-events";
 import { WalletManifest } from "../../types/wallet";
-import { EventEmitter } from "../../events";
+import { WalletSelector } from "../../selector";
 import { parseUrl } from "../../utils/url";
 import { uuid4 } from "../../utils/uuid";
 import getIframeCode from "./iframe";
-import { WalletSelector } from "../../selector";
+
 class SandboxExecutor {
   iframe?: HTMLIFrameElement;
   private _initializeTask: Promise<HTMLIFrameElement> | null = null;

@@ -34,22 +34,39 @@ export function WalletModal({ selector, modal }: Props) {
   useEffect(() => {
     modal.open = () => setOpened(true);
     modal.close = () => setOpened(false);
+
     selector.executeIframe = async (iframe, render, execute) => {
       if (!render) return await execute();
 
-      try {
-        setOpened(false);
-        iframe.classList.add("wallet-selector__modal");
-        iframe.style.display = "block";
-        const result = await execute();
-        iframe.style.display = "none";
-        return result;
-      } catch (error) {
-        setOpened(true);
-        setError(error?.toString() ?? "Unknown error");
-        iframe.style.display = "none";
-        throw error;
-      }
+      const wrapper = document.createElement("div");
+      wrapper.classList.add("wallet-selector__container");
+      iframe.parentElement!.insertBefore(wrapper, iframe);
+
+      return new Promise(async (resolve, reject) => {
+        try {
+          setOpened(false);
+          wrapper.onclick = () => {
+            reject(new Error("User rejected"));
+            setError("User rejected");
+            iframe.style.display = "none";
+            wrapper.remove();
+            setOpened(true);
+          };
+
+          iframe.classList.add("wallet-selector__modal");
+          iframe.style.display = "block";
+          const result = await execute();
+          iframe.style.display = "none";
+          wrapper.remove();
+          resolve(result);
+        } catch (error) {
+          setOpened(true);
+          setError(error?.toString() ?? "Unknown error");
+          iframe.style.display = "none";
+          wrapper.remove();
+          reject(error);
+        }
+      });
     };
   }, []);
 
