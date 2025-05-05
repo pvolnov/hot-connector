@@ -12,7 +12,7 @@ Unlike near-wallet-selector, this library provides a secure execution environmen
 
 ## Wallet integration
 
-The developer writes a self-hosted script that implements the integration of their wallet and adds a description to the common [manifest](./src/manifest.ts):
+The developer writes a self-hosted script that implements the integration of their wallet and adds a description to the common [manifest](./repository/manifest.ts):
 
 ```json
 {
