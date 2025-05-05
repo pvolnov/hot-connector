@@ -2,7 +2,9 @@
 
 ![image.png](./media/image.png)
 
-Zero-dependenices, robust, secure and lightweight wallet connector for the NEAR blockchain with **easily updatable** wallets code
+Zero-dependenices (only preact for UI), robust, secure and lightweight wallet connector for the NEAR blockchain with **easily updatable** wallets code
+
+`yarn add @hot-labs/near-selector`
 
 ## How it works
 
