@@ -25,12 +25,12 @@ export class InjectedWallet implements NearWallet {
     return this.wallet.signIn({ ...params, network: params.network || this.selector.network });
   }
 
-  async signOut(data: { network?: Network }): Promise<void> {
-    await this.wallet.signOut({ network: data.network || this.selector.network });
+  async signOut(data?: { network?: Network }): Promise<void> {
+    await this.wallet.signOut({ network: data?.network || this.selector.network });
   }
 
-  async getAccounts(data: { network?: Network }): Promise<Array<Account>> {
-    return this.wallet.getAccounts({ network: data.network || this.selector.network });
+  async getAccounts(data?: { network?: Network }): Promise<Array<Account>> {
+    return this.wallet.getAccounts({ network: data?.network || this.selector.network });
   }
 
   async verifyOwner(params: VerifyOwnerParams): Promise<VerifiedOwner | void> {

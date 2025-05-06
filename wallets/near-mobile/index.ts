@@ -169,14 +169,12 @@ export const initNearMobileWallet = async () => {
 
   return {
     async signIn(data: { network: Network; contractId: string }) {
-      window.selector.showContent();
       const contractId = data.contractId !== "" ? data.contractId : undefined;
       await wallet[data.network].signIn({ ...data, contractId: contractId });
       return await getAccounts(data.network);
     },
 
     async signOut({ network }: { network: Network }) {
-      window.selector.showContent();
       await wallet[network].signOut();
     },
 
@@ -185,7 +183,6 @@ export const initNearMobileWallet = async () => {
     },
 
     async signAndSendTransaction(data: { network: Network; actions: any[] }) {
-      window.selector.showContent();
       return await wallet[data.network].signAndSendTransaction(data);
     },
 
@@ -196,7 +193,6 @@ export const initNearMobileWallet = async () => {
     },
 
     async signMessage(data: { network: Network; recipient: string; message: string; nonce: number[] }) {
-      window.selector.showContent();
       const { recipient, nonce, ...rest } = data;
       const result = await wallet[data.network].signMessage({ ...rest, receiver: recipient, nonce: Array.from(nonce) });
       return {
@@ -207,7 +203,6 @@ export const initNearMobileWallet = async () => {
     },
 
     async signAndSendTransactions(data: { network: Network; transactions: any[] }) {
-      window.selector.showContent();
       return await wallet[data.network].signAndSendTransactions(data);
     },
   };

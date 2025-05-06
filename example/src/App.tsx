@@ -2,7 +2,14 @@ import { FC, useEffect, useState } from "react";
 import { WalletSelector, WalletSelectorUI, NearWallet } from "../../src";
 import "./index.css";
 
-const selector = new WalletSelector({ contractId: "demo.near", network: "mainnet" });
+import manifest from "../../repository/manifest.json";
+
+const selector = new WalletSelector({
+  manifest: manifest as any,
+  contractId: "demo.near",
+  network: "mainnet",
+});
+
 const modal = new WalletSelectorUI(selector);
 
 export const ExampleNEAR: FC = () => {

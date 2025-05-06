@@ -23,11 +23,11 @@
         "storage": true,
         "open": {
           "allows": [
-            "https://hot-labs.org/wallet",
-            "hotwallet://",
+            "https://hot-labs.org",
             "https://t.me/hot_wallet",
             "https://play.google.com",
-            "https://apps.apple.com"
+            "https://apps.apple.com",
+            "hotwallet://"
           ]
         }
       }
@@ -38,9 +38,9 @@
       "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/08/28/af/0828af98-0077-02ae-e1c7-cbaa94389179/AppIcon-0-0-1x_U007ephone-0-85-220.png/246x0w.webp",
       "description": "Discover the only NEAR wallet you will need: NEAR Mobile, the most secure and comprehensive mobile wallet designed exclusively for the NEAR Blockchain",
       "website": "https://nearmobile.app",
-      "version": "1.0.0",
       "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/near-mobile.js",
       "type": "sandbox",
+      "version": "1.0.0",
 
       "platform": {
         "android": "https://play.google.com/store/apps/details?id=com.peersyst.nearmobilewallet",
@@ -72,6 +72,28 @@
         "storage": true,
         "open": {
           "allows": ["https://app.mynearwallet.com"]
+        }
+      }
+    },
+    {
+      "id": "meteor-wallet",
+      "name": "Meteor Wallet",
+      "icon": "https://github.com/Meteor-Wallet/meteor-public/raw/main/logo_svg.svg",
+      "description": "The most simple and secure wallet to manage your crypto, access DeFi, and explore Web3",
+      "website": "https://meteorwallet.app/",
+      "version": "1.0.0",
+      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/near-mobile.js",
+      "type": "sandbox",
+
+      "platform": {
+        "web": "https://wallet.meteorwallet.app",
+        "chrome": "https://chromewebstore.google.com/detail/meteor-wallet/pcndjhkinnkaohffealmlmhaepkpmgkb"
+      },
+
+      "permissions": {
+        "storage": true,
+        "open": {
+          "allows": ["https://wallet.meteorwallet.app"]
         }
       }
     },

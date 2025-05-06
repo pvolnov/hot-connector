@@ -11,17 +11,19 @@ interface WalletSelectorOptions {
   manifest?: string | { wallets: WalletManifest[]; version: string };
   network?: Network;
   contractId?: string;
+  methodNames?: string[];
+  allowance?: string;
 }
 
 export class WalletSelector {
+  readonly events: EventEmitter<EventMap>;
   private storage: DataStorage;
 
-  readonly events: EventEmitter<EventMap>;
-  readonly wallets: NearWallet[] = [];
-
+  wallets: NearWallet[] = [];
   manifest: { wallets: WalletManifest[]; version: string } = { wallets: [], version: "1.0.0" };
+
   network: Network = "mainnet";
-  contractId: string = "";
+  signInOptions: { contractId: string; methodNames: string[] } = { contractId: "", methodNames: [] };
 
   executeIframe: <T>(iframe: HTMLIFrameElement, render: boolean, execute: () => Promise<T>) => Promise<T> = async (
     iframe,
@@ -36,10 +38,13 @@ export class WalletSelector {
   constructor(options?: WalletSelectorOptions) {
     this.storage = options?.storage ?? new LocalStorage();
     this.events = options?.events ?? new EventEmitter<EventMap>();
+
     this.network = options?.network ?? "mainnet";
-    this.contractId = options?.contractId ?? "";
+    this.signInOptions.contractId = options?.contractId ?? "";
+    this.signInOptions.methodNames = options?.methodNames ?? [];
 
     window.addEventListener<any>("near-wallet-injected", this._handleNearWalletInjected);
+    window.dispatchEvent(new Event("near-selector-ready"));
 
     this.whenManifestLoaded = new Promise(async (resolve) => {
       if (options?.manifest == null || typeof options.manifest === "string") {
@@ -49,16 +54,17 @@ export class WalletSelector {
       }
 
       this.manifest.wallets.forEach((wallet) => this.registerWallet(wallet));
-      this.events.emit("selector:manifestUpdated", {});
       this.events.emit("selector:walletsChanged", {});
+      await new Promise((resolve) => setTimeout(resolve, 100));
       resolve();
     });
   }
 
-  private _handleNearWalletInjected(event: EventNearWalletInjected) {
-    this.wallets.push(new InjectedWallet(this, event.detail.wallet));
+  private _handleNearWalletInjected = (event: EventNearWalletInjected) => {
+    this.wallets = this.wallets.filter((wallet) => wallet.manifest.id !== event.detail.manifest.id);
+    this.wallets.unshift(new InjectedWallet(this, event.detail as any));
     this.events.emit("selector:walletsChanged", {});
-  }
+  };
 
   private async _loadManifest(manifestUrl?: string) {
     let manifestEndpoint = manifestUrl
@@ -71,6 +77,7 @@ export class WalletSelector {
 
   async registerWallet(manifest: WalletManifest) {
     if (manifest.type !== "sandbox") throw new Error("Only sandbox wallets are supported");
+    if (this.wallets.find((wallet) => wallet.manifest.id === manifest.id)) return;
     this.wallets.push(new SandboxWallet(this, manifest));
   }
 
@@ -78,9 +85,7 @@ export class WalletSelector {
     const wallet = await this.wallet(id);
 
     await this.storage.set("selected-wallet", id);
-    const accounts = await wallet?.signIn({ contractId: this.contractId });
-
-    console.log("connect", accounts);
+    const accounts = await wallet?.signIn(this.signInOptions);
 
     if (!accounts?.length) throw new Error("Failed to sign in");
     this.events.emit("wallet:signIn", { wallet, accounts, success: true });
@@ -103,7 +108,7 @@ export class WalletSelector {
       const wallet = this.wallets.find((wallet) => wallet.manifest.id === id);
       if (!wallet) throw new Error("No wallet selected");
 
-      const accounts = await wallet.getAccounts().catch(() => null);
+      const accounts = await wallet.getAccounts();
       if (accounts?.length) return wallet;
 
       await this.disconnect(wallet);

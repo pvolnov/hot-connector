@@ -112,7 +112,7 @@ export interface SignAndSendTransactionsParams {
   network?: Network;
 }
 
-export type EventNearWalletInjected = CustomEvent<{ wallet: NearWallet }>;
+export type EventNearWalletInjected = CustomEvent<NearWallet>;
 
 type Permission =
   | {

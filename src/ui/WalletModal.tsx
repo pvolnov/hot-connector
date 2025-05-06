@@ -2,6 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 import { WalletSelector } from "../selector";
 import { NearWallet } from "../types/wallet";
 import { parseUrl } from "../utils/url";
+import { InjectedWallet } from "../wallets/InjectedWallet";
 
 import "./styles.css";
 
@@ -102,7 +103,10 @@ export function WalletModal({ selector, modal }: Props) {
                 >
                   <img src={w.manifest.icon} />
                   <div>
-                    <h2>{w.manifest.name}</h2>
+                    <div style={{ display: "flex", flexDirection: "row", gap: "8px", alignItems: "center" }}>
+                      <h2>{w.manifest.name}</h2>
+                      {w instanceof InjectedWallet && <p class="installed-badge">Installed</p>}
+                    </div>
                     <p>{parseUrl(w.manifest.website)?.hostname}</p>
                   </div>
                 </button>

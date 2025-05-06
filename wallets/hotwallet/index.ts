@@ -135,7 +135,6 @@ class NearWallet {
 
   signIn = async (data: any) => {
     if (data.network === "testnet") throw "HOT Wallet not supported on testnet";
-    window.selector.showContent();
     const result = await HOT.shared.request("near:signIn", {});
     window.selector.storage.set("hot-account", JSON.stringify(result));
     return [result];
@@ -148,14 +147,12 @@ class NearWallet {
 
   signMessage = async (payload: any) => {
     if (payload.network === "testnet") throw "HOT Wallet not supported on testnet";
-    window.selector.showContent();
     const res = await HOT.shared.request("near:signMessage", payload);
     return res;
   };
 
   signAndSendTransaction = async (payload: any) => {
     if (payload.network === "testnet") throw "HOT Wallet not supported on testnet";
-    window.selector.showContent();
     return await HOT.shared.request("near:signAndSendTransactions", {
       transactions: [payload],
     });
@@ -163,7 +160,6 @@ class NearWallet {
 
   signAndSendTransactions = async (payload: any) => {
     if (payload.network === "testnet") throw "HOT Wallet not supported on testnet";
-    window.selector.showContent();
     return await HOT.shared.request("near:signAndSendTransactions", payload);
   };
 }
