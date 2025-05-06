@@ -68,7 +68,15 @@ interface NearSelector {
 Like [Ethereum Multi Injected Provider Standart](https://eips.ethereum.org/EIPS/eip-6963) this library supports injected wallets for extenstions and in-app browsers. Your injection script can dispatch custom event with your wallet:
 
 ```js
-window.dispatchEvent(new CustomEvent("near-wallet-injected", { detail: wallet }));
+class NearWallet {
+  manifest: { ... }
+  signIn() {}
+  // all implementation
+}
+
+window.addEventListener("near-selector-ready", () => {
+  window.dispatchEvent(new CustomEvent("near-wallet-injected", { detail: new NearWallet() }));
+});
 ```
 
 ## Background
