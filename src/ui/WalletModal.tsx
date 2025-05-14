@@ -4,8 +4,6 @@ import { NearWallet } from "../types/wallet";
 import { parseUrl } from "../utils/url";
 import { InjectedWallet } from "../wallets/InjectedWallet";
 
-import "./styles.css";
-
 type Props = {
   selector: WalletSelector;
   modal: { open: () => void; close: () => void };
