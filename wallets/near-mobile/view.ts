@@ -8,12 +8,14 @@ export const nearMobileFrame = `
         <section class="near-mobile-logo-section">
             <img src="https://near-mobile-signer-backend_production.peersyst.tech/assets/near-logo.svg" class="near-mobile-logo" />
         </section>
+
         <div class="near-mobile-layout">
             <div class="near-mobile-qr-section">
                 <p>Connect Wallet</p>
                 <div class="near-mobile-qr-wrap">
                     <div id="qr-code" class="near-mobile-qr"></div>
                 </div>
+
                 <div class="near-mobile-responsive-layout near-mobile-redirect-visible">
                     <a
                         id="approve-button"
@@ -25,6 +27,7 @@ export const nearMobileFrame = `
                     </a>
                 </div>
             </div>
+
             <footer class="near-mobile-footer">
                 <div class="near-mobile-links">
                     <a onclick="window.selector.open('https://apps.apple.com/app/near-mobile/id6443501225', true)">
@@ -277,10 +280,6 @@ export const nearMobileFrameHead = `
         color: #000 !important;
         align-items: center;
         justify-content: center;
-    }
-
-    .near-mobile-redirect-visible {
-        display: none;
     }
 
     .near-mobile-link {

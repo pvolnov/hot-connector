@@ -135,7 +135,7 @@ export function WalletModal({ selector, modal }: Props) {
               </div>
             </div>
           ) : (
-            <div style={{ padding: "16px" }} class="selector-intro">
+            <div style={{ padding: "32px" }} class="selector-intro">
               <h2>What is a Wallet?</h2>
 
               <div class="selector-intro__items">
