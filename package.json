@@ -12,7 +12,7 @@
     "modal-ui.css"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npx sass modal-ui.sass modal-ui.css --no-source-map",
     "example": "cd example && yarn start",
     "build:example": "cd example && yarn build",
     "build:wallets": "yarn build:hotwallet && yarn build:ledger && yarn build:mnw && yarn build:near-mobile",

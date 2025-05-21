@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from "react";
 import { WalletSelector, WalletSelectorUI, NearWallet } from "../../src";
-import "../../modal-ui.css";
 
+import "../../modal-ui.sass";
 import "./index.css";
 
 import manifest from "../../repository/manifest.json";
