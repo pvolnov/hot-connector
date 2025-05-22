@@ -111,6 +111,7 @@
   font-weight: 600
   transition: background-color 0.3s, transform 0.3s, border 0.3s
   border: 1px solid transparent
+  position: relative
 
   &:hover
     background-color: #212121
@@ -201,6 +202,7 @@
   align-items: center
   justify-content: center
   transition: background-color 0.2s, transform 0.2s
+  font-weight: bold
   position: absolute
   font-size: 18px
   top: 12px
@@ -392,6 +394,17 @@
   border-radius: 24px
   font-size: 12px
   margin-top: -2
+  @media (max-width: 768px)
+    position: absolute
+    top: 8px
+    right: 8px
+    overflow: hidden
+    white-space: nowrap
+    background: #428342
+    max-width: 100%
+    width: 12px
+    height: 12px
+    padding: 0
 
 iframe.wallet-selector__modal
   border: none

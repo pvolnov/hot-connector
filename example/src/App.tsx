@@ -4,7 +4,7 @@ import { WalletSelector, WalletSelectorUI, NearWallet } from "../../src";
 import "../../modal-ui.sass";
 import "./index.css";
 
-import manifest from "../../repository/manifest.json";
+import manifest from "../public/repository/manifest.json";
 
 const selector = new WalletSelector({
   manifest: manifest as any,

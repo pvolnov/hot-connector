@@ -11,7 +11,7 @@ export const nearMobileFrame = `
 
         <div class="near-mobile-layout">
             <div class="near-mobile-qr-section">
-                <p>Connect Wallet</p>
+                <p style="font-size: 24px;">Connect Wallet</p>
                 <div class="near-mobile-qr-wrap">
                     <div id="qr-code" class="near-mobile-qr"></div>
                 </div>
@@ -163,7 +163,6 @@ export const nearMobileFrameHead = `
         align-items: center;
         justify-content: center;
         padding-bottom: 1rem;
-        margin-bottom: 1.75rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     }
 
