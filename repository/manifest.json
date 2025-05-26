@@ -8,7 +8,7 @@
       "description": "Secure Multichain wallet. Manage assets, refuel gas, and mine $HOT on any device with HOT Wallet",
       "website": "https://hot-labs.org/wallet",
       "version": "1.0.0",
-      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/hotwallet.js",
+      "executor": "/repository/hotwallet.js",
       "type": "sandbox",
 
       "platform": {
@@ -38,7 +38,7 @@
       "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/08/28/af/0828af98-0077-02ae-e1c7-cbaa94389179/AppIcon-0-0-1x_U007ephone-0-85-220.png/246x0w.webp",
       "description": "Discover the only NEAR wallet you will need: NEAR Mobile, the most secure and comprehensive mobile wallet designed exclusively for the NEAR Blockchain",
       "website": "https://nearmobile.app",
-      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/near-mobile.js",
+      "executor": "/repository/near-mobile.js",
       "type": "sandbox",
       "version": "1.0.0",
 
@@ -61,7 +61,7 @@
       "description": "Web wallet for NEAR.",
       "website": "https://mynearwallet.com",
       "version": "1.0.0",
-      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/mnw.js",
+      "executor": "/repository/mnw.js",
       "type": "sandbox",
 
       "platform": {
@@ -82,7 +82,7 @@
       "description": "The most simple and secure wallet to manage your crypto, access DeFi, and explore Web3",
       "website": "https://meteorwallet.app/",
       "version": "1.0.0",
-      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/near-mobile.js",
+      "executor": "/repository/meteor.js",
       "type": "sandbox",
 
       "platform": {
