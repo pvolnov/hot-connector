@@ -15,7 +15,8 @@
     "build": "tsc && npx sass modal-ui.sass modal-ui.css --no-source-map",
     "example": "cd example && yarn start",
     "build:example": "cd example && yarn build",
-    "build:wallets": "yarn build:hotwallet && yarn build:ledger && yarn build:mnw && yarn build:near-mobile",
+    "build:meteor": "PACKAGE=meteor vite build --config ./wallets/vite.config.ts",
+    "build:wallets": "yarn build:hotwallet && yarn build:ledger && yarn build:mnw && yarn build:near-mobile && yarn build:meteor",
     "build:hotwallet": "PACKAGE=hotwallet vite build --config ./wallets/vite.config.ts",
     "build:near-mobile": "PACKAGE=near-mobile vite build --config ./wallets/vite.config.ts",
     "build:ledger": "PACKAGE=ledger vite build --config ./wallets/vite.config.ts",
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@here-wallet/core": "^3.4.0",
     "@hot-wallet/sdk": "^1.0.11",
+    "@meteorwallet/sdk": "^1.0.9",
     "@near-wallet-selector/core": "^8.9.12",
     "@near-wallet-selector/ledger": "^8.10.1",
     "@near-wallet-selector/modal-ui-js": "^8.9.12",

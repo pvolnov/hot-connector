@@ -23,10 +23,67 @@ async function getIframeCode(endpoint: string, origin: string) {
       </style>
 
       <script>
+      window.mockLocalStorage = (() => {
+        let storage = {};
+        return {
+          setItem: function(key, value) {
+            storage[key] = value || '';
+          },
+          getItem: function(key) {
+            return key in storage ? storage[key] : null;
+          },
+          removeItem: function(key) {
+            delete storage[key];
+          },
+          get length() {
+            return Object.keys(storage).length;
+          },
+          key: function(i) {
+            const keys = Object.keys(storage);
+            return keys[i] || null;
+          },
+        };
+      })();
+
+      class ProxyWindow {
+        constructor(url, newTab, params) {
+          this.closed = false;
+          this.windowIdPromise = window.selector.call("open", { url, newTab, params });
+
+          window.addEventListener("message", async (event) => {            
+            if (event.data.origin !== "${origin}") return;
+            if (!event.data.method?.startsWith("proxy-window:")) return;
+            const method = event.data.method.replace("proxy-window:", "");
+            if (method === "closed" && event.data.windowId === await this.id()) this.closed = true;
+          });
+        } 
+
+        async id() {
+          return await this.windowIdPromise;
+        }
+
+        async focus() {
+          await window.selector.call("windowFocus", { windowId: await this.id() });
+        }
+
+        async postMessage(data) {
+          window.selector.call("windowPostMessage", { windowId: await this.id(), data });
+        }
+
+        async close() {
+          window.selector.call("windowClose", { windowId: await this.id() });
+        }
+      }
+
       window.selector = {
         wallet: null,
         location: "${window.location.href}",
-      
+        
+        outerHeight: ${window.outerHeight},
+        screenY: ${window.screenY},
+        outerWidth: ${window.outerWidth},
+        screenX: ${window.screenX},
+
         uuid() {
           return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
             const r = (Math.random() * 16) | 0;
@@ -39,7 +96,6 @@ async function getIframeCode(endpoint: string, origin: string) {
           window.parent.postMessage({ method: "wallet-ready", origin: "${origin}" }, "*");
           window.selector.wallet = wallet;
         },
-    
 
         showContent() {
           window.parent.postMessage({ method: "showContent", origin: "${origin}" }, "*");
@@ -62,8 +118,12 @@ async function getIframeCode(endpoint: string, origin: string) {
           });
         },
 
-        async open(url, newTab = false) {
-          await window.selector.call("open", { url, newTab });
+        panelClosed(windowId) {
+          window.parent.postMessage({ method: "panelClosed", origin: "${origin}", result: { windowId } }, "*");
+        },
+
+        open(url, newTab = false, params) {
+          return new ProxyWindow(url, newTab, params)
         },
 
         storage: {

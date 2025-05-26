@@ -8,6 +8,7 @@ import getIframeCode from "./iframe";
 class SandboxExecutor {
   iframe?: HTMLIFrameElement;
   private _initializeTask: Promise<HTMLIFrameElement> | null = null;
+  private activePanels: Record<string, Window> = {};
 
   readonly origin = uuid4();
   readonly id: string;
@@ -85,15 +86,57 @@ class SandboxExecutor {
         return;
       }
 
+      if (event.data.method === "windowFocus") {
+        const panel = this.activePanels[event.data.params.windowId];
+        if (panel) panel.focus();
+        this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
+        return;
+      }
+
+      if (event.data.method === "windowPostMessage") {
+        const panel = this.activePanels[event.data.params.windowId];
+        if (panel) panel.postMessage(event.data.params.data, "*");
+        this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
+        return;
+      }
+
+      if (event.data.method === "windowClose") {
+        const panel = this.activePanels[event.data.params.windowId];
+        if (panel) panel.close();
+        delete this.activePanels[event.data.params.windowId];
+        this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
+        return;
+      }
+
       if (event.data.method === "open" && this.checkPermissions("open", event.data.params)) {
-        console.log("open", event.data.params);
         if (event.data.params.newTab) {
-          window.open(event.data.params.url, "_blank");
-        } else {
-          window.location.href = event.data.params.url;
+          const panel = window.open(event.data.params.url, event.data.params.newTab, event.data.params.params);
+          const panelId = panel ? uuid4() : null;
+
+          window.addEventListener("message", (ev) => {
+            const url = parseUrl(event.data.params.url);
+            if (url && url.origin === ev.origin) {
+              this.iframe?.contentWindow?.postMessage(ev.data, "*");
+            }
+          });
+
+          this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: panelId }, "*");
+
+          if (panel && panelId) {
+            this.activePanels[panelId] = panel;
+            const interval = setInterval(() => {
+              if (!panel?.closed) return;
+              const args = { method: "proxy-window:closed", windowId: panelId, origin: this.origin };
+              this.iframe?.contentWindow?.postMessage(args, "*");
+              delete this.activePanels[panelId];
+              clearInterval(interval);
+            }, 500);
+          }
+
+          return;
         }
 
-        this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
+        window.location.href = event.data.params.url;
         return;
       }
 
@@ -108,7 +151,10 @@ class SandboxExecutor {
 
   async code() {
     const code = await getIframeCode(this.manifest.executor, this.origin);
-    return code;
+    return code
+      .replaceAll("localStorage", "mockLocalStorage")
+      .replaceAll("window.top", "window.selector")
+      .replaceAll("window.open", "window.selector.open");
   }
 
   async call<T>(method: keyof EventMap, params: any): Promise<T> {
