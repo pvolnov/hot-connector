@@ -10,6 +10,23 @@ Zero-dependenices (only preact for UI), robust, secure and lightweight wallet co
 
 Unlike near-wallet-selector, this library provides a secure execution environment for integrating wallets. This eliminates the need for a single registry of code for all wallets.
 
+## Dapp integration
+
+```ts
+import { WalletSelector, WalletSelectorUI } from "@hot-labs/near-connect";
+import "@hot-labs/near-connect/modal-ui.css";
+
+const selector = new WalletSelector({ contractId: "demo.near", network: "mainnet" });
+const modal = new WalletSelectorUI(selector);
+
+selector.on("wallet:signOut", async () => {});
+selector.on("wallet:signIn", async (t) => {
+  const wallet = await selector.wallet(); // api like near-wallet-selector
+  const address = t.accounts[0].accountId;
+  wallet.signMessage(); // all methods like near-wallet-selector
+});
+```
+
 ## Wallet integration
 
 The developer writes a self-hosted script that implements the integration of their wallet and adds a description to the common [manifest](./repository/manifest.ts):
