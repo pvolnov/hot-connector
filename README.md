@@ -69,7 +69,7 @@ Like [Ethereum Multi Injected Provider Standart](https://eips.ethereum.org/EIPS/
 
 ```js
 class NearWallet {
-  manifest: { ... }
+  manifest: { ... };
   signIn() {}
   // all implementation
 }

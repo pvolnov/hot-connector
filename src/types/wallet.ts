@@ -131,6 +131,7 @@ export interface WalletManifest {
   executor: string;
   type: "sandbox" | "injected";
   permissions: Record<string, Permission>;
+  debug?: boolean;
 }
 
 export interface NearWallet {

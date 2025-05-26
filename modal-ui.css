@@ -14,6 +14,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 100000;
 }
 @media (max-width: 768px) {
   .wallet-selector__container {
@@ -63,7 +64,7 @@
 }
 @media (max-width: 768px) {
   .wallet-selector__modal {
-    height: 90%;
+    height: 70%;
     width: 100%;
     border-radius: 0;
     border-top-left-radius: 16px;
@@ -76,15 +77,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-@media (max-width: 768px) {
-  .wallet-selector__options {
-    flex-direction: row;
-    overflow-x: auto;
-    margin-left: -16px;
-    width: calc(100% + 32px);
-    padding: 0 16px;
-  }
 }
 
 .wallet-selector__modal-sidebar {
@@ -154,7 +146,6 @@
   display: flex;
   flex-direction: column;
   text-align: left;
-  gap: 4px;
 }
 .wallet-selector__option h2 {
   margin: 0;
@@ -180,24 +171,6 @@
   border-radius: 12px;
   background-color: #1a1a1a;
   border: none;
-}
-@media (max-width: 768px) {
-  .wallet-selector__option {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    width: 130px;
-    flex-shrink: 0;
-    gap: 12px;
-  }
-  .wallet-selector__option div {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-  }
 }
 
 .wallet-selector__header {
@@ -388,6 +361,16 @@
   text-align: center;
   font-size: 12px;
   color: #888;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 4px 8px;
+  width: fit-content;
+  margin: 0 auto;
+  transition: background-color 0.2s, color 0.2s;
+}
+.selector-intro__dev p:hover {
+  color: #fff;
+  background-color: #131313;
 }
 
 .selector-intro__items {

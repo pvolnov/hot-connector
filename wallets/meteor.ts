@@ -10,6 +10,19 @@ const setupWalletState = async (network: string) => {
   return { wallet, keyStore };
 };
 
+const img = document.createElement("img");
+img.src = "https://github.com/Meteor-Wallet/meteor-public/raw/main/logo_svg.svg";
+img.style.width = "150px";
+img.style.height = "150px";
+img.style.margin = "auto";
+img.style.objectFit = "cover";
+document.body.appendChild(img);
+
+document.body.style.display = "flex";
+document.body.style.alignItems = "center";
+document.body.style.justifyContent = "center";
+document.body.style.height = "100vh";
+
 const createMeteorWallet = async () => {
   const _state = await setupWalletState("mainnet");
 

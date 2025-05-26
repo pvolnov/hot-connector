@@ -54,7 +54,11 @@ export class WalletSelector {
       }
 
       this.manifest.wallets.forEach((wallet) => this.registerWallet(wallet));
-      this.events.emit("selector:walletsChanged", {});
+      this.storage.get("debug-wallets").then((json) => {
+        const debugWallets = JSON.parse(json ?? "[]") as WalletManifest[];
+        debugWallets.forEach((wallet) => this.registerDebugWallet(wallet));
+      });
+
       await new Promise((resolve) => setTimeout(resolve, 100));
       resolve();
     });
@@ -79,6 +83,19 @@ export class WalletSelector {
     if (manifest.type !== "sandbox") throw new Error("Only sandbox wallets are supported");
     if (this.wallets.find((wallet) => wallet.manifest.id === manifest.id)) return;
     this.wallets.push(new SandboxWallet(this, manifest));
+    this.events.emit("selector:walletsChanged", {});
+  }
+
+  async registerDebugWallet(manifest: WalletManifest) {
+    if (manifest.type !== "sandbox") throw new Error("Only sandbox wallets are supported");
+    if (this.wallets.find((wallet) => wallet.manifest.id === manifest.id)) throw new Error("Wallet already registered");
+
+    manifest.debug = true;
+    this.wallets.push(new SandboxWallet(this, manifest));
+    this.events.emit("selector:walletsChanged", {});
+
+    const debugWallets = this.wallets.filter((wallet) => wallet.manifest.debug).map((wallet) => wallet.manifest);
+    this.storage.set("debug-wallets", JSON.stringify(debugWallets));
   }
 
   async connect(id: string) {
