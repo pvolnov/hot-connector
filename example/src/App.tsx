@@ -8,8 +8,10 @@ import manifest from "../public/repository/manifest.json";
 
 const selector = new WalletSelector({
   manifest: manifest as any,
-  contractId: "demo.near",
   network: "mainnet",
+  features: {
+    signInWithoutAddKey: true,
+  },
 });
 
 const modal = new WalletSelectorUI(selector);

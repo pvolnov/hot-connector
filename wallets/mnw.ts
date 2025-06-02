@@ -1,5 +1,5 @@
 import * as nearAPI from "near-api-js";
-import { KeyPair, PublicKey } from "@near-js/crypto";
+import { PublicKey } from "@near-js/crypto";
 import type { Transaction, Optional, Account } from "@near-wallet-selector/core";
 import { createAction } from "@near-wallet-selector/wallet-utils";
 import { Action } from "near-api-js/lib/transaction";
@@ -149,12 +149,10 @@ const MyNearWallet = async () => {
     async signIn({ network, contractId, methodNames, successUrl, failureUrl }: any) {
       if (network === "testnet") throw "MyNearWallet not supported on testnet";
 
-      console.log("signIn", contractId, methodNames, successUrl, failureUrl);
       const existingAccounts = await getAccounts();
       if (existingAccounts.length) return existingAccounts;
 
       const currentUrl = new URL(window.selector.location);
-      console.log("currentUrl", currentUrl);
       const newUrl = new URL("https://app.mynearwallet.com/login/");
 
       newUrl.searchParams.set("success_url", successUrl || currentUrl.href);

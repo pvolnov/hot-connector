@@ -16,7 +16,7 @@ Unlike near-wallet-selector, this library provides a secure execution environmen
 import { WalletSelector, WalletSelectorUI } from "@hot-labs/near-connect";
 import "@hot-labs/near-connect/modal-ui.css";
 
-const selector = new WalletSelector({ contractId: "demo.near", network: "mainnet" });
+const selector = new WalletSelector({ network: "mainnet" });
 const modal = new WalletSelectorUI(selector);
 
 selector.on("wallet:signOut", async () => {});
@@ -35,13 +35,44 @@ The developer writes a self-hosted script that implements the integration of the
 {
   "id": "hot-wallet",
   "version": "1.0.0",
-  "name": "Hot Wallet",
-  "platform": ["android", "ios", "web"],
+  "name": "HOT Wallet",
+  "description": "Secure Multichain wallet. Manage assets, refuel gas, and mine $HOT on any device with HOT Wallet",
   "icon": "https://app.hot-labs.org/images/hot/hot-icon.png",
-  "description": "Hot Wallet is a wallet that allows you to send and receive NEAR.",
-  "executor": "https://hot-labs.org/hot-wallet.js",
   "website": "https://hot-labs.org/wallet",
-  "type": "sandbox"
+
+  "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/hotwallet.js",
+  "type": "sandbox",
+
+  "platform": {
+    "android": "https://play.google.com/store/apps/details?id=app.herewallet.hot&hl=en",
+    "ios": "https://apps.apple.com/us/app/hot-wallet/id6740916148",
+    "chrome": "https://chromewebstore.google.com/detail/hot-wallet/mpeengabcnhhjjgleiodimegnkpcenbk",
+    "firefox": "https://addons.mozilla.org/en-US/firefox/addon/hot-wallet",
+    "tga": "https://t.me/hot_wallet"
+  },
+
+  "features": {
+    "signMessage": true,
+    "signTransaction": true,
+    "signAndSendTransaction": true,
+    "signAndSendTransactions": true,
+    "signInWithoutAddKey": true,
+    "verifyOwner": false,
+    "testnet": false
+  },
+
+  "permissions": {
+    "storage": true,
+    "open": {
+      "allows": [
+        "https://hot-labs.org",
+        "https://t.me/hot_wallet",
+        "https://play.google.com",
+        "https://apps.apple.com",
+        "hotwallet://"
+      ]
+    }
+  }
 }
 ```
 
@@ -79,6 +110,18 @@ interface NearSelector {
 - `{ "location": true }`: Use window.selector.location for initial url from dapp
 - `{ "usb": true }`: Use usb in execution script (use for Ledger)
 - `{ "hid": true }`: Use hid in execution script (use for Ledger)
+
+## Manifest features
+
+Each wallet must specify in the manifest a list of features that are supported.
+This will help dApps filter wallets by the required features. As soon as the wallet starts supporting the required feature -- it simply adds it to the manifest and updates its execution script, all dapps automatically download the updates without the need to update the frontend.
+
+```ts
+const selector = new WalletSelector({
+  // Show wallets that support signMessage and testnet env
+  features: { signMessage: true, testnet: true },
+});
+```
 
 ## Injected wallets
 

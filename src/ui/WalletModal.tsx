@@ -36,7 +36,7 @@ const WalletPage = ({
 
         {error && <p class="wallet-selector__error">{error}</p>}
 
-        <button onClick={() => handleWalletSelect(wallet).catch(console.error)}>Connect</button>
+        <button onClick={() => handleWalletSelect(wallet)}>Connect</button>
       </div>
 
       <div class="wallet-selector__platforms">
@@ -118,6 +118,16 @@ export function WalletModal({ selector, modal }: Props) {
         executor: "https://yet-another-wallet.app/script.js",
         type: "sandbox",
 
+        features: {
+          signMessage: true,
+          signTransaction: false,
+          signAndSendTransaction: true,
+          signAndSendTransactions: true,
+          signInWithoutAddKey: true,
+          verifyOwner: false,
+          testnet: true,
+        },
+
         platform: { web: "", chrome: "" },
         permissions: {
           storage: true,
@@ -137,7 +147,11 @@ export function WalletModal({ selector, modal }: Props) {
   const handleWalletSelect = async (wallet: NearWallet) => {
     setOpened(false);
     setError(null);
-    await selector.connect(wallet.manifest.id).catch(() => setOpened(true));
+
+    await selector.connect(wallet.manifest.id).catch((error) => {
+      setError(error?.toString() ?? "Unknown error");
+      setOpened(true);
+    });
   };
 
   const selectWallet = (newWallet: NearWallet) => {
@@ -181,8 +195,6 @@ export function WalletModal({ selector, modal }: Props) {
           wrapper.remove();
           resolve(result);
         } catch (error) {
-          setOpened(true);
-          setError(error?.toString() ?? "Unknown error");
           iframe.style.display = "none";
           wrapper.remove();
           reject(error);
@@ -199,7 +211,7 @@ export function WalletModal({ selector, modal }: Props) {
         <p>Select a wallet</p>
       </div>
       <div class="wallet-selector__options">
-        {selector.wallets.map((w) => {
+        {selector.availableWallets.map((w) => {
           return (
             <button
               class={`wallet-selector__option ${wallet === w ? "--selected" : ""}`}
@@ -299,7 +311,7 @@ export function WalletModal({ selector, modal }: Props) {
                   border: "1px solid #ccc",
                   borderRadius: "4px",
                   fontFamily: "monospace",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   lineHeight: "1.4",
                   resize: "vertical",
                 }}

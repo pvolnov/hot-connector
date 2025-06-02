@@ -131,7 +131,18 @@ export interface WalletManifest {
   executor: string;
   type: "sandbox" | "injected";
   permissions: Record<string, Permission>;
+  features: WalletFeatures;
   debug?: boolean;
+}
+
+export interface WalletFeatures {
+  signMessage: boolean;
+  signTransaction: boolean;
+  signAndSendTransaction: boolean;
+  signAndSendTransactions: boolean;
+  verifyOwner: boolean;
+  signInWithoutAddKey: boolean;
+  testnet: boolean;
 }
 
 export interface NearWallet {

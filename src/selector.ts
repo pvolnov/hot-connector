@@ -1,4 +1,4 @@
-import { NearWallet, EventNearWalletInjected, WalletManifest, Network } from "./types/wallet";
+import { NearWallet, EventNearWalletInjected, WalletManifest, Network, WalletFeatures } from "./types/wallet";
 import { EventMap } from "./types/wallet-events";
 import { LocalStorage, DataStorage } from "./storage";
 import { EventEmitter } from "./events";
@@ -10,9 +10,12 @@ interface WalletSelectorOptions {
   events?: EventEmitter<EventMap>;
   manifest?: string | { wallets: WalletManifest[]; version: string };
   network?: Network;
-  contractId?: string;
-  methodNames?: string[];
-  allowance?: string;
+  features?: Partial<WalletFeatures>;
+  connectWithKey?: {
+    contractId: string;
+    methodNames?: string[];
+    allowance?: string;
+  };
 }
 
 export class WalletSelector {
@@ -21,9 +24,10 @@ export class WalletSelector {
 
   wallets: NearWallet[] = [];
   manifest: { wallets: WalletManifest[]; version: string } = { wallets: [], version: "1.0.0" };
+  features: Partial<WalletFeatures> = {};
 
   network: Network = "mainnet";
-  signInOptions: { contractId: string; methodNames: string[] } = { contractId: "", methodNames: [] };
+  connectWithKey?: { contractId: string; methodNames?: string[]; allowance?: string };
 
   executeIframe: <T>(iframe: HTMLIFrameElement, render: boolean, execute: () => Promise<T>) => Promise<T> = async (
     iframe,
@@ -40,8 +44,8 @@ export class WalletSelector {
     this.events = options?.events ?? new EventEmitter<EventMap>();
 
     this.network = options?.network ?? "mainnet";
-    this.signInOptions.contractId = options?.contractId ?? "";
-    this.signInOptions.methodNames = options?.methodNames ?? [];
+    this.connectWithKey = options?.connectWithKey;
+    this.features = options?.features ?? {};
 
     window.addEventListener<any>("near-wallet-injected", this._handleNearWalletInjected);
     window.dispatchEvent(new Event("near-selector-ready"));
@@ -61,6 +65,15 @@ export class WalletSelector {
 
       await new Promise((resolve) => setTimeout(resolve, 100));
       resolve();
+    });
+  }
+
+  get availableWallets() {
+    return this.wallets.filter((wallet) => {
+      return Object.entries(this.features).every(([key, value]) => {
+        if (value && !wallet.manifest.features?.[key as keyof WalletFeatures]) return false;
+        return true;
+      });
     });
   }
 
@@ -102,7 +115,7 @@ export class WalletSelector {
     const wallet = await this.wallet(id);
 
     await this.storage.set("selected-wallet", id);
-    const accounts = await wallet?.signIn(this.signInOptions);
+    const accounts = await wallet?.signIn(this.connectWithKey ?? { contractId: "" });
 
     if (!accounts?.length) throw new Error("Failed to sign in");
     this.events.emit("wallet:signIn", { wallet, accounts, success: true });

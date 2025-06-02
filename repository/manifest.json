@@ -19,6 +19,16 @@
         "tga": "https://t.me/hot_wallet"
       },
 
+      "features": {
+        "signMessage": true,
+        "signTransaction": true,
+        "signInWithoutAddKey": true,
+        "signAndSendTransaction": true,
+        "signAndSendTransactions": true,
+        "verifyOwner": false,
+        "testnet": false
+      },
+
       "permissions": {
         "storage": true,
         "open": {
@@ -41,6 +51,16 @@
       "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/near-mobile.js",
       "type": "sandbox",
       "version": "1.0.0",
+
+      "features": {
+        "signMessage": true,
+        "signTransaction": false,
+        "signInWithoutAddKey": true,
+        "signAndSendTransaction": true,
+        "signAndSendTransactions": true,
+        "verifyOwner": false,
+        "testnet": true
+      },
 
       "platform": {
         "android": "https://play.google.com/store/apps/details?id=com.peersyst.nearmobilewallet",
@@ -68,6 +88,16 @@
         "web": "https://app.mynearwallet.com"
       },
 
+      "features": {
+        "signMessage": true,
+        "signTransaction": false,
+        "signInWithoutAddKey": true,
+        "signAndSendTransaction": true,
+        "signAndSendTransactions": true,
+        "verifyOwner": false,
+        "testnet": false
+      },
+
       "permissions": {
         "storage": true,
         "open": {
@@ -84,6 +114,16 @@
       "version": "1.0.0",
       "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/meteor.js",
       "type": "sandbox",
+
+      "features": {
+        "signMessage": true,
+        "signTransaction": false,
+        "signInWithoutAddKey": true,
+        "signAndSendTransaction": true,
+        "signAndSendTransactions": true,
+        "verifyOwner": false,
+        "testnet": true
+      },
 
       "platform": {
         "web": "https://wallet.meteorwallet.app",

@@ -1,4 +1,4 @@
-async function getIframeCode(endpoint: string, origin: string) {
+async function getIframeCode(endpoint: string, origin: string, storage: any) {
   const code = await fetch(endpoint).then((res) => res.text());
 
   return /* html */ `
@@ -23,16 +23,19 @@ async function getIframeCode(endpoint: string, origin: string) {
       </style>
 
       <script>
-      window.mockLocalStorage = (() => {
-        let storage = {};
+      window.sandboxedLocalStorage = (() => {
+        let storage = ${JSON.stringify(storage)}
+
         return {
           setItem: function(key, value) {
+            window.selector.storage.set(key, value)
             storage[key] = value || '';
           },
           getItem: function(key) {
             return key in storage ? storage[key] : null;
           },
           removeItem: function(key) {
+            window.selector.storage.remove(key)
             delete storage[key];
           },
           get length() {

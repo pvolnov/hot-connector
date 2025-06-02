@@ -23,8 +23,15 @@ class SandboxExecutor {
       const config = this.manifest.permissions[action];
 
       if (!openUrl || typeof config !== "object" || !config.allows) return false;
-      const allowsHostnames = config.allows.map((allow) => parseUrl(allow)?.hostname);
-      return allowsHostnames.some((hostname) => openUrl?.hostname === hostname);
+      const isAllowed = config.allows.some((path) => {
+        const url = parseUrl(path);
+        if (!url) return false;
+        if (openUrl.protocol !== url.protocol) return false;
+        if (!!url.hostname && openUrl.hostname !== url.hostname) return false;
+        return true;
+      });
+
+      return isAllowed;
     }
 
     return this.manifest.permissions[action];
@@ -150,9 +157,10 @@ class SandboxExecutor {
   }
 
   async code() {
-    const code = await getIframeCode(this.manifest.executor, this.origin);
+    const storage = await this.getAllStorage();
+    const code = await getIframeCode(this.manifest.executor, this.origin, storage);
     return code
-      .replaceAll("localStorage", "mockLocalStorage")
+      .replaceAll("window.localStorage", "window.sandboxedLocalStorage")
       .replaceAll("window.top", "window.selector")
       .replaceAll("window.open", "window.selector.open");
   }
@@ -183,6 +191,17 @@ class SandboxExecutor {
         iframe.contentWindow?.postMessage({ method, params, id, origin: this.origin }, "*");
       });
     });
+  }
+
+  async getAllStorage() {
+    const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.id}:`));
+    const storage: Record<string, any> = {};
+
+    for (const key of keys) {
+      storage[key.replace(`${this.id}:`, "")] = localStorage.getItem(key);
+    }
+
+    return storage;
   }
 
   async clearStorage() {
