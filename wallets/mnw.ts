@@ -284,15 +284,17 @@ const MyNearWallet = async () => {
       });
     },
 
-    async signAndSendTransaction({ network, signerId, receiverId, actions }: any) {
+    async signAndSendTransaction({ network, signerId, receiverId, actions }: any): Promise<FinalExecutionOutcome> {
       if (network === "testnet") throw "MyNearWallet not supported on testnet";
-      return await this.signAndSendTransactions({
+      const list = await this.signAndSendTransactions({
         transactions: [{ signerId, receiverId, actions }],
         callbackUrl: window.selector.location,
       });
+
+      return list[0];
     },
 
-    async signAndSendTransactions({ network, transactions }: any) {
+    async signAndSendTransactions({ network, transactions }: any): Promise<FinalExecutionOutcome[]> {
       if (network === "testnet") throw "MyNearWallet not supported on testnet";
 
       const newUrl = new URL("sign", "https://app.mynearwallet.com");

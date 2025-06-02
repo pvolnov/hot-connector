@@ -153,14 +153,14 @@ class NearWallet {
 
   signAndSendTransaction = async (payload: any) => {
     if (payload.network === "testnet") throw "HOT Wallet not supported on testnet";
-    return await HOT.shared.request("near:signAndSendTransactions", {
-      transactions: [payload],
-    });
+    const { transactions } = await HOT.shared.request("near:signAndSendTransactions", { transactions: [payload] });
+    return transactions[0];
   };
 
   signAndSendTransactions = async (payload: any) => {
     if (payload.network === "testnet") throw "HOT Wallet not supported on testnet";
-    return await HOT.shared.request("near:signAndSendTransactions", payload);
+    const { transactions } = await HOT.shared.request("near:signAndSendTransactions", payload);
+    return transactions;
   };
 }
 
