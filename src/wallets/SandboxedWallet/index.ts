@@ -11,7 +11,6 @@ import {
   VerifyOwnerParams,
   WalletManifest,
 } from "../../types/wallet";
-
 import { WalletSelector } from "../../selector";
 import SandboxExecutor from "./executor";
 
@@ -49,7 +48,7 @@ export class SandboxWallet implements NearWallet {
     return this.executor.call("wallet:signAndSendTransactions", { ...params, network });
   }
 
-  async signMessage?(params: SignMessageParams): Promise<SignedMessage | void> {
+  async signMessage(params: SignMessageParams): Promise<SignedMessage> {
     const network = params.network || this.selector.network;
     return this.executor.call("wallet:signMessage", { ...params, network });
   }

@@ -5,7 +5,17 @@ interface Window {
     network: "testnet" | "mainnet";
     location: string;
     ready: (wallet: any) => void;
-    open: (url: string, newTab?: boolean) => void;
+
+    open: (
+      url: string,
+      newTab?: boolean | string,
+      options?: string
+    ) => {
+      close: () => void;
+      postMessage: (message: any) => void;
+      closed: boolean;
+    };
+
     showContent: () => void;
     storage: {
       set: (key: string, value: string) => Promise<void>;

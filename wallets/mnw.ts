@@ -1,6 +1,6 @@
 import * as nearAPI from "near-api-js";
 import { PublicKey } from "@near-js/crypto";
-import type { Transaction, Optional, Account } from "@near-wallet-selector/core";
+import type { Transaction, Optional, Account, FinalExecutionOutcome } from "@near-wallet-selector/core";
 import { createAction } from "@near-wallet-selector/wallet-utils";
 import { Action } from "near-api-js/lib/transaction";
 import * as borsh from "borsh";
@@ -9,33 +9,64 @@ import { SelectorStorageKeyStore } from "./keystore";
 
 const keyStore = new SelectorStorageKeyStore();
 
-const _completeSignInWithAccessKey = async () => {
-  const authData = await window.selector.storage.get("authData");
-  if (authData) return JSON.parse(authData);
+const img = document.createElement("img");
+img.src = "https://www.mynearwallet.com/images/webclip.png";
+img.style.width = "150px";
+img.style.height = "150px";
+img.style.borderRadius = "24px";
+img.style.margin = "auto";
+img.style.objectFit = "cover";
+document.body.appendChild(img);
 
+document.body.style.display = "flex";
+document.body.style.alignItems = "center";
+document.body.style.justifyContent = "center";
+document.body.style.height = "100vh";
+
+const _completeSignInWithAccessKey = async () => {
   const currentUrl = new URL(window.selector.location);
   const publicKey = currentUrl.searchParams.get("public_key") || "";
   const allKeys = (currentUrl.searchParams.get("all_keys") || "").split(",");
   const accountId = currentUrl.searchParams.get("account_id") || "";
+  if (!accountId) return;
 
-  if (accountId) {
-    const authData = { accountId, allKeys };
-    await window.selector.storage.set("authData", JSON.stringify(authData));
+  const authData = { accountId, allKeys };
+  await window.selector.storage.set("authData", JSON.stringify(authData));
 
-    if (publicKey) {
-      const keyPair = await keyStore.getKey("mainnet", "pending_key:" + publicKey);
-      await keyStore.setKey("mainnet", accountId, keyPair);
-      await keyStore.removeKey("mainnet", "pending_key:" + publicKey);
-    }
-
-    return { accountId, allKeys };
+  if (publicKey) {
+    const keyPair = await keyStore.getKey("mainnet", "pending_key:" + publicKey);
+    await keyStore.setKey("mainnet", accountId, keyPair);
+    await keyStore.removeKey("mainnet", "pending_key:" + publicKey);
   }
+};
 
-  return null;
+const _completeSignMessage = async () => {
+  const hash = new URL(window.selector.location).hash;
+  const search = new URLSearchParams(hash.slice(1));
+  const signature = search.get("signature") || "";
+  const accountId = search.get("accountId") || "";
+  if (!signature || !accountId) return;
+
+  await window.selector.storage.set("pendingSignMessage", JSON.stringify({ signature, accountId }));
+};
+
+const _completeSignAndSendTransaction = async () => {
+  const search = new URL(window.selector.location).searchParams;
+  const transactionHashes = search.get("transactionHashes") || "";
+  if (!transactionHashes) return;
+  await window.selector.storage.set(
+    "pendingSignAndSendTransaction",
+    JSON.stringify({ transactionHashes: transactionHashes.split(",") })
+  );
 };
 
 const setupWalletState = async () => {
-  const authData = await _completeSignInWithAccessKey();
+  const authData = await window.selector.storage.get("authData");
+  const parsedAuthData = authData ? JSON.parse(authData) : null;
+
+  if (typeof parsedAuthData?.accountId !== "string") {
+    throw new Error("authData not found");
+  }
 
   const near = await nearAPI.connect({
     walletUrl: "https://app.mynearwallet.com",
@@ -45,22 +76,25 @@ const setupWalletState = async () => {
     keyStore,
   });
 
-  const account = authData ? await near.account(authData.accountId) : null;
-  return { near, account, keyStore, authData };
+  const account = await near.account(parsedAuthData.accountId);
+  return { near, account, keyStore, authData: parsedAuthData };
 };
 
 const MyNearWallet = async () => {
-  const _state = await setupWalletState();
+  await _completeSignInWithAccessKey().catch(() => null);
+  await _completeSignMessage().catch(() => null);
+  await _completeSignAndSendTransaction().catch(() => null);
+  let wallet = await setupWalletState().catch(() => null);
 
   const getAccounts = async (): Promise<Array<Account>> => {
-    if (!_state.account) return [];
-    const publicKey = await _state.account.connection.signer.getPublicKey(_state.account.accountId, "mainnet");
-    return [{ accountId: _state.account.accountId, publicKey: publicKey ? publicKey.toString() : "" }];
+    if (!wallet?.account) return [];
+    const publicKey = await wallet.account.connection.signer.getPublicKey(wallet.account.accountId, "mainnet");
+    return [{ accountId: wallet.account.accountId, publicKey: publicKey ? publicKey.toString() : "" }];
   };
 
   const transformTransactions = async (transactions: Array<Optional<Transaction, "signerId">>) => {
-    if (!_state.account) return [];
-    const account = _state.account;
+    if (!wallet?.account) return [];
+    const account = wallet.account;
     const { networkId, signer, provider } = account.connection;
     const localKey = await signer.getPublicKey(account.accountId, networkId);
 
@@ -109,7 +143,7 @@ const MyNearWallet = async () => {
         }
       }
 
-      const walletKeys = _state.authData?.allKeys;
+      const walletKeys = wallet?.authData?.allKeys || [];
       for (const accessKey of accessKeys) {
         if (
           walletKeys.indexOf(accessKey.public_key) !== -1 &&
@@ -162,7 +196,7 @@ const MyNearWallet = async () => {
         newUrl.searchParams.set("contract_id", contractId);
         const accessKey = nearAPI.utils.KeyPair.fromRandom("ed25519");
         newUrl.searchParams.set("public_key", accessKey.getPublicKey().toString());
-        await _state.keyStore.setKey("mainnet", "pending_key:" + accessKey.getPublicKey(), accessKey);
+        await keyStore.setKey("mainnet", "pending_key:" + accessKey.getPublicKey(), accessKey);
       }
 
       if (methodNames) {
@@ -171,12 +205,30 @@ const MyNearWallet = async () => {
         });
       }
 
-      window.selector.open(newUrl.toString());
+      const panel = window.selector.open(newUrl.toString(), "_blank");
+      return new Promise((resolve, reject) => {
+        const timer = setInterval(async () => {
+          wallet = await setupWalletState().catch(() => null);
+
+          if (wallet) {
+            resolve([{ accountId: wallet.account.accountId }]);
+            clearInterval(timer);
+            panel.close();
+            return;
+          }
+
+          if (panel.closed) {
+            clearInterval(timer);
+            reject(new Error("signIn rejected"));
+          }
+        }, 500);
+      });
     },
 
     async signOut(data: any) {
       if (data.network === "testnet") throw "MyNearWallet not supported on testnet";
-      await _state.keyStore.clear();
+      await window.selector.storage.remove("authData");
+      await keyStore.clear();
     },
 
     async getAccounts(data: any) {
@@ -188,42 +240,65 @@ const MyNearWallet = async () => {
       throw new Error(`Method not supported by MyNearWallet`);
     },
 
-    async signMessage({ network, message, nonce, recipient, callbackUrl, state }: any) {
+    async signMessage({ network, message, nonce, recipient }: any) {
       if (network === "testnet") throw "MyNearWallet not supported on testnet";
-
-      const url = callbackUrl || window.selector.location;
-      if (!url) throw new Error(`The callbackUrl is missing for MyNearWallet`);
 
       const href = new URL("https://app.mynearwallet.com");
       href.pathname = "sign-message";
       href.searchParams.append("message", message);
       href.searchParams.append("nonce", btoa(String.fromCharCode(...nonce)));
       href.searchParams.append("recipient", recipient);
-      href.searchParams.append("callbackUrl", url);
-      if (state) href.searchParams.append("state", state);
+      href.searchParams.append("callbackUrl", window.selector.location);
 
-      window.selector.open(href.toString());
-      return;
+      const panel = window.selector.open(href.toString(), "_blank");
+      return new Promise((resolve, reject) => {
+        const timer = setInterval(async () => {
+          if (panel.closed || wallet == null) {
+            clearInterval(timer);
+            reject(new Error("signIn rejected"));
+          }
+
+          try {
+            const pendingSignMessageJson = await window.selector.storage.get("pendingSignMessage");
+            const pendingSignMessage = pendingSignMessageJson ? JSON.parse(pendingSignMessageJson) : null;
+            if (!pendingSignMessage) return;
+
+            await window.selector.storage.remove("pendingSignMessage");
+            if (pendingSignMessage.accountId !== wallet?.account?.accountId) throw "accountId mismatch";
+            if (wallet == null) throw "wallet not found";
+
+            resolve({
+              signature: pendingSignMessage.signature,
+              accountId: wallet.account.accountId,
+              publicKey: wallet.authData.allKeys[0], // WTF?
+            });
+
+            clearInterval(timer);
+            panel.close();
+          } catch {
+            clearInterval(timer);
+            reject(new Error("signMessage failed"));
+            panel.close();
+          }
+        }, 500);
+      });
     },
 
-    async signAndSendTransaction({ network, signerId, receiverId, actions, callbackUrl }: any) {
+    async signAndSendTransaction({ network, signerId, receiverId, actions }: any) {
       if (network === "testnet") throw "MyNearWallet not supported on testnet";
-
-      const url = callbackUrl || window.selector.location;
-      if (!url) throw new Error(`The callbackUrl is missing for MyNearWallet`);
-      await this.signAndSendTransactions({ transactions: [{ signerId, receiverId, actions }], callbackUrl: url });
+      return await this.signAndSendTransactions({
+        transactions: [{ signerId, receiverId, actions }],
+        callbackUrl: window.selector.location,
+      });
     },
 
-    async signAndSendTransactions({ network, transactions, callbackUrl }: any) {
+    async signAndSendTransactions({ network, transactions }: any) {
       if (network === "testnet") throw "MyNearWallet not supported on testnet";
-
-      const url = callbackUrl || window.selector.location;
-      if (!url) throw new Error(`The callbackUrl is missing for MyNearWallet`);
 
       const newUrl = new URL("sign", "https://app.mynearwallet.com");
       const list = await transformTransactions(transactions);
 
-      newUrl.searchParams.set("callbackUrl", url);
+      newUrl.searchParams.set("callbackUrl", window.selector.location);
       newUrl.searchParams.set(
         "transactions",
         list
@@ -232,7 +307,42 @@ const MyNearWallet = async () => {
           .join(",")
       );
 
-      window.selector.open(newUrl.toString());
+      const panel = window.selector.open(newUrl.toString(), "_blank");
+      return new Promise((resolve, reject) => {
+        const timer = setInterval(async () => {
+          if (panel.closed || wallet == null) {
+            reject(new Error("signIn rejected"));
+            clearInterval(timer);
+            return;
+          }
+
+          try {
+            const json = await window.selector.storage.get("pendingSignAndSendTransaction");
+            if (!json) return;
+
+            const { transactionHashes } = JSON.parse(json);
+            if (!transactionHashes) return;
+
+            await window.selector.storage.remove("pendingSignAndSendTransaction");
+            if (wallet == null) throw "wallet not found";
+            panel.close();
+
+            const txs: FinalExecutionOutcome[] = [];
+            for (const transactionHash of transactionHashes) {
+              const rpc = wallet.near.connection.provider;
+              const tx = await rpc.txStatus(transactionHash, wallet.account.accountId, "EXECUTED_OPTIMISTIC");
+              txs.push(tx);
+            }
+
+            resolve(txs);
+            clearInterval(timer);
+          } catch (e) {
+            clearInterval(timer);
+            reject(new Error("signAndSendTransaction failed"));
+            panel.close();
+          }
+        }, 500);
+      });
     },
   };
 };

@@ -10,7 +10,6 @@ import {
   SignMessageParams,
   VerifiedOwner,
   VerifyOwnerParams,
-  WalletManifest,
 } from "../types/wallet";
 import { WalletSelector } from "../selector";
 
@@ -45,7 +44,7 @@ export class InjectedWallet implements NearWallet {
     return this.wallet.signAndSendTransactions({ ...params, network: params.network || this.selector.network });
   }
 
-  async signMessage(params: SignMessageParams): Promise<SignedMessage | void> {
-    return this.wallet.signMessage?.({ ...params, network: params.network || this.selector.network });
+  async signMessage(params: SignMessageParams): Promise<SignedMessage> {
+    return this.wallet.signMessage({ ...params, network: params.network || this.selector.network });
   }
 }

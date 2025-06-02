@@ -9,9 +9,6 @@ import manifest from "../public/repository/manifest.json";
 const selector = new WalletSelector({
   manifest: manifest as any,
   network: "mainnet",
-  features: {
-    signInWithoutAddKey: true,
-  },
 });
 
 const modal = new WalletSelectorUI(selector);
@@ -57,14 +54,16 @@ const SignMessage = ({ wallet }: { wallet: NearWallet }) => {
   const singMessage = async () => {
     const nonce = Buffer.from(window.crypto.getRandomValues(new Uint8Array(32)));
     const result = await wallet.signMessage?.({ message: "Hello", recipient: "Demo app", nonce });
-    alert(`Is verfiied: ${result?.signature}`);
+    console.log(`Is verfiied: ${result?.signature}`);
   };
 
   const sendTx = async () => {
-    wallet.signAndSendTransaction({
+    const result = await wallet.signAndSendTransaction({
       receiverId: "demo.near",
       actions: [{ type: "Transfer", params: { deposit: "0" } }],
     });
+
+    console.log({ result });
   };
 
   return (

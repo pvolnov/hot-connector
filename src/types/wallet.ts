@@ -75,7 +75,6 @@ export interface SignedMessage {
   accountId: string;
   publicKey: string;
   signature: string;
-  state?: string;
 }
 
 export type SignMessageMethod = {
@@ -114,11 +113,7 @@ export interface SignAndSendTransactionsParams {
 
 export type EventNearWalletInjected = CustomEvent<NearWallet>;
 
-type Permission =
-  | {
-      allows?: string[];
-    }
-  | boolean;
+type Permission = { allows?: string[] } | boolean;
 
 export interface WalletManifest {
   id: string;
@@ -176,7 +171,7 @@ export interface NearWallet {
    * The user must be signed in to call this method as there's at least charges for gas spent.
    */
   signAndSendTransactions(params: SignAndSendTransactionsParams): Promise<Array<providers.FinalExecutionOutcome>>;
-  signMessage?(params: SignMessageParams): Promise<SignedMessage | void>;
+  signMessage(params: SignMessageParams): Promise<SignedMessage>;
 }
 
 export type WalletEvents = {
