@@ -1,5 +1,8 @@
-async function getIframeCode(endpoint: string, origin: string, storage: any) {
-  const code = await fetch(endpoint).then((res) => res.text());
+import SandboxExecutor from "./executor";
+
+async function getIframeCode(executor: SandboxExecutor) {
+  const storage = await executor.getAllStorage();
+  const code = await fetch(executor.manifest.executor).then((res) => res.text());
 
   return /* html */ `
       <style>
@@ -54,7 +57,7 @@ async function getIframeCode(endpoint: string, origin: string, storage: any) {
           this.windowIdPromise = window.selector.call("open", { url, newTab, params });
 
           window.addEventListener("message", async (event) => {            
-            if (event.data.origin !== "${origin}") return;
+            if (event.data.origin !== "${executor.origin}") return;
             if (!event.data.method?.startsWith("proxy-window:")) return;
             const method = event.data.method.replace("proxy-window:", "");
             if (method === "closed" && event.data.windowId === await this.id()) this.closed = true;
@@ -96,21 +99,21 @@ async function getIframeCode(endpoint: string, origin: string, storage: any) {
         },
       
         async ready(wallet) {
-          window.parent.postMessage({ method: "wallet-ready", origin: "${origin}" }, "*");
+          window.parent.postMessage({ method: "wallet-ready", origin: "${executor.origin}" }, "*");
           window.selector.wallet = wallet;
         },
 
         showContent() {
-          window.parent.postMessage({ method: "showContent", origin: "${origin}" }, "*");
+          window.parent.postMessage({ method: "showContent", origin: "${executor.origin}" }, "*");
         },
 
         async call(method, params) {
           const id = window.selector.uuid();
-          window.parent.postMessage({ method, params, id, origin: "${origin}" }, "*");
+          window.parent.postMessage({ method, params, id, origin: "${executor.origin}" }, "*");
 
           return new Promise((resolve, reject) => {
             const handler = (event) => {
-              if (event.data.id !== id || event.data.origin !== "${origin}") return;
+              if (event.data.id !== id || event.data.origin !== "${executor.origin}") return;
               window.removeEventListener("message", handler);
 
               if (event.data.status === "failed") reject(event.data.result);
@@ -122,7 +125,7 @@ async function getIframeCode(endpoint: string, origin: string, storage: any) {
         },
 
         panelClosed(windowId) {
-          window.parent.postMessage({ method: "panelClosed", origin: "${origin}", result: { windowId } }, "*");
+          window.parent.postMessage({ method: "panelClosed", origin: "${executor.origin}", result: { windowId } }, "*");
         },
 
         open(url, newTab = false, params) {
@@ -147,14 +150,22 @@ async function getIframeCode(endpoint: string, origin: string, storage: any) {
           },
         },
       };
+
+      if (${executor.checkPermissions("parentFrame")}) {
+        window.selector.parentFrame = {
+          async postMessage(data) {
+            return await window.selector.call("parentPostMessage", { data });
+          },
+        };
+      }
       
       window.addEventListener("message", async (event) => {
-        if (event.data.origin !== "${origin}") return;
+        if (event.data.origin !== "${executor.origin}") return;
         if (!event.data.method?.startsWith("wallet:")) return;
       
         const wallet = window.selector.wallet;
         const method = event.data.method.replace("wallet:", "");
-        const payload = { id: event.data.id, origin: "${origin}", method };
+        const payload = { id: event.data.id, origin: "${executor.origin}", method };
       
         if (wallet == null || typeof wallet[method] !== "function") {
           const data = { ...payload, status: "failed", result: "Method not found" };

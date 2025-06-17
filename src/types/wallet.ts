@@ -31,43 +31,12 @@ export interface SignInParams {
   network?: Network;
 }
 
-export interface VerifyOwnerParams {
-  /**
-   * The message requested sign. Defaults to `verify owner` string.
-   */
-  message: string;
-  /**
-   * Applicable to browser wallets (e.g. MyNearWallet). This is the callback url once the signing is approved. Defaults to `window.location.href`.
-   */
-  callbackUrl?: string;
-  /**
-   * Applicable to browser wallets (e.g. MyNearWallet) extra data that will be passed to the callback url once the signing is approved.
-   */
-  meta?: string;
-  /**
-   * Specify the network to verify the owner on.
-   */
-  network?: Network;
-}
-
-export interface VerifiedOwner {
-  accountId: string;
-  message: string;
-  blockId: string;
-  publicKey: string;
-  signature: string;
-  keyType: utils.key_pair.KeyType;
-}
-
 export interface SignMessageParams {
   message: string;
   recipient: string;
   nonce: Buffer;
   callbackUrl?: string;
   state?: string;
-  /**
-   * Specify the network to sign the message on.
-   */
   network?: Network;
 }
 
@@ -76,10 +45,6 @@ export interface SignedMessage {
   publicKey: string;
   signature: string;
 }
-
-export type SignMessageMethod = {
-  signMessage(params: SignMessageParams): Promise<SignedMessage | void>;
-};
 
 export interface SignAndSendTransactionParams {
   /**
@@ -113,7 +78,14 @@ export interface SignAndSendTransactionsParams {
 
 export type EventNearWalletInjected = CustomEvent<NearWallet>;
 
-type Permission = { allows?: string[] } | boolean;
+export interface WalletPermissions {
+  storage?: boolean;
+  open?: { allows?: string[] };
+  autoRun?: { parentFrame?: boolean; webviewUserAgent?: string };
+  parentFrame?: string[];
+  usb?: boolean;
+  hid?: boolean;
+}
 
 export interface WalletManifest {
   id: string;
@@ -125,7 +97,7 @@ export interface WalletManifest {
   version: string;
   executor: string;
   type: "sandbox" | "injected";
-  permissions: Record<string, Permission>;
+  permissions: WalletPermissions;
   features: WalletFeatures;
   debug?: boolean;
 }
@@ -135,7 +107,6 @@ export interface WalletFeatures {
   signTransaction: boolean;
   signAndSendTransaction: boolean;
   signAndSendTransactions: boolean;
-  verifyOwner: boolean;
   signInWithoutAddKey: boolean;
   testnet: boolean;
 }
@@ -157,10 +128,6 @@ export interface NearWallet {
    * In this case, you can use an `accountId` returned as the `signerId` for `signAndSendTransaction`.
    */
   getAccounts(data?: { network?: Network }): Promise<Array<Account>>;
-  /**
-   * Signs the message and verifies the owner. Message is not sent to blockchain.
-   */
-  verifyOwner(params: VerifyOwnerParams): Promise<VerifiedOwner | void>;
   /**
    * Signs one or more NEAR Actions before sending to the network.
    * The user must be signed in to call this method as there's at least charges for gas spent.

@@ -11,7 +11,6 @@ export type {
   WalletManifest,
   EventNearWalletInjected,
   SignInParams,
-  VerifyOwnerParams,
   SignMessageParams,
   SignedMessage,
   SignAndSendTransactionParams,

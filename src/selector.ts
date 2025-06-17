@@ -1,9 +1,9 @@
 import { NearWallet, EventNearWalletInjected, WalletManifest, Network, WalletFeatures } from "./types/wallet";
-import { EventMap } from "./types/wallet-events";
-import { LocalStorage, DataStorage } from "./storage";
-import { EventEmitter } from "./events";
 import { InjectedWallet } from "./wallets/InjectedWallet";
 import { SandboxWallet } from "./wallets/SandboxedWallet";
+import { LocalStorage, DataStorage } from "./storage";
+import { EventMap } from "./types/wallet-events";
+import { EventEmitter } from "./events";
 
 interface WalletSelectorOptions {
   storage?: DataStorage;
@@ -47,9 +47,6 @@ export class WalletSelector {
     this.connectWithKey = options?.connectWithKey;
     this.features = options?.features ?? {};
 
-    window.addEventListener<any>("near-wallet-injected", this._handleNearWalletInjected);
-    window.dispatchEvent(new Event("near-selector-ready"));
-
     this.whenManifestLoaded = new Promise(async (resolve) => {
       if (options?.manifest == null || typeof options.manifest === "string") {
         this.manifest = await this._loadManifest(options?.manifest).catch(() => ({ wallets: [], version: "1.0.0" }));
@@ -57,14 +54,19 @@ export class WalletSelector {
         this.manifest = options?.manifest ?? { wallets: [], version: "1.0.0" };
       }
 
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      resolve();
+    });
+
+    window.addEventListener<any>("near-wallet-injected", this._handleNearWalletInjected);
+    window.dispatchEvent(new Event("near-selector-ready"));
+
+    this.whenManifestLoaded.then(() => {
       this.manifest.wallets.forEach((wallet) => this.registerWallet(wallet));
       this.storage.get("debug-wallets").then((json) => {
         const debugWallets = JSON.parse(json ?? "[]") as WalletManifest[];
         debugWallets.forEach((wallet) => this.registerDebugWallet(wallet));
       });
-
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      resolve();
     });
   }
 
@@ -97,6 +99,24 @@ export class WalletSelector {
     if (this.wallets.find((wallet) => wallet.manifest.id === manifest.id)) return;
     this.wallets.push(new SandboxWallet(this, manifest));
     this.events.emit("selector:walletsChanged", {});
+
+    // Auto run for webview browsers (for mobile wallets)
+    const webviewUserAgent = manifest.permissions.autoRun?.webviewUserAgent;
+    if (webviewUserAgent) {
+      const userAgent = window.navigator.userAgent;
+      if (userAgent.includes(webviewUserAgent)) {
+        this.connect(manifest.id);
+        return;
+      }
+    }
+
+    // Auto run for parent frame
+    const authRunForParentFrame = manifest.permissions.autoRun?.parentFrame;
+    const allowedParentFrame = manifest.permissions.parentFrame;
+    const parentFrameOrigin = window.location.ancestorOrigins?.[0];
+    if (authRunForParentFrame && allowedParentFrame && parentFrameOrigin) {
+      if (allowedParentFrame.includes(parentFrameOrigin)) return this.connect(manifest.id);
+    }
   }
 
   async registerDebugWallet(manifest: WalletManifest) {

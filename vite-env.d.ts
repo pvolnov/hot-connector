@@ -6,6 +6,10 @@ interface Window {
     location: string;
     ready: (wallet: any) => void;
 
+    parentFrame?: {
+      postMessage: (data: any) => Promise<void>;
+    };
+
     open: (
       url: string,
       newTab?: boolean | string,

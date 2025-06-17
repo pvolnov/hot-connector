@@ -4,15 +4,19 @@ import crypto from "crypto";
 
 import { head } from "./view";
 import { body } from "./view";
-const root = document.createElement("div");
-root.style.height = "100%";
-document.body.appendChild(root);
-document.head.innerHTML = head;
-root.innerHTML = body;
 
-export const proxyApi = "https://h4n.app";
 const logoImage = new Image();
 logoImage.src = "https://hot-labs.org/hot-widget/icon.svg";
+
+const renderUI = () => {
+  const root = document.createElement("div");
+  root.style.height = "100%";
+  document.body.appendChild(root);
+  document.head.innerHTML = head;
+  root.innerHTML = body;
+};
+
+export const proxyApi = "https://h4n.app";
 
 export const uuid4 = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
@@ -68,7 +72,25 @@ class HOT {
     return requestId;
   }
 
+  async injectedRequest(method: string, request: any): Promise<any> {
+    const id = uuid4();
+    return new Promise((resolve, reject) => {
+      const handler = (e: any) => {
+        if (e.data.id !== id) return;
+        window?.removeEventListener("message", handler);
+        if (e.data.success) return resolve(e.data.payload);
+        else return reject(e.data.payload);
+      };
+
+      window.selector.parentFrame?.postMessage({ $hot: true, method, request, id });
+      window?.addEventListener("message", handler);
+    });
+  }
+
   async request(method: string, request: any): Promise<any> {
+    if (window.selector.parentFrame) return this.injectedRequest(method, request);
+
+    renderUI();
     const id = uuid4();
     const qr = document.querySelector(".qr-code");
     if (qr) qr.innerHTML = "";
