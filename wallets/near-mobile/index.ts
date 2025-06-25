@@ -224,5 +224,6 @@ export const initNearMobileWallet = async () => {
 };
 
 initNearMobileWallet().then((wallet) => {
+  window.selector.ui.showIframe();
   window.selector.ready(wallet);
 });

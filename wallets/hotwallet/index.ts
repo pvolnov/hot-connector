@@ -186,4 +186,5 @@ class NearWallet {
   };
 }
 
+window.selector.ui.showIframe();
 window.selector.ready(new NearWallet());

@@ -10,19 +10,6 @@ const setupWalletState = async (network: string) => {
   return { wallet, keyStore };
 };
 
-const img = document.createElement("img");
-img.src = "https://github.com/Meteor-Wallet/meteor-public/raw/main/logo_svg.svg";
-img.style.width = "150px";
-img.style.height = "150px";
-img.style.margin = "auto";
-img.style.objectFit = "cover";
-document.body.appendChild(img);
-
-document.body.style.display = "flex";
-document.body.style.alignItems = "center";
-document.body.style.justifyContent = "center";
-document.body.style.height = "100vh";
-
 const createMeteorWallet = async () => {
   const _states: Record<string, { wallet: MeteorWallet; keyStore: SelectorStorageKeyStore }> = {};
 
@@ -47,6 +34,8 @@ const createMeteorWallet = async () => {
   return {
     async signIn({ network, contractId, methodNames }: any) {
       const state = await getState(network);
+      await window.selector.ui.whenApprove({ title: "Sign in", button: "Open wallet" });
+
       if (methodNames?.length) {
         await state.wallet.requestSignIn({
           methods: methodNames,
@@ -67,6 +56,7 @@ const createMeteorWallet = async () => {
     async signOut({ network }: any) {
       const state = await getState(network);
       if (state.wallet.isSignedIn()) {
+        await window.selector.ui.whenApprove({ title: "Sign out", button: "Open wallet" });
         await state.wallet.signOut();
       }
     },
@@ -83,7 +73,10 @@ const createMeteorWallet = async () => {
 
     async verifyOwner({ network, message }: any) {
       const state = await getState(network);
+
+      await window.selector.ui.whenApprove({ title: "Verify owner", button: "Open wallet" });
       const response = await state.wallet.verifyOwner({ message });
+
       if (response.success) return response.payload;
       throw new Error(`Couldn't verify owner: ${response.message}`);
     },
@@ -91,7 +84,10 @@ const createMeteorWallet = async () => {
     async signMessage({ network, message, nonce, recipient, state }: any) {
       const { wallet } = await getState(network);
       const accountId = wallet.getAccountId();
+
+      await window.selector.ui.whenApprove({ title: "Sign message", button: "Open wallet" });
       const response = await wallet.signMessage({ message, nonce, recipient, accountId, state });
+
       if (response.success) return response.payload;
       throw new Error(`Couldn't sign message owner: ${response.message}`);
     },
@@ -101,12 +97,15 @@ const createMeteorWallet = async () => {
       if (!state.wallet.isSignedIn()) throw new Error("Wallet not signed in");
 
       const account = state.wallet.account()!;
+      await window.selector.ui.whenApprove({ title: "Sign transaction", button: "Open wallet" });
       return account["signAndSendTransaction_direct"]({ receiverId: receiverId, actions });
     },
 
     async signAndSendTransactions({ network, transactions }: any) {
       const state = await getState(network);
       if (!state.wallet.isSignedIn()) throw new Error("Wallet not signed in");
+
+      await window.selector.ui.whenApprove({ title: "Sign transactions", button: "Open wallet" });
       return state.wallet.requestSignTransactions({ transactions });
     },
   };

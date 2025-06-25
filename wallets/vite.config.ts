@@ -8,7 +8,7 @@ export default defineConfig({
   root: "./",
   build: {
     emptyOutDir: false,
-    outDir: "./repository",
+    outDir: "./example/public/repository",
     rollupOptions: {
       input: {
         main: `./wallets/${pkg}`,

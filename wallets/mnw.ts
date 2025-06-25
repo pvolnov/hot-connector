@@ -9,20 +9,6 @@ import { SelectorStorageKeyStore } from "./keystore";
 
 const keyStore = new SelectorStorageKeyStore();
 
-const img = document.createElement("img");
-img.src = "https://www.mynearwallet.com/images/webclip.png";
-img.style.width = "150px";
-img.style.height = "150px";
-img.style.borderRadius = "24px";
-img.style.margin = "auto";
-img.style.objectFit = "cover";
-document.body.appendChild(img);
-
-document.body.style.display = "flex";
-document.body.style.alignItems = "center";
-document.body.style.justifyContent = "center";
-document.body.style.height = "100vh";
-
 const _completeSignInWithAccessKey = async () => {
   const currentUrl = new URL(window.selector.location);
   const publicKey = currentUrl.searchParams.get("public_key") || "";
@@ -205,6 +191,7 @@ const MyNearWallet = async () => {
         });
       }
 
+      await window.selector.ui.whenApprove({ title: "Sign in", button: "Open wallet" });
       const panel = window.selector.open(newUrl.toString(), "_blank");
       return new Promise((resolve, reject) => {
         const timer = setInterval(async () => {
@@ -250,7 +237,9 @@ const MyNearWallet = async () => {
       href.searchParams.append("recipient", recipient);
       href.searchParams.append("callbackUrl", window.selector.location);
 
+      await window.selector.ui.whenApprove({ title: "Sign message", button: "Open wallet" });
       const panel = window.selector.open(href.toString(), "_blank");
+
       return new Promise((resolve, reject) => {
         const timer = setInterval(async () => {
           if (panel.closed || wallet == null) {
@@ -286,6 +275,7 @@ const MyNearWallet = async () => {
 
     async signAndSendTransaction({ network, signerId, receiverId, actions }: any): Promise<FinalExecutionOutcome> {
       if (network === "testnet") throw "MyNearWallet not supported on testnet";
+      await window.selector.ui.whenApprove({ title: "Send transaction", button: "Open wallet" });
       const list = await this.signAndSendTransactions({
         transactions: [{ signerId, receiverId, actions }],
         callbackUrl: window.selector.location,
@@ -309,7 +299,9 @@ const MyNearWallet = async () => {
           .join(",")
       );
 
+      await window.selector.ui.whenApprove({ title: "Send transactions", button: "Open wallet" });
       const panel = window.selector.open(newUrl.toString(), "_blank");
+
       return new Promise((resolve, reject) => {
         const timer = setInterval(async () => {
           if (panel.closed || wallet == null) {

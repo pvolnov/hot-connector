@@ -10,6 +10,11 @@ interface Window {
       postMessage: (data: any) => Promise<void>;
     };
 
+    ui: {
+      whenApprove: (options: { title: string; button: string }) => Promise<void>;
+      showIframe: () => void;
+    };
+
     open: (
       url: string,
       newTab?: boolean | string,

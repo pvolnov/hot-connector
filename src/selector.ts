@@ -29,14 +29,6 @@ export class WalletSelector {
   network: Network = "mainnet";
   connectWithKey?: { contractId: string; methodNames?: string[]; allowance?: string };
 
-  executeIframe: <T>(iframe: HTMLIFrameElement, render: boolean, execute: () => Promise<T>) => Promise<T> = async (
-    iframe,
-    render,
-    execute
-  ) => {
-    return execute();
-  };
-
   readonly whenManifestLoaded: Promise<void>;
 
   constructor(options?: WalletSelectorOptions) {

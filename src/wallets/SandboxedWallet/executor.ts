@@ -1,17 +1,15 @@
 import { EventMap } from "../../types/wallet-events";
 import { WalletManifest, WalletPermissions } from "../../types/wallet";
 import { WalletSelector } from "../../selector";
-import { parseUrl } from "../../utils/url";
-import { uuid4 } from "../../utils/uuid";
-import getIframeCode from "./iframe";
+import { parseUrl, uuid4 } from "../../utils";
+import IframeExecutor from "./iframe";
 
 class SandboxExecutor {
-  iframe?: HTMLIFrameElement;
-  private _initializeTask: Promise<HTMLIFrameElement> | null = null;
   private activePanels: Record<string, Window> = {};
+  private iframe = new IframeExecutor(this);
 
   readonly origin = uuid4();
-  readonly id: string;
+  readonly storageSpace: string;
 
   private readyPromiseResolve!: (value: void) => void;
   private readyPromise = new Promise<void>((resolve, reject) => {
@@ -19,7 +17,9 @@ class SandboxExecutor {
   });
 
   constructor(readonly selector: WalletSelector, readonly manifest: WalletManifest) {
-    this.id = manifest.id;
+    this.storageSpace = `${manifest.id}:${manifest.version}:${manifest.executor}`;
+    window.addEventListener("message", this._onMessage);
+    this.iframe.on("dispose", () => this.dispose());
   }
 
   checkPermissions(action: keyof WalletPermissions, params?: { url?: string }) {
@@ -34,7 +34,7 @@ class SandboxExecutor {
 
         if (openUrl.protocol !== url.protocol) return false;
         if (!!url.hostname && openUrl.hostname !== url.hostname) return false;
-        if (!!url.pathname && openUrl.pathname !== url.pathname) return false;
+        if (!!url.pathname && url.pathname !== "/" && openUrl.pathname !== url.pathname) return false;
         return true;
       });
 
@@ -52,36 +52,8 @@ class SandboxExecutor {
   }
 
   async dispose() {
+    this.iframe.dispose();
     window.removeEventListener("message", this._onMessage);
-  }
-
-  async initialize() {
-    if (!this._initializeTask) this._initializeTask = this._initialize();
-    const iframe = await this._initializeTask;
-    return iframe;
-  }
-
-  async _initialize() {
-    this.iframe = document.createElement("iframe");
-    this.iframe.setAttribute("sandbox", "allow-scripts");
-    this.iframe.style.display = "none";
-    document.body.appendChild(this.iframe);
-
-    const iframeAllowedPersimissions = [];
-    if (this.checkPermissions("usb")) {
-      iframeAllowedPersimissions.push("usb *;");
-    }
-
-    if (this.checkPermissions("hid")) {
-      iframeAllowedPersimissions.push("hid *;");
-    }
-
-    this.iframe.allow = iframeAllowedPersimissions.join(" ");
-    this.iframe.srcdoc = await this.code();
-
-    window.addEventListener("message", this._onMessage);
-    await this.readyPromise;
-    return this.iframe;
   }
 
   get parentOrigin() {
@@ -92,12 +64,10 @@ class SandboxExecutor {
     return this.manifest.permissions.parentFrame?.includes(this.parentOrigin);
   }
 
-  _onMessage = (event: MessageEvent) => {
-    console.log("onMessage", event, event.data.origin, this.origin);
-
+  _onMessage = async (event: MessageEvent) => {
     // Interact with parent frame, executor just a proxy between iframe and parent frame
     if (event.origin === this.parentOrigin && this.checkPermissions("parentFrame")) {
-      this.iframe?.contentWindow?.postMessage(event.data, "*");
+      this.iframe.postMessage(event.data);
       return;
     }
 
@@ -106,56 +76,68 @@ class SandboxExecutor {
       this.readyPromiseResolve();
     }
 
-    if (event.data.method === "setStorage" && this.checkPermissions("storage")) {
-      localStorage.setItem(`${this.id}:${event.data.params.key}`, event.data.params.value);
-      this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
+    if (event.data.method === "ui.showIframe") {
+      this.iframe.show();
+      this.iframe.postMessage({ ...event.data, status: "success", result: null });
       return;
     }
 
-    if (event.data.method === "getStorage" && this.checkPermissions("storage")) {
-      const value = localStorage.getItem(`${this.id}:${event.data.params.key}`);
-      this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: value }, "*");
+    if (event.data.method === "ui.hideIframe") {
+      this.iframe.hide();
+      this.iframe.postMessage({ ...event.data, status: "success", result: null });
       return;
     }
 
-    if (event.data.method === "getStorageKeys" && this.checkPermissions("storage")) {
-      const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.id}:`));
-      this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: keys }, "*");
+    if (event.data.method === "storage.set" && this.checkPermissions("storage")) {
+      localStorage.setItem(`${this.storageSpace}:${event.data.params.key}`, event.data.params.value);
+      this.iframe.postMessage({ ...event.data, status: "success", result: null });
       return;
     }
 
-    if (event.data.method === "removeStorage" && this.checkPermissions("storage")) {
-      localStorage.removeItem(`${this.id}:${event.data.params.key}`);
-      this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
+    if (event.data.method === "storage.get" && this.checkPermissions("storage")) {
+      const value = localStorage.getItem(`${this.storageSpace}:${event.data.params.key}`);
+      this.iframe.postMessage({ ...event.data, status: "success", result: value });
       return;
     }
 
-    if (event.data.method === "windowFocus") {
+    if (event.data.method === "storage.keys" && this.checkPermissions("storage")) {
+      const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.storageSpace}:`));
+      this.iframe.postMessage({ ...event.data, status: "success", result: keys });
+      return;
+    }
+
+    if (event.data.method === "storage.remove" && this.checkPermissions("storage")) {
+      localStorage.removeItem(`${this.storageSpace}:${event.data.params.key}`);
+      this.iframe.postMessage({ ...event.data, status: "success", result: null });
+      return;
+    }
+
+    if (event.data.method === "panel.focus") {
       const panel = this.activePanels[event.data.params.windowId];
       if (panel) panel.focus();
-      this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
+      this.iframe.postMessage({ ...event.data, status: "success", result: null });
       return;
     }
 
-    if (event.data.method === "windowPostMessage") {
+    if (event.data.method === "panel.postMessage") {
       const panel = this.activePanels[event.data.params.windowId];
       if (panel) panel.postMessage(event.data.params.data, "*");
-      this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
+      this.iframe.postMessage({ ...event.data, status: "success", result: null });
       return;
     }
 
-    if (event.data.method === "windowClose") {
+    if (event.data.method === "panel.close") {
       const panel = this.activePanels[event.data.params.windowId];
       if (panel) panel.close();
 
       delete this.activePanels[event.data.params.windowId];
-      this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
+      this.iframe.postMessage({ ...event.data, status: "success", result: null });
       return;
     }
 
-    if (event.data.method === "parentPostMessage" && this.checkPermissions("parentFrame")) {
+    if (event.data.method === "parentFrame.postMessage" && this.checkPermissions("parentFrame")) {
       window.parent.postMessage(event.data.params.data, "*");
-      this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: null }, "*");
+      this.iframe.postMessage({ ...event.data, status: "success", result: null });
       return;
     }
 
@@ -170,14 +152,15 @@ class SandboxExecutor {
       if (event.data.params.newTab) {
         const panel = window.open(event.data.params.url, event.data.params.newTab, event.data.params.params);
         const panelId = panel ? uuid4() : null;
+
         const handler = (ev: MessageEvent) => {
           const url = parseUrl(event.data.params.url);
           if (url && url.origin === ev.origin) {
-            this.iframe?.contentWindow?.postMessage(ev.data, "*");
+            this.iframe.postMessage(ev.data);
           }
         };
 
-        this.iframe?.contentWindow?.postMessage({ ...event.data, status: "success", result: panelId }, "*");
+        this.iframe.postMessage({ ...event.data, status: "success", result: panelId });
         window.addEventListener("message", handler);
 
         if (panel && panelId) {
@@ -186,7 +169,7 @@ class SandboxExecutor {
             if (!panel?.closed) return;
             window.removeEventListener("message", handler);
             const args = { method: "proxy-window:closed", windowId: panelId, origin: this.origin };
-            this.iframe?.contentWindow?.postMessage(args, "*");
+            this.iframe.postMessage(args);
             delete this.activePanels[panelId];
             clearInterval(interval);
           }, 500);
@@ -200,55 +183,38 @@ class SandboxExecutor {
     }
   };
 
-  async code() {
-    const code = await getIframeCode(this);
-    return code
-      .replaceAll("window.localStorage", "window.sandboxedLocalStorage")
-      .replaceAll("window.top", "window.selector")
-      .replaceAll("window.open", "window.selector.open");
-  }
-
   async call<T>(method: keyof EventMap, params: any): Promise<T> {
-    const iframe = await this.initialize();
+    await this.iframe.initialize();
+    await this.readyPromise;
     const id = uuid4();
 
-    const methods = [
-      "wallet:signIn",
-      "wallet:signOut",
-      "wallet:signMessage",
-      "wallet:signAndSendTransaction",
-      "wallet:signAndSendTransactions",
-    ];
+    return new Promise<T>((resolve, reject) => {
+      const handler = (event: MessageEvent) => {
+        if (event.data.id !== id || event.data.origin !== this.origin) return;
 
-    return this.selector.executeIframe(iframe, methods.includes(method), () => {
-      return new Promise<T>((resolve, reject) => {
-        const handler = (event: MessageEvent) => {
-          if (event.data.id !== id || event.data.origin !== this.origin) return;
+        window.removeEventListener("message", handler);
+        if (event.data.status === "failed") reject(event.data.result);
+        else resolve(event.data.result);
+      };
 
-          window.removeEventListener("message", handler);
-          if (event.data.status === "failed") reject(event.data.result);
-          else resolve(event.data.result);
-        };
-
-        window.addEventListener("message", handler);
-        iframe.contentWindow?.postMessage({ method, params, id, origin: this.origin }, "*");
-      });
+      window.addEventListener("message", handler);
+      this.iframe.postMessage({ method, params, id, origin: this.origin });
     });
   }
 
   async getAllStorage() {
-    const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.id}:`));
+    const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.storageSpace}:`));
     const storage: Record<string, any> = {};
 
     for (const key of keys) {
-      storage[key.replace(`${this.id}:`, "")] = localStorage.getItem(key);
+      storage[key.replace(`${this.storageSpace}:`, "")] = localStorage.getItem(key);
     }
 
     return storage;
   }
 
   async clearStorage() {
-    const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.id}:`));
+    const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.storageSpace}:`));
     for (const key of keys) {
       localStorage.removeItem(key);
     }

@@ -1,190 +1,102 @@
+import { EventEmitter } from "../../events";
 import SandboxExecutor from "./executor";
+import getIframeCode from "./code";
 
-async function getIframeCode(executor: SandboxExecutor) {
-  const storage = await executor.getAllStorage();
-  const code = await fetch(executor.manifest.executor).then((res) => res.text());
+class IframeExecutor {
+  private events = new EventEmitter<{ dispose: {} }>();
+  private popup = document.createElement("div");
+  private popupContent = document.createElement("div");
+  private iframe = document.createElement("iframe");
+  private _initializeTask: Promise<void> | null = null;
 
-  return /* html */ `
-      <style>
-        :root {
-          --background-color: rgb(40, 40, 40);
-          --text-color: rgb(255, 255, 255);
-          --border-color: rgb(209, 209, 209);
-        }
+  constructor(readonly executor: SandboxExecutor) {
+    this.popup.addEventListener("click", () => {
+      this.events.emit("dispose", {});
+      this.dispose();
+    });
+  }
 
-        * {
-          font-family: system-ui, Avenir, Helvetica, Arial, sans-serif
-        }
+  on(event: "dispose", callback: () => void) {
+    this.events.on(event, callback);
+  }
 
-        body, html {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-          background-color: var(--background-color);
-          color: var(--text-color);
-        }
-      </style>
+  show() {
+    this.popup.style.display = "flex";
+  }
 
-      <script>
-      window.sandboxedLocalStorage = (() => {
-        let storage = ${JSON.stringify(storage)}
+  hide() {
+    this.popup.style.display = "none";
+  }
 
-        return {
-          setItem: function(key, value) {
-            window.selector.storage.set(key, value)
-            storage[key] = value || '';
-          },
-          getItem: function(key) {
-            return key in storage ? storage[key] : null;
-          },
-          removeItem: function(key) {
-            window.selector.storage.remove(key)
-            delete storage[key];
-          },
-          get length() {
-            return Object.keys(storage).length;
-          },
-          key: function(i) {
-            const keys = Object.keys(storage);
-            return keys[i] || null;
-          },
-        };
-      })();
+  async initialize() {
+    if (!this._initializeTask) this._initializeTask = this._initialize();
+    await this._initializeTask;
+  }
 
-      class ProxyWindow {
-        constructor(url, newTab, params) {
-          this.closed = false;
-          this.windowIdPromise = window.selector.call("open", { url, newTab, params });
+  async code() {
+    const code = await getIframeCode(this.executor);
+    return code
+      .replaceAll("window.localStorage", "window.sandboxedLocalStorage")
+      .replaceAll("window.top", "window.selector")
+      .replaceAll("window.open", "window.selector.open");
+  }
 
-          window.addEventListener("message", async (event) => {            
-            if (event.data.origin !== "${executor.origin}") return;
-            if (!event.data.method?.startsWith("proxy-window:")) return;
-            const method = event.data.method.replace("proxy-window:", "");
-            if (method === "closed" && event.data.windowId === await this.id()) this.closed = true;
-          });
-        } 
+  async _initialize() {
+    this.iframe.setAttribute("sandbox", "allow-scripts");
+    const iframeAllowedPersimissions = [];
+    if (this.executor.checkPermissions("usb")) {
+      iframeAllowedPersimissions.push("usb *;");
+    }
 
-        async id() {
-          return await this.windowIdPromise;
-        }
+    if (this.executor.checkPermissions("hid")) {
+      iframeAllowedPersimissions.push("hid *;");
+    }
 
-        async focus() {
-          await window.selector.call("windowFocus", { windowId: await this.id() });
-        }
+    this.iframe.allow = iframeAllowedPersimissions.join(" ");
+    this.iframe.srcdoc = await this.code();
 
-        async postMessage(data) {
-          window.selector.call("windowPostMessage", { windowId: await this.id(), data });
-        }
+    Object.assign(this.iframe.style, {
+      display: "block",
+      overflow: "hidden",
+      width: "100%",
+      height: "100%",
+      border: "none",
+    });
 
-        async close() {
-          window.selector.call("windowClose", { windowId: await this.id() });
-        }
-      }
+    Object.assign(this.popupContent.style, {
+      backgroundColor: "var(--background-color)",
+      borderRadius: "16px",
+      overflow: "hidden",
+      width: "400px",
+      height: "600px",
+    });
 
-      window.selector = {
-        wallet: null,
-        location: "${window.location.href}",
-        
-        outerHeight: ${window.outerHeight},
-        screenY: ${window.screenY},
-        outerWidth: ${window.outerWidth},
-        screenX: ${window.screenX},
+    Object.assign(this.popup.style, {
+      backgroundColor: "rgba(0, 0, 0, 0.2)",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: "10000000000",
+      display: "none",
+      position: "fixed",
+      top: "0",
+      left: "0",
+      width: "100%",
+      height: "100%",
+    });
 
-        uuid() {
-          return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-            const r = (Math.random() * 16) | 0;
-            const v = c === "x" ? r : (r & 0x3) | 0x8;
-            return v.toString(16);
-          });
-        },
-      
-        async ready(wallet) {
-          window.parent.postMessage({ method: "wallet-ready", origin: "${executor.origin}" }, "*");
-          window.selector.wallet = wallet;
-        },
+    this.popupContent.appendChild(this.iframe);
+    this.popup.appendChild(this.popupContent);
+    document.body.appendChild(this.popup);
+  }
 
-        showContent() {
-          window.parent.postMessage({ method: "showContent", origin: "${executor.origin}" }, "*");
-        },
+  postMessage(data: any) {
+    if (!this.iframe.contentWindow) throw new Error("Iframe not loaded");
+    this.iframe.contentWindow.postMessage(data, "*");
+  }
 
-        async call(method, params) {
-          const id = window.selector.uuid();
-          window.parent.postMessage({ method, params, id, origin: "${executor.origin}" }, "*");
-
-          return new Promise((resolve, reject) => {
-            const handler = (event) => {
-              if (event.data.id !== id || event.data.origin !== "${executor.origin}") return;
-              window.removeEventListener("message", handler);
-
-              if (event.data.status === "failed") reject(event.data.result);
-              else resolve(event.data.result);
-            };
-
-            window.addEventListener("message", handler);
-          });
-        },
-
-        panelClosed(windowId) {
-          window.parent.postMessage({ method: "panelClosed", origin: "${executor.origin}", result: { windowId } }, "*");
-        },
-
-        open(url, newTab = false, params) {
-          return new ProxyWindow(url, newTab, params)
-        },
-
-        storage: {
-          async set(key, value) {
-            await window.selector.call("setStorage", { key, value });
-          },
-      
-          async get(key) {
-            return await window.selector.call("getStorage", { key });
-          },
-      
-          async remove(key) {
-            await window.selector.call("removeStorage", { key });
-          },
-
-          async keys() {
-            return await window.selector.call("getStorageKeys", {});
-          },
-        },
-      };
-
-      if (${executor.checkPermissions("parentFrame")}) {
-        window.selector.parentFrame = {
-          async postMessage(data) {
-            return await window.selector.call("parentPostMessage", { data });
-          },
-        };
-      }
-      
-      window.addEventListener("message", async (event) => {
-        if (event.data.origin !== "${executor.origin}") return;
-        if (!event.data.method?.startsWith("wallet:")) return;
-      
-        const wallet = window.selector.wallet;
-        const method = event.data.method.replace("wallet:", "");
-        const payload = { id: event.data.id, origin: "${executor.origin}", method };
-      
-        if (wallet == null || typeof wallet[method] !== "function") {
-          const data = { ...payload, status: "failed", result: "Method not found" };
-          window.parent.postMessage(data, "*");
-          return;
-        }
-        
-        try {
-          const result = await wallet[method](event.data.params);
-          window.parent.postMessage({ ...payload, status: "success", result }, "*");
-        } catch (error) {
-          const data = { ...payload, status: "failed", result: error };
-          window.parent.postMessage(data, "*");
-        }
-      });
-      </script>
-      
-      <script type="module">${code}</script>
-    `;
+  dispose() {
+    this.popup.remove();
+  }
 }
 
-export default getIframeCode;
+export default IframeExecutor;
