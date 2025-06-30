@@ -1,9 +1,16 @@
 {
   "name": "@hot-labs/near-connect",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "type": "commonjs",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
+  "license": "MIT",
+  "author": "Hot Labs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hot-dao/near-selector"
+  },
+  "homepage": "https://github.com/hot-dao/near-selector",
   "directories": {
     "build": "build"
   },

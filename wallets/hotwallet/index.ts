@@ -2,8 +2,7 @@ import { baseEncode } from "@near-js/utils";
 import { QRCode } from "@here-wallet/core/qrcode-strategy";
 import crypto from "crypto";
 
-import { head } from "./view";
-import { body } from "./view";
+import { head, body } from "./view";
 
 const logoImage = new Image();
 logoImage.src = "https://hot-labs.org/hot-widget/icon.svg";
@@ -95,6 +94,7 @@ class HOT {
     const qr = document.querySelector(".qr-code");
     if (qr) qr.innerHTML = "";
 
+    window.selector.ui.showIframe();
     const requestId = await this.createRequest({
       origin: window.selector.location,
       inside: true,
@@ -186,5 +186,4 @@ class NearWallet {
   };
 }
 
-window.selector.ui.showIframe();
 window.selector.ready(new NearWallet());

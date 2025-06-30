@@ -1,47 +1,18 @@
 import { EventEmitter } from "../../events";
 import SandboxExecutor from "./executor";
-import getIframeCode from "./code";
 
 class IframeExecutor {
-  private events = new EventEmitter<{ dispose: {} }>();
+  private events = new EventEmitter<{ close: {} }>();
   private popup = document.createElement("div");
   private popupContent = document.createElement("div");
   private iframe = document.createElement("iframe");
-  private _initializeTask: Promise<void> | null = null;
+  private handler: (event: MessageEvent<any>) => void;
 
-  constructor(readonly executor: SandboxExecutor) {
-    this.popup.addEventListener("click", () => {
-      this.events.emit("dispose", {});
-      this.dispose();
-    });
-  }
-
-  on(event: "dispose", callback: () => void) {
-    this.events.on(event, callback);
-  }
-
-  show() {
-    this.popup.style.display = "flex";
-  }
-
-  hide() {
-    this.popup.style.display = "none";
-  }
-
-  async initialize() {
-    if (!this._initializeTask) this._initializeTask = this._initialize();
-    await this._initializeTask;
-  }
-
-  async code() {
-    const code = await getIframeCode(this.executor);
-    return code
-      .replaceAll("window.localStorage", "window.sandboxedLocalStorage")
-      .replaceAll("window.top", "window.selector")
-      .replaceAll("window.open", "window.selector.open");
-  }
-
-  async _initialize() {
+  constructor(
+    readonly executor: SandboxExecutor,
+    code: string,
+    onMessage: (iframe: IframeExecutor, event: MessageEvent) => void
+  ) {
     this.iframe.setAttribute("sandbox", "allow-scripts");
     const iframeAllowedPersimissions = [];
     if (this.executor.checkPermissions("usb")) {
@@ -53,40 +24,39 @@ class IframeExecutor {
     }
 
     this.iframe.allow = iframeAllowedPersimissions.join(" ");
-    this.iframe.srcdoc = await this.code();
-
-    Object.assign(this.iframe.style, {
-      display: "block",
-      overflow: "hidden",
-      width: "100%",
-      height: "100%",
-      border: "none",
-    });
-
-    Object.assign(this.popupContent.style, {
-      backgroundColor: "var(--background-color)",
-      borderRadius: "16px",
-      overflow: "hidden",
-      width: "400px",
-      height: "600px",
-    });
-
-    Object.assign(this.popup.style, {
-      backgroundColor: "rgba(0, 0, 0, 0.2)",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: "10000000000",
-      display: "none",
-      position: "fixed",
-      top: "0",
-      left: "0",
-      width: "100%",
-      height: "100%",
-    });
+    this.iframe.srcdoc = code;
 
     this.popupContent.appendChild(this.iframe);
     this.popup.appendChild(this.popupContent);
     document.body.appendChild(this.popup);
+
+    this.popupContent.classList.add("iframe-widget__popup");
+    this.popup.classList.add("iframe-widget__container");
+
+    this.popup.addEventListener("click", () => {
+      window.removeEventListener("message", this.handler);
+      this.events.emit("close", {});
+      this.popup.remove();
+    });
+
+    this.handler = (event: MessageEvent<any>) => {
+      console.log("handler", event.data);
+      onMessage(this, event);
+    };
+
+    window.addEventListener("message", this.handler);
+  }
+
+  on(event: "close", callback: () => void) {
+    this.events.on(event, callback);
+  }
+
+  show() {
+    this.popup.style.display = "flex";
+  }
+
+  hide() {
+    this.popup.style.display = "none";
   }
 
   postMessage(data: any) {
@@ -95,7 +65,9 @@ class IframeExecutor {
   }
 
   dispose() {
+    console.log("dispose", this.popup);
     this.popup.remove();
+    window.removeEventListener("message", this.handler);
   }
 }
 

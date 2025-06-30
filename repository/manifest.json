@@ -16,7 +16,7 @@
         "ios": "https://apps.apple.com/us/app/hot-wallet/id6740916148",
         "chrome": "https://chromewebstore.google.com/detail/hot-wallet/mpeengabcnhhjjgleiodimegnkpcenbk",
         "firefox": "https://addons.mozilla.org/en-US/firefox/addon/hot-wallet",
-        "tga": "https://t.me/hot_wallet"
+        "tga": "https://t.me/hot_wallet/app"
       },
 
       "features": {
@@ -38,7 +38,7 @@
         "open": {
           "allows": [
             "https://hot-labs.org",
-            "https://t.me/hot_wallet",
+            "https://t.me/hot_wallet/app",
             "https://play.google.com",
             "https://apps.apple.com",
             "hotwallet://"
