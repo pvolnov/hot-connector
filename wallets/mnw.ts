@@ -257,14 +257,14 @@ const MyNearWallet = async () => {
             if (pendingSignMessage.accountId !== wallet?.account?.accountId) throw "accountId mismatch";
             if (wallet == null) throw "wallet not found";
 
+            panel.close();
+            clearInterval(timer);
+
             resolve({
               signature: pendingSignMessage.signature,
               accountId: wallet.account.accountId,
               publicKey: wallet.authData.allKeys[0], // WTF?
             });
-
-            clearInterval(timer);
-            panel.close();
           } catch {
             clearInterval(timer);
             reject(new Error("signMessage failed"));
