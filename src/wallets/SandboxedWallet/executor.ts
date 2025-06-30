@@ -198,11 +198,9 @@ class SandboxExecutor {
           const handler = (event: MessageEvent) => {
             if (event.data.id !== id || event.data.origin !== this.origin) return;
 
-            iframe.dispose();
+            this.readyPromise = new Promise<void>((r) => (this.readyPromiseResolve = r));
             window.removeEventListener("message", handler);
-            this.readyPromise = new Promise<void>((resolve) => {
-              this.readyPromiseResolve = resolve;
-            });
+            iframe.dispose();
 
             if (event.data.status === "failed") reject(event.data.result);
             else resolve(event.data.result);

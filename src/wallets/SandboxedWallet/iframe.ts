@@ -39,11 +39,7 @@ class IframeExecutor {
       this.popup.remove();
     });
 
-    this.handler = (event: MessageEvent<any>) => {
-      console.log("handler", event.data);
-      onMessage(this, event);
-    };
-
+    this.handler = (event: MessageEvent<any>) => onMessage(this, event);
     window.addEventListener("message", this.handler);
   }
 
