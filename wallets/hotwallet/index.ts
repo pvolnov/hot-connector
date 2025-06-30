@@ -131,8 +131,8 @@ class HOT {
     qr?.appendChild(qrcode.canvas);
 
     // @ts-ignore
-    window.openTelegram = () => window.selector.open(`https://t.me/hot_wallet/app?startapp=${link}`, "_blank"); // @ts-ignore
-    window.openMobile = () => window.selector.open(`hotwallet://${link}`, "_blank");
+    window.openTelegram = () => window.selector.open(`https://t.me/hot_wallet/app?startapp=${link}`); // @ts-ignore
+    window.openMobile = () => window.selector.open(`hotwallet://${link}`);
 
     const poolResponse = async () => {
       await wait(3000);

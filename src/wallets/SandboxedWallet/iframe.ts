@@ -8,12 +8,18 @@ class IframeExecutor {
   private iframe = document.createElement("iframe");
   private handler: (event: MessageEvent<any>) => void;
 
+  private readyPromiseResolve!: (value: void) => void;
+  readonly readyPromise = new Promise<void>((resolve) => {
+    this.readyPromiseResolve = resolve;
+  });
+
   constructor(
     readonly executor: SandboxExecutor,
     code: string,
     onMessage: (iframe: IframeExecutor, event: MessageEvent) => void
   ) {
     this.iframe.setAttribute("sandbox", "allow-scripts");
+
     const iframeAllowedPersimissions = [];
     if (this.executor.checkPermissions("usb")) {
       iframeAllowedPersimissions.push("usb *;");
@@ -26,12 +32,12 @@ class IframeExecutor {
     this.iframe.allow = iframeAllowedPersimissions.join(" ");
     this.iframe.srcdoc = code;
 
+    this.popupContent.classList.add("iframe-widget__popup");
+    this.popup.classList.add("iframe-widget__container");
+
     this.popupContent.appendChild(this.iframe);
     this.popup.appendChild(this.popupContent);
     document.body.appendChild(this.popup);
-
-    this.popupContent.classList.add("iframe-widget__popup");
-    this.popup.classList.add("iframe-widget__container");
 
     this.popup.addEventListener("click", () => {
       window.removeEventListener("message", this.handler);
@@ -39,7 +45,12 @@ class IframeExecutor {
       this.popup.remove();
     });
 
-    this.handler = (event: MessageEvent<any>) => onMessage(this, event);
+    this.handler = (event: MessageEvent<any>) => {
+      onMessage(this, event);
+      if (event.data.origin !== this.executor.origin) return;
+      if (event.data.method === "wallet-ready") this.readyPromiseResolve();
+    };
+
     window.addEventListener("message", this.handler);
   }
 
@@ -61,9 +72,8 @@ class IframeExecutor {
   }
 
   dispose() {
-    console.log("dispose", this.popup);
-    this.popup.remove();
     window.removeEventListener("message", this.handler);
+    this.popup.remove();
   }
 }
 

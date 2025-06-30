@@ -1,8 +1,13 @@
 import SandboxExecutor from "./executor";
 
+const cache = new Map<string, string>();
+
 async function getIframeCode(executor: SandboxExecutor) {
   const storage = await executor.getAllStorage();
-  const code = await fetch(executor.manifest.executor).then((res) => res.text());
+
+  const code =
+    cache.get(executor.manifest.executor) || (await fetch(executor.manifest.executor).then((res) => res.text()));
+  cache.set(executor.manifest.executor, code!);
 
   return /* html */ `
   <!DOCTYPE html>
@@ -140,9 +145,9 @@ async function getIframeCode(executor: SandboxExecutor) {
       }
 
       class ProxyWindow {
-        constructor(url, newTab, params) {
+        constructor(url, features) {
           this.closed = false;
-          this.windowIdPromise = window.selector.call("open", { url, newTab, params });
+          this.windowIdPromise = window.selector.call("open", { url, features });
 
           window.addEventListener("message", async (event) => {            
             if (event.data.origin !== "${executor.origin}") return;
@@ -165,7 +170,7 @@ async function getIframeCode(executor: SandboxExecutor) {
         }
 
         async close() {
-          window.selector.call("panel.close", { windowId: await this.id() });
+          await window.selector.call("panel.close", { windowId: await this.id() });
         }
       }
 
@@ -216,8 +221,8 @@ async function getIframeCode(executor: SandboxExecutor) {
           }, "*");
         },
 
-        open(url, newTab = false, params) {
-          return new ProxyWindow(url, newTab, params)
+        open(url, _, params) {
+          return new ProxyWindow(url, params)
         },
 
         ui: {

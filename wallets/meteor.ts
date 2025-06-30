@@ -38,9 +38,9 @@ const createMeteorWallet = async () => {
 
       if (methodNames?.length) {
         await state.wallet.requestSignIn({
-          methods: methodNames,
           type: EMeteorWalletSignInType.SELECTED_METHODS,
           contract_id: contractId,
+          methods: methodNames,
         });
       } else {
         await state.wallet.requestSignIn({
@@ -68,7 +68,7 @@ const createMeteorWallet = async () => {
     },
 
     async getAccounts({ network }: any) {
-      return getAccounts(network);
+      return await getAccounts(network);
     },
 
     async verifyOwner({ network, message }: any) {

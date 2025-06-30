@@ -193,14 +193,15 @@ const MyNearWallet = async () => {
 
       await window.selector.ui.whenApprove({ title: "Sign in", button: "Open wallet" });
       const panel = window.selector.open(newUrl.toString(), "_blank");
+
       return new Promise((resolve, reject) => {
         const timer = setInterval(async () => {
           wallet = await setupWalletState().catch(() => null);
 
           if (wallet) {
-            resolve([{ accountId: wallet.account.accountId }]);
-            clearInterval(timer);
             panel.close();
+            clearInterval(timer);
+            resolve([{ accountId: wallet.account.accountId }]);
             return;
           }
 

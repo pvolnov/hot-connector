@@ -30,13 +30,14 @@ export const nearMobileFrame = `
 
             <footer class="near-mobile-footer">
                 <div class="near-mobile-links">
-                    <a onclick="window.selector.open('https://apps.apple.com/app/near-mobile/id6443501225', true)">
+                    <a onclick="window.selector.open('https://apps.apple.com/app/near-mobile/id6443501225')">
                         <div class="near-mobile-link">
                             <img src="https://near-mobile-signer-backend_production.peersyst.tech/assets/ios.svg" />
                             <p>App Store</p>
                         </div>
                     </a>
-                    <a class="near-mobile-android" onclick="window.selector.open('https://play.google.com/store/apps/details?id=com.peersyst.nearmobilewallet', true)">
+                    
+                    <a class="near-mobile-android" onclick="window.selector.open('https://play.google.com/store/apps/details?id=com.peersyst.nearmobilewallet')">
                         <div class="near-mobile-link">
                             <img src="https://near-mobile-signer-backend_production.peersyst.tech/assets/play-store.svg" />
                             <p>Google Play</p>
@@ -45,7 +46,7 @@ export const nearMobileFrame = `
                 </div>
                 <p class="near-mobile-subtitle">
                     Don’t have an account yet?
-                    <a onclick="window.selector.open('https://nearmobile.app/', true)">Download the app</a>
+                    <a onclick="window.selector.open('https://nearmobile.app')">Download the app</a>
                 </p>
             </footer>
         </div>

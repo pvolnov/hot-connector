@@ -11,13 +11,8 @@ class SandboxExecutor {
   readonly origin = uuid4();
   readonly storageSpace: string;
 
-  private readyPromiseResolve!: (value: void) => void;
-  private readyPromise = new Promise<void>((resolve, reject) => {
-    this.readyPromiseResolve = resolve;
-  });
-
   constructor(readonly selector: WalletSelector, readonly manifest: WalletManifest) {
-    this.storageSpace = `${manifest.id}:${manifest.version}:${manifest.executor}`;
+    this.storageSpace = manifest.id;
   }
 
   checkPermissions(action: keyof WalletPermissions, params?: { url?: string }) {
@@ -65,10 +60,6 @@ class SandboxExecutor {
     }
 
     if (event.data.origin !== this.origin) return;
-    if (event.data.method === "wallet-ready") {
-      this.readyPromiseResolve();
-    }
-
     if (event.data.method === "ui.showIframe") {
       iframe.show();
       iframe.postMessage({ ...event.data, status: "success", result: null });
@@ -142,41 +133,39 @@ class SandboxExecutor {
         return;
       }
 
-      if (event.data.params.newTab) {
-        const panel = window.open(event.data.params.url, event.data.params.newTab, event.data.params.params);
-        const panelId = panel ? uuid4() : null;
+      const panel = window.open(event.data.params.url, "_blank", event.data.params.features);
+      const panelId = panel ? uuid4() : null;
 
-        const handler = (ev: MessageEvent) => {
-          const url = parseUrl(event.data.params.url);
-          if (url && url.origin === ev.origin) {
-            iframe.postMessage(ev.data);
-          }
-        };
-
-        iframe.postMessage({ ...event.data, status: "success", result: panelId });
-        window.addEventListener("message", handler);
-
-        if (panel && panelId) {
-          this.activePanels[panelId] = panel;
-          const interval = setInterval(() => {
-            if (!panel?.closed) return;
-            window.removeEventListener("message", handler);
-            const args = { method: "proxy-window:closed", windowId: panelId, origin: this.origin };
-            iframe.postMessage(args);
-            delete this.activePanels[panelId];
-            clearInterval(interval);
-          }, 500);
+      const handler = (ev: MessageEvent) => {
+        const url = parseUrl(event.data.params.url);
+        if (url && url.origin === ev.origin) {
+          iframe.postMessage(ev.data);
         }
+      };
 
-        return;
+      iframe.postMessage({ ...event.data, status: "success", result: panelId });
+      window.addEventListener("message", handler);
+
+      if (panel && panelId) {
+        this.activePanels[panelId] = panel;
+        const interval = setInterval(() => {
+          if (!panel?.closed) return;
+
+          window.removeEventListener("message", handler);
+          const args = { method: "proxy-window:closed", windowId: panelId, origin: this.origin };
+          delete this.activePanels[panelId];
+          clearInterval(interval);
+
+          try {
+            iframe.postMessage(args);
+          } catch {}
+        }, 500);
       }
 
-      window.location.href = event.data.params.url;
       return;
     }
   };
 
-  _code: string | null = null;
   async code() {
     const code = await getIframeCode(this);
     return code
@@ -187,10 +176,8 @@ class SandboxExecutor {
 
   async call<T>(method: keyof EventMap, params: any): Promise<T> {
     return this.queue.enqueue(async () => {
-      if (!this._code) this._code = await this.code();
-      const iframe = new IframeExecutor(this, this._code, this._onMessage);
-
-      await this.readyPromise;
+      const iframe = new IframeExecutor(this, await this.code(), this._onMessage);
+      await iframe.readyPromise;
       const id = uuid4();
 
       return new Promise<T>((resolve, reject) => {
@@ -198,9 +185,9 @@ class SandboxExecutor {
           const handler = (event: MessageEvent) => {
             if (event.data.id !== id || event.data.origin !== this.origin) return;
 
-            this.readyPromise = new Promise<void>((r) => (this.readyPromiseResolve = r));
-            window.removeEventListener("message", handler);
             iframe.dispose();
+            window.removeEventListener("message", handler);
+            console.log("postMessage", { result: event.data, request: { method, params } });
 
             if (event.data.status === "failed") reject(event.data.result);
             else resolve(event.data.result);

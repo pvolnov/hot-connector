@@ -55,10 +55,7 @@ async function setQRCode({ requestUrl }: { requestUrl: string }) {
 
     approveButton!.style.display = "flex";
     approveButton!.onclick = () => {
-      window.selector.open(
-        `https://near-mobile-signer-backend.peersyst.tech/api/deep-link?uuid=${id}&type=${type}`,
-        true
-      );
+      window.selector.open(`https://near-mobile-signer-backend.peersyst.tech/api/deep-link?uuid=${id}&type=${type}`);
     };
   }
 }
