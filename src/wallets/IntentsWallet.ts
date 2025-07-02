@@ -1,5 +1,4 @@
-import crypto from "crypto";
-import { FinalExecutionOutcome } from "@near-wallet-selector/core";
+import type { FinalExecutionOutcome } from "@near-wallet-selector/core";
 
 import binary_to_base58 from "../base58/encode";
 import { uuid4 } from "../utils";
@@ -30,10 +29,11 @@ export abstract class IntentsWallet implements NearWallet {
 
     const seed = uuid4();
     const input = `${domain}_${seed}`;
-    const nonce = crypto.createHash("sha256").update(input).digest();
+    const msgBuffer = new TextEncoder().encode(input);
+    const nonce = await crypto.subtle.digest("SHA-256", msgBuffer);
 
     return {
-      intent: await this.signIntents(intents || [], { nonce }),
+      intent: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
       address: wallet[0].accountId,
       publicKey: wallet[0].publicKey,
       chainId: 1010 as const,
@@ -44,23 +44,23 @@ export abstract class IntentsWallet implements NearWallet {
 
   async signIntents(
     intents: Record<string, any>[],
-    options: { deadline?: number; nonce?: Buffer } = {}
+    options?: { deadline?: number; nonce?: Buffer | Uint8Array }
   ): Promise<Record<string, any>> {
     const wallet = await this.getAccounts();
     if (wallet.length === 0) throw new Error("No account found");
 
-    const nonce = options.nonce || Buffer.from(crypto.getRandomValues(new Uint8Array(32)));
+    const nonce = options?.nonce || Buffer.from(crypto.getRandomValues(new Uint8Array(32)));
     const intentAccount = wallet[0].accountId;
 
     const message = JSON.stringify({
-      deadline: options.deadline
+      deadline: options?.deadline
         ? new Date(options.deadline).toISOString()
         : new Date(Date.now() + 24 * 3_600_000 * 365).toISOString(),
       signer_id: intentAccount,
       intents: intents,
     });
 
-    const result = await this.signMessage?.({ message, recipient: "intents.near", nonce: nonce });
+    const result = await this.signMessage?.({ message, recipient: "intents.near", nonce });
     if (!result) throw new Error("Failed to sign message");
 
     const { signature, publicKey } = result;

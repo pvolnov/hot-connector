@@ -6,14 +6,8 @@ export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type Network = "mainnet" | "testnet";
 
 export interface Account {
-  /**
-   * NEAR account identifier.
-   */
   accountId: string;
-  /**
-   * Account public key.
-   */
-  publicKey?: string;
+  publicKey: string;
 }
 
 export interface SignInParams {
@@ -34,9 +28,7 @@ export interface SignInParams {
 export interface SignMessageParams {
   message: string;
   recipient: string;
-  nonce: Buffer;
-  callbackUrl?: string;
-  state?: string;
+  nonce: Buffer | Uint8Array;
   network?: Network;
 }
 
