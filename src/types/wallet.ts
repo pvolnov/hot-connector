@@ -114,7 +114,17 @@ export interface WalletFeatures {
 export interface NearWallet {
   manifest: WalletManifest;
 
-  authIntents(): Promise<{ authIntent: any; address: string; authSeed: string; chainId: 1010 }>;
+  signIntentsWithAuth(
+    domain: string,
+    intents?: Record<string, any>[]
+  ): Promise<{
+    intent: any;
+    address: string;
+    domain: string;
+    nonce: string;
+    chainId: 1010;
+  }>;
+
   signIntents(
     intents: Record<string, any>[],
     options: { deadline?: number; nonce?: Buffer }

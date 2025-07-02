@@ -12,11 +12,12 @@ const keyStore = new SelectorStorageKeyStore();
 const _completeSignInWithAccessKey = async () => {
   const currentUrl = new URL(window.selector.location);
   const publicKey = currentUrl.searchParams.get("public_key") || "";
-  const allKeys = (currentUrl.searchParams.get("all_keys") || "").split(",");
   const accountId = currentUrl.searchParams.get("account_id") || "";
+
+  const [fullPublicKey] = (currentUrl.searchParams.get("all_keys") || "").split(",");
   if (!accountId) return;
 
-  const authData = { accountId, allKeys };
+  const authData = { accountId, publicKey: fullPublicKey };
   await window.selector.storage.set("authData", JSON.stringify(authData));
 
   if (publicKey) {
@@ -48,9 +49,9 @@ const _completeSignAndSendTransaction = async () => {
 
 const setupWalletState = async () => {
   const authData = await window.selector.storage.get("authData");
-  const parsedAuthData = authData ? JSON.parse(authData) : null;
+  const auth = authData ? JSON.parse(authData) : null;
 
-  if (typeof parsedAuthData?.accountId !== "string") {
+  if (typeof auth?.accountId !== "string") {
     throw new Error("authData not found");
   }
 
@@ -62,8 +63,8 @@ const setupWalletState = async () => {
     keyStore,
   });
 
-  const account = await near.account(parsedAuthData.accountId);
-  return { near, account, keyStore, authData: parsedAuthData };
+  const account = await near.account(auth.accountId);
+  return { near, account, keyStore, accountId: auth.accountId, publicKey: auth.publicKey };
 };
 
 const MyNearWallet = async () => {
@@ -74,8 +75,7 @@ const MyNearWallet = async () => {
 
   const getAccounts = async (): Promise<Array<Account>> => {
     if (!wallet?.account) return [];
-    const publicKey = await wallet.account.connection.signer.getPublicKey(wallet.account.accountId, "mainnet");
-    return [{ accountId: wallet.account.accountId, publicKey: publicKey ? publicKey.toString() : "" }];
+    return [{ accountId: wallet.accountId, publicKey: wallet.publicKey }];
   };
 
   const transformTransactions = async (transactions: Array<Optional<Transaction, "signerId">>) => {
@@ -129,7 +129,7 @@ const MyNearWallet = async () => {
         }
       }
 
-      const walletKeys = wallet?.authData?.allKeys || [];
+      const walletKeys = wallet?.publicKey ? [wallet.publicKey] : [];
       for (const accessKey of accessKeys) {
         if (
           walletKeys.indexOf(accessKey.public_key) !== -1 &&
@@ -259,11 +259,10 @@ const MyNearWallet = async () => {
 
             panel.close();
             clearInterval(timer);
-
             resolve({
               signature: pendingSignMessage.signature,
-              accountId: wallet.account.accountId,
-              publicKey: wallet.authData.allKeys[0], // WTF?
+              accountId: wallet.accountId,
+              publicKey: wallet.publicKey,
             });
           } catch {
             clearInterval(timer);

@@ -1,18 +1,19 @@
 import crypto from "crypto";
+import { FinalExecutionOutcome } from "@near-wallet-selector/core";
+
+import binary_to_base58 from "../base58/encode";
+import { uuid4 } from "../utils";
 import {
+  SignAndSendTransactionParams,
+  SignAndSendTransactionsParams,
+  SignMessageParams,
+  SignedMessage,
+  SignInParams,
+  WalletManifest,
   Account,
   NearWallet,
   Network,
-  SignAndSendTransactionParams,
-  SignAndSendTransactionsParams,
-  SignedMessage,
-  SignInParams,
-  SignMessageParams,
-  WalletManifest,
 } from "../types/wallet";
-import { FinalExecutionOutcome } from "@near-wallet-selector/core";
-import binary_to_base58 from "../base58/encode";
-import { uuid4 } from "../utils";
 
 export abstract class IntentsWallet implements NearWallet {
   abstract manifest: WalletManifest;
@@ -23,19 +24,21 @@ export abstract class IntentsWallet implements NearWallet {
   abstract signAndSendTransactions(params: SignAndSendTransactionsParams): Promise<Array<FinalExecutionOutcome>>;
   abstract signMessage(params: SignMessageParams): Promise<SignedMessage>;
 
-  async authIntents() {
+  async signIntentsWithAuth(domain: string, intents?: Record<string, any>[]) {
     const wallet = await this.getAccounts();
     if (wallet.length === 0) throw new Error("No account found");
 
     const seed = uuid4();
-    const input = `auth_intent_${seed}`;
+    const input = `${domain}_${seed}`;
     const nonce = crypto.createHash("sha256").update(input).digest();
 
     return {
-      authIntent: await this.signIntents([], { nonce }),
+      intent: await this.signIntents(intents || [], { nonce }),
       address: wallet[0].accountId,
+      publicKey: wallet[0].publicKey,
       chainId: 1010 as const,
-      authSeed: seed,
+      nonce: seed,
+      domain,
     };
   }
 

@@ -6,11 +6,7 @@ import "./index.css";
 
 import manifest from "../public/repository/manifest.json";
 
-const selector = new WalletSelector({
-  manifest: manifest as any,
-  network: "mainnet",
-});
-
+const selector = new WalletSelector({ manifest: manifest as any, network: "mainnet" });
 const modal = new WalletSelectorUI(selector);
 
 export const ExampleNEAR: FC = () => {
@@ -38,7 +34,7 @@ export const ExampleNEAR: FC = () => {
 
   const connect = async () => {
     if (wallet) return selector.disconnect();
-    await selector.connect("hot-wallet");
+    await modal.open();
   };
 
   return (
@@ -52,21 +48,9 @@ export const ExampleNEAR: FC = () => {
 
 const SignMessage = ({ wallet }: { wallet: NearWallet }) => {
   const singMessage = async () => {
-    wallet.authIntents().then((t) => {
-      fetch("https://dev.herewallet.app/api/v1/wallet_market/user", {
-        method: "POST",
-        body: JSON.stringify({
-          auth_seed: t.authSeed,
-          auth_intent: t.authIntent,
-          chain_id: t.chainId,
-          address: t.address,
-        }),
-      });
-    });
-
-    // const nonce = Buffer.from(window.crypto.getRandomValues(new Uint8Array(32)));
-    // const result = await wallet.signMessage?.({ message: "Hello", recipient: "Demo app", nonce });
-    // console.log(`Is verfiied: ${result?.signature}`);
+    const nonce = Buffer.from(window.crypto.getRandomValues(new Uint8Array(32)));
+    const result = await wallet.signMessage?.({ message: "Hello", recipient: "Demo app", nonce });
+    console.log(`Is verfiied: ${result?.signature}`);
   };
 
   const sendTx = async () => {
