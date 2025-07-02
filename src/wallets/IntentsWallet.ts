@@ -1,0 +1,71 @@
+import crypto from "crypto";
+import {
+  Account,
+  NearWallet,
+  Network,
+  SignAndSendTransactionParams,
+  SignAndSendTransactionsParams,
+  SignedMessage,
+  SignInParams,
+  SignMessageParams,
+  WalletManifest,
+} from "../types/wallet";
+import { FinalExecutionOutcome } from "@near-wallet-selector/core";
+import binary_to_base58 from "../base58/encode";
+import { uuid4 } from "../utils";
+
+export abstract class IntentsWallet implements NearWallet {
+  abstract manifest: WalletManifest;
+  abstract signIn(params: SignInParams): Promise<Array<Account>>;
+  abstract signOut(data?: { network?: Network }): Promise<void>;
+  abstract getAccounts(data?: { network?: Network }): Promise<Array<Account>>;
+  abstract signAndSendTransaction(params: SignAndSendTransactionParams): Promise<FinalExecutionOutcome>;
+  abstract signAndSendTransactions(params: SignAndSendTransactionsParams): Promise<Array<FinalExecutionOutcome>>;
+  abstract signMessage(params: SignMessageParams): Promise<SignedMessage>;
+
+  async authIntents() {
+    const wallet = await this.getAccounts();
+    if (wallet.length === 0) throw new Error("No account found");
+
+    const seed = uuid4();
+    const input = `auth_intent_${seed}`;
+    const nonce = crypto.createHash("sha256").update(input).digest();
+
+    return {
+      authIntent: await this.signIntents([], { nonce }),
+      address: wallet[0].accountId,
+      chainId: 1010 as const,
+      authSeed: seed,
+    };
+  }
+
+  async signIntents(
+    intents: Record<string, any>[],
+    options: { deadline?: number; nonce?: Buffer } = {}
+  ): Promise<Record<string, any>> {
+    const wallet = await this.getAccounts();
+    if (wallet.length === 0) throw new Error("No account found");
+
+    const nonce = options.nonce || Buffer.from(crypto.getRandomValues(new Uint8Array(32)));
+    const intentAccount = wallet[0].accountId;
+
+    const message = JSON.stringify({
+      deadline: options.deadline
+        ? new Date(options.deadline).toISOString()
+        : new Date(Date.now() + 24 * 3_600_000 * 365).toISOString(),
+      signer_id: intentAccount,
+      intents: intents,
+    });
+
+    const result = await this.signMessage?.({ message, recipient: "intents.near", nonce: nonce });
+    if (!result) throw new Error("Failed to sign message");
+
+    const { signature, publicKey } = result;
+    return {
+      standard: "nep413",
+      payload: { nonce: nonce.toString("base64"), recipient: "intents.near", message },
+      signature: "ed25519:" + binary_to_base58(Buffer.from(signature, "base64")),
+      public_key: publicKey,
+    };
+  }
+}

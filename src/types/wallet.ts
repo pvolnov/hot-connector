@@ -114,6 +114,12 @@ export interface WalletFeatures {
 export interface NearWallet {
   manifest: WalletManifest;
 
+  authIntents(): Promise<{ authIntent: any; address: string; authSeed: string; chainId: 1010 }>;
+  signIntents(
+    intents: Record<string, any>[],
+    options: { deadline?: number; nonce?: Buffer }
+  ): Promise<Record<string, any>>;
+
   /**
    * Programmatically sign in. Hardware wallets (e.g. Ledger) require `derivationPaths` to validate access key permissions.
    */

@@ -11,11 +11,13 @@ import {
 } from "../../types/wallet";
 import { WalletSelector } from "../../selector";
 import SandboxExecutor from "./executor";
+import { IntentsWallet } from "../IntentsWallet";
 
-export class SandboxWallet implements NearWallet {
+export class SandboxWallet extends IntentsWallet implements NearWallet {
   executor: SandboxExecutor;
 
   constructor(readonly selector: WalletSelector, readonly manifest: WalletManifest) {
+    super();
     this.executor = new SandboxExecutor(selector, manifest);
   }
 
