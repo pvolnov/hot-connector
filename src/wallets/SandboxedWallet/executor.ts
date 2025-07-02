@@ -1,7 +1,10 @@
-import { EventMap } from "../../types/wallet-events";
 import { WalletManifest, WalletPermissions } from "../../types/wallet";
+import { EventMap } from "../../types/wallet-events";
 import { WalletSelector } from "../../selector";
-import { parseUrl, uuid4, AutoQueue } from "../../utils";
+import { AutoQueue } from "../../helpers/queue";
+import { parseUrl } from "../../helpers/url";
+import { uuid4 } from "../../helpers/uuid";
+
 import IframeExecutor from "./iframe";
 import getIframeCode from "./code";
 

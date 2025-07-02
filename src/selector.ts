@@ -3,7 +3,7 @@ import { InjectedWallet } from "./wallets/InjectedWallet";
 import { SandboxWallet } from "./wallets/SandboxedWallet";
 import { LocalStorage, DataStorage } from "./storage";
 import { EventMap } from "./types/wallet-events";
-import { EventEmitter } from "./events";
+import { EventEmitter } from "./helpers/events";
 
 interface WalletSelectorOptions {
   storage?: DataStorage;

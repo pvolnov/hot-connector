@@ -3,7 +3,7 @@ import { useEffect, useState } from "preact/hooks";
 import { InjectedWallet } from "../wallets/InjectedWallet";
 import { WalletSelector } from "../selector";
 import { NearWallet } from "../types/wallet";
-import { parseUrl } from "../utils";
+import { parseUrl } from "../helpers/url";
 
 import WalletPage from "./WalletPage";
 import SelectorIntro from "./SelectorIntro";

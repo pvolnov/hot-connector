@@ -1,4 +1,4 @@
-import { EventEmitter } from "../../events";
+import { EventEmitter } from "../../helpers/events";
 import SandboxExecutor from "./executor";
 
 class IframeExecutor {

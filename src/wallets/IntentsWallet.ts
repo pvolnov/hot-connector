@@ -1,7 +1,7 @@
 import type { FinalExecutionOutcome } from "@near-wallet-selector/core";
 
-import binary_to_base58 from "../base58/encode";
-import { uuid4 } from "../utils";
+import binary_to_base58 from "../helpers/base58/encode";
+import { uuid4 } from "../helpers/uuid";
 import {
   SignAndSendTransactionParams,
   SignAndSendTransactionsParams,
@@ -49,13 +49,11 @@ export abstract class IntentsWallet implements NearWallet {
     const wallet = await this.getAccounts();
     if (wallet.length === 0) throw new Error("No account found");
 
-    const nonce = options?.nonce || Buffer.from(crypto.getRandomValues(new Uint8Array(32)));
+    const nonce = new Uint8Array(options?.nonce || crypto.getRandomValues(new Uint8Array(32)));
     const intentAccount = wallet[0].accountId;
 
     const message = JSON.stringify({
-      deadline: options?.deadline
-        ? new Date(options.deadline).toISOString()
-        : new Date(Date.now() + 24 * 3_600_000 * 365).toISOString(),
+      deadline: options?.deadline ? new Date(options.deadline).toISOString() : "2100-01-01T00:00:00.000Z",
       signer_id: intentAccount,
       intents: intents,
     });
@@ -66,8 +64,8 @@ export abstract class IntentsWallet implements NearWallet {
     const { signature, publicKey } = result;
     return {
       standard: "nep413",
-      payload: { nonce: nonce.toString("base64"), recipient: "intents.near", message },
-      signature: "ed25519:" + binary_to_base58(Buffer.from(signature, "base64")),
+      payload: { nonce: arrayBufferToBase64(nonce), recipient: "intents.near", message },
+      signature: "ed25519:" + binary_to_base58(base64ToArrayBuffer(signature)),
       public_key: publicKey,
     };
   }

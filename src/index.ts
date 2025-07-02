@@ -1,7 +1,7 @@
 export { WalletSelector } from "./selector";
 export { type DataStorage, LocalStorage } from "./storage";
 export { WalletSelectorUI } from "./ui-selector";
-export { EventEmitter } from "./events";
+export { EventEmitter } from "./helpers/events";
 
 export { SandboxWallet } from "./wallets/SandboxedWallet";
 export { InjectedWallet } from "./wallets/InjectedWallet";
