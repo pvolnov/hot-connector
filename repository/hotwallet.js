@@ -268,11 +268,11 @@ input::-webkit-inner-spin-button {
       <h2 class="title">Approve in <span>App</span></h2>
 
       <div style="display: flex; gap: 12px;">
-        <button class="button" style="width: 140px; margin-top: 16px; margin-bottom: 32px" onclick="window.openMobile()">
+        <button class="button" style="white-space: nowrap; width: 140px; margin-top: 16px; margin-bottom: 32px" onclick="window.openMobile()">
            Open Mobile
         </button>
 
-        <button class="button" style="width: 140px; margin-top: 16px; margin-bottom: 32px" onclick="window.openTelegram()">
+        <button class="button" style="white-space: nowrap; width: 140px; margin-top: 16px; margin-bottom: 32px" onclick="window.openTelegram()">
            Open Telegram
         </button>
       </div>
