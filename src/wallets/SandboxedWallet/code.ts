@@ -261,14 +261,6 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
         },
       };
 
-      if (${args.executor.checkPermissions("parentFrame")}) {
-        window.selector.parentFrame = {
-          async postMessage(data) {
-            return await window.selector.call("parentFrame.postMessage", { data });
-          },
-        };
-      }
-      
       window.addEventListener("message", async (event) => {
         if (event.data.origin !== "${uuid}") return;
         if (!event.data.method?.startsWith("wallet:")) return;

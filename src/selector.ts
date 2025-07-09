@@ -1,4 +1,5 @@
 import { NearWallet, EventNearWalletInjected, WalletManifest, Network, WalletFeatures, Logger } from "./types/wallet";
+import { ParentFrameWallet } from "./wallets/ParentFrameWallet";
 import { InjectedWallet } from "./wallets/InjectedWallet";
 import { SandboxWallet } from "./wallets/SandboxedWallet";
 import { LocalStorage, DataStorage } from "./storage";
@@ -60,11 +61,22 @@ export class WalletSelector {
     window.dispatchEvent(new Event("near-selector-ready"));
 
     this.whenManifestLoaded.then(() => {
+      window.parent.postMessage({ type: "near-selector-ready" }, "*");
       this.manifest.wallets.forEach((wallet) => this.registerWallet(wallet));
       this.storage.get("debug-wallets").then((json) => {
         const debugWallets = JSON.parse(json ?? "[]") as WalletManifest[];
         debugWallets.forEach((wallet) => this.registerDebugWallet(wallet));
       });
+    });
+
+    window.addEventListener("message", async (event) => {
+      if (event.data.type === "near-wallet-injected") {
+        await this.whenManifestLoaded.catch(() => {});
+        this.wallets = this.wallets.filter((wallet) => wallet.manifest.id !== event.data.manifest.id);
+        this.wallets.unshift(new ParentFrameWallet(this, event.data.manifest));
+        this.events.emit("selector:walletsChanged", {});
+        this.connect(event.data.manifest.id);
+      }
     });
   }
 
@@ -97,24 +109,6 @@ export class WalletSelector {
     if (this.wallets.find((wallet) => wallet.manifest.id === manifest.id)) return;
     this.wallets.push(new SandboxWallet(this, manifest));
     this.events.emit("selector:walletsChanged", {});
-
-    // Auto run for webview browsers (for mobile wallets)
-    const webviewUserAgent = manifest.permissions.autoRun?.webviewUserAgent;
-    if (webviewUserAgent) {
-      const userAgent = window.navigator.userAgent;
-      if (userAgent.includes(webviewUserAgent)) {
-        this.connect(manifest.id);
-        return;
-      }
-    }
-
-    // Auto run for parent frame
-    const authRunForParentFrame = manifest.permissions.autoRun?.parentFrame;
-    const allowedParentFrame = manifest.permissions.parentFrame;
-    const parentFrameOrigin = window.location.ancestorOrigins?.[0];
-    if (authRunForParentFrame && allowedParentFrame && parentFrameOrigin) {
-      if (allowedParentFrame.includes(parentFrameOrigin)) return this.connect(manifest.id);
-    }
   }
 
   async registerDebugWallet(manifest: WalletManifest) {

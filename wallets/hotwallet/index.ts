@@ -71,24 +71,7 @@ class HOT {
     return requestId;
   }
 
-  async injectedRequest(method: string, request: any): Promise<any> {
-    const id = uuid4();
-    return new Promise((resolve, reject) => {
-      const handler = (e: any) => {
-        if (e.data.id !== id) return;
-        window?.removeEventListener("message", handler);
-        if (e.data.success) return resolve(e.data.payload);
-        else return reject(e.data.payload);
-      };
-
-      window.selector.parentFrame?.postMessage({ $hot: true, method, request, id });
-      window?.addEventListener("message", handler);
-    });
-  }
-
   async request(method: string, request: any): Promise<any> {
-    if (window.selector.parentFrame) return this.injectedRequest(method, request);
-
     renderUI();
     const id = uuid4();
     const qr = document.querySelector(".qr-code");
@@ -149,8 +132,7 @@ class HOT {
 
 class NearWallet {
   getAccounts = async (data: any) => {
-    if (data.network === "testnet") throw "HOT Wallet not";
-    if (window.selector.parentFrame) return await HOT.shared.request("near:getAccounts", {});
+    if (data.network === "testnet") throw "HOT Wallet not supported on testnet";
     const hotAccount = await window.selector.storage.get("hot-account");
     if (hotAccount) return [JSON.parse(hotAccount)];
     return [];

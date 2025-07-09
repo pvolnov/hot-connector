@@ -28,16 +28,9 @@
 
       "permissions": {
         "storage": true,
-        "parentFrame": [
-          "https://app.hot-labs.org",
-          "https://tgapp.herewallet.app",
-          "https://tgapp-dev.herewallet.app",
-          "http://localhost:1234"
-        ],
-        "autoRun": { "parentFrame": true, "webviewUserAgent": "HOT_Browser" },
         "open": {
           "allows": [
-            "https://hot-labs.org",
+            "https://hot-labs.org/wallet",
             "https://t.me/hot_wallet/app",
             "https://play.google.com",
             "https://apps.apple.com",

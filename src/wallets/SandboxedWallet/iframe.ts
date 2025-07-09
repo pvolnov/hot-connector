@@ -24,12 +24,6 @@ class IframeExecutor {
   ) {
     this.origin = uuid4();
     this.handler = (event: MessageEvent<any>) => {
-      // Interact with parent frame, executor just a proxy between iframe and parent frame
-      if (event.origin === this.executor.parentOrigin && this.executor.checkPermissions("parentFrame")) {
-        this.postMessage(event.data);
-        return;
-      }
-
       if (event.data.origin !== this.origin) return;
       if (event.data.method === "wallet-ready") this.readyPromiseResolve();
       onMessage(this, event);
