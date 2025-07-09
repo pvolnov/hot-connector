@@ -30,8 +30,6 @@
         "storage": true,
         "parentFrame": [
           "https://app.hot-labs.org",
-          "https://hot-labs.org",
-          "https://app.hot-labs.org",
           "https://tgapp.herewallet.app",
           "https://tgapp-dev.herewallet.app",
           "http://localhost:1234"
