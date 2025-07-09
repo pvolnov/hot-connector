@@ -30,6 +30,7 @@
         "storage": true,
         "open": {
           "allows": [
+            "https://download.hot-labs.org",
             "https://hot-labs.org/wallet",
             "https://t.me/hot_wallet/app",
             "https://play.google.com",

@@ -2,7 +2,11 @@ import { baseEncode } from "@near-js/utils";
 import { QRCode } from "@here-wallet/core/qrcode-strategy";
 import crypto from "crypto";
 
-import { head, body } from "./view";
+import { head, body, bodyDesktop } from "./view";
+
+const isMobile = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
 
 const logoImage = new Image();
 logoImage.src = "https://hot-labs.org/hot-widget/icon.svg";
@@ -12,7 +16,9 @@ const renderUI = () => {
   root.style.height = "100%";
   document.body.appendChild(root);
   document.head.innerHTML = head;
-  root.innerHTML = body;
+
+  if (isMobile()) root.innerHTML = body;
+  else root.innerHTML = bodyDesktop;
 };
 
 export const proxyApi = "https://h4n.app";
@@ -115,6 +121,7 @@ class HOT {
 
     // @ts-ignore
     window.openTelegram = () => window.selector.open(`https://t.me/hot_wallet/app?startapp=${link}`); // @ts-ignore
+    window.openExtension = () => window.selector.open(`https://download.hot-labs.org?hotconnector`); // @ts-ignore
     window.openMobile = () => window.selector.open(`hotwallet://${link}`);
 
     const poolResponse = async () => {
