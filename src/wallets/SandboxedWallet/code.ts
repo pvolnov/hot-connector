@@ -1,13 +1,14 @@
 import SandboxExecutor from "./executor";
 
-const cache = new Map<string, string>();
+async function getIframeCode(args: { id: string; executor: SandboxExecutor; code: string }) {
+  const storage = await args.executor.getAllStorage();
+  const manifest = args.executor.manifest;
+  const uuid = args.id;
 
-async function getIframeCode(executor: SandboxExecutor) {
-  const storage = await executor.getAllStorage();
-
-  const code =
-    cache.get(executor.manifest.executor) || (await fetch(executor.manifest.executor).then((res) => res.text()));
-  cache.set(executor.manifest.executor, code!);
+  const code = args.code
+    .replaceAll("window.localStorage", "window.sandboxedLocalStorage")
+    .replaceAll("window.top", "window.selector")
+    .replaceAll("window.open", "window.selector.open");
 
   return /* html */ `
   <!DOCTYPE html>
@@ -129,8 +130,8 @@ async function getIframeCode(executor: SandboxExecutor) {
         root.style.display = "flex";
         root.innerHTML = \`
           <div class="prompt-container">
-            <img src="${executor.manifest.icon}" />
-            <h1>${executor.manifest.name}</h1>
+            <img src="${manifest.icon}" />
+            <h1>${manifest.name}</h1>
             <p>\${args.title}</p>
             <button>\${args.button}</button>
           </div>
@@ -150,7 +151,7 @@ async function getIframeCode(executor: SandboxExecutor) {
           this.windowIdPromise = window.selector.call("open", { url, features });
 
           window.addEventListener("message", async (event) => {            
-            if (event.data.origin !== "${executor.origin}") return;
+            if (event.data.origin !== "${uuid}") return;
             if (!event.data.method?.startsWith("proxy-window:")) return;
             const method = event.data.method.replace("proxy-window:", "");
             if (method === "closed" && event.data.windowId === await this.id()) this.closed = true;
@@ -192,17 +193,17 @@ async function getIframeCode(executor: SandboxExecutor) {
         },
       
         async ready(wallet) {
-          window.parent.postMessage({ method: "wallet-ready", origin: "${executor.origin}" }, "*");
+          window.parent.postMessage({ method: "wallet-ready", origin: "${uuid}" }, "*");
           window.selector.wallet = wallet;
         },
 
         async call(method, params) {
           const id = window.selector.uuid();
-          window.parent.postMessage({ method, params, id, origin: "${executor.origin}" }, "*");
+          window.parent.postMessage({ method, params, id, origin: "${uuid}" }, "*");
 
           return new Promise((resolve, reject) => {
             const handler = (event) => {
-              if (event.data.id !== id || event.data.origin !== "${executor.origin}") return;
+              if (event.data.id !== id || event.data.origin !== "${uuid}") return;
               window.removeEventListener("message", handler);
 
               if (event.data.status === "failed") reject(event.data.result);
@@ -216,7 +217,7 @@ async function getIframeCode(executor: SandboxExecutor) {
         panelClosed(windowId) {
           window.parent.postMessage({ 
             method: "panel.closed", 
-            origin: "${executor.origin}", 
+            origin: "${uuid}", 
             result: { windowId } 
           }, "*");
         },
@@ -260,7 +261,7 @@ async function getIframeCode(executor: SandboxExecutor) {
         },
       };
 
-      if (${executor.checkPermissions("parentFrame")}) {
+      if (${args.executor.checkPermissions("parentFrame")}) {
         window.selector.parentFrame = {
           async postMessage(data) {
             return await window.selector.call("parentFrame.postMessage", { data });
@@ -269,12 +270,12 @@ async function getIframeCode(executor: SandboxExecutor) {
       }
       
       window.addEventListener("message", async (event) => {
-        if (event.data.origin !== "${executor.origin}") return;
+        if (event.data.origin !== "${uuid}") return;
         if (!event.data.method?.startsWith("wallet:")) return;
       
         const wallet = window.selector.wallet;
         const method = event.data.method.replace("wallet:", "");
-        const payload = { id: event.data.id, origin: "${executor.origin}", method };
+        const payload = { id: event.data.id, origin: "${uuid}", method };
       
         if (wallet == null || typeof wallet[method] !== "function") {
           const data = { ...payload, status: "failed", result: "Method not found" };

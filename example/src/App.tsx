@@ -6,7 +6,7 @@ import "./index.css";
 
 import manifest from "../public/repository/manifest.json";
 
-const selector = new WalletSelector({ manifest: manifest as any, network: "mainnet" });
+const selector = new WalletSelector({ manifest: manifest as any, network: "mainnet", logger: console });
 const modal = new WalletSelectorUI(selector);
 
 export const ExampleNEAR: FC = () => {

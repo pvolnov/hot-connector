@@ -1,17 +1,14 @@
 import { WalletManifest, WalletPermissions } from "../../types/wallet";
-import { EventMap } from "../../types/wallet-events";
 import { WalletSelector } from "../../selector";
 import { AutoQueue } from "../../helpers/queue";
 import { parseUrl } from "../../helpers/url";
 import { uuid4 } from "../../helpers/uuid";
 
 import IframeExecutor from "./iframe";
-import getIframeCode from "./code";
 
 class SandboxExecutor {
   private queue = new AutoQueue();
   private activePanels: Record<string, Window> = {};
-  readonly origin = uuid4();
   readonly storageSpace: string;
 
   constructor(readonly selector: WalletSelector, readonly manifest: WalletManifest) {
@@ -56,13 +53,6 @@ class SandboxExecutor {
   }
 
   _onMessage = async (iframe: IframeExecutor, event: MessageEvent) => {
-    // Interact with parent frame, executor just a proxy between iframe and parent frame
-    if (event.origin === this.parentOrigin && this.checkPermissions("parentFrame")) {
-      iframe.postMessage(event.data);
-      return;
-    }
-
-    if (event.data.origin !== this.origin) return;
     if (event.data.method === "ui.showIframe") {
       iframe.show();
       iframe.postMessage({ ...event.data, status: "success", result: null });
@@ -155,7 +145,7 @@ class SandboxExecutor {
           if (!panel?.closed) return;
 
           window.removeEventListener("message", handler);
-          const args = { method: "proxy-window:closed", windowId: panelId, origin: this.origin };
+          const args = { method: "proxy-window:closed", windowId: panelId };
           delete this.activePanels[panelId];
           clearInterval(interval);
 
@@ -169,42 +159,76 @@ class SandboxExecutor {
     }
   };
 
-  async code() {
-    const code = await getIframeCode(this);
-    return code
-      .replaceAll("window.localStorage", "window.sandboxedLocalStorage")
-      .replaceAll("window.top", "window.selector")
-      .replaceAll("window.open", "window.selector.open");
+  private actualCode: string | null = null;
+  async checkNewVersion(executor: SandboxExecutor, currentVersion: string | null) {
+    if (this.actualCode) {
+      this.selector.logger?.log(`New version of code already checked`);
+      return this.actualCode;
+    }
+
+    const newVersion = await fetch(executor.manifest.executor).then((res) => res.text());
+    this.selector.logger?.log(`New version of code fetched`);
+    this.actualCode = newVersion;
+
+    if (newVersion === currentVersion) {
+      this.selector.logger?.log(`New version of code is the same as the current version`);
+      return this.actualCode;
+    }
+
+    await this.selector.db.setItem(`${this.manifest.id}:${this.manifest.version}`, newVersion);
+    this.selector.logger?.log(`New version of code saved to cache`);
+    return newVersion;
   }
 
-  async call<T>(method: keyof EventMap, params: any): Promise<T> {
-    return this.queue.enqueue(async () => {
-      const iframe = new IframeExecutor(this, await this.code(), this._onMessage);
-      await iframe.readyPromise;
-      const id = uuid4();
+  async loadCode(): Promise<string> {
+    const cachedCode = await this.selector.db
+      .getItem<string>(`${this.manifest.id}:${this.manifest.version}`)
+      .catch(() => null);
+    this.selector.logger?.log(`Code loaded from cache`, cachedCode !== null);
 
-      return new Promise<T>((resolve, reject) => {
-        try {
-          const handler = (event: MessageEvent) => {
-            if (event.data.id !== id || event.data.origin !== this.origin) return;
+    const task = this.checkNewVersion(this, cachedCode as string | null);
+    if (cachedCode) return cachedCode;
+    return await task;
+  }
 
-            iframe.dispose();
-            window.removeEventListener("message", handler);
-            console.log("postMessage", { result: event.data, request: { method, params } });
+  async call<T>(method: string, params: any): Promise<T> {
+    this.selector.logger?.log(`Add to queue`, method, params);
 
-            if (event.data.status === "failed") reject(event.data.result);
-            else resolve(event.data.result);
-          };
+    // return this.queue.enqueue(async () => {
+    this.selector.logger?.log(`Calling method`, method, params);
 
-          window.addEventListener("message", handler);
-          iframe.postMessage({ method, params, id, origin: this.origin });
-          iframe.on("close", () => reject(new Error("Wallet closed")));
-        } catch (e) {
-          console.error(e);
-          reject(e);
-        }
-      });
+    const code = await this.loadCode();
+    this.selector.logger?.log(`Code loaded, preparing`);
+
+    const iframe = new IframeExecutor(this, code, this._onMessage);
+    this.selector.logger?.log(`Code loaded, iframe initialized`);
+
+    await iframe.readyPromise;
+    this.selector.logger?.log(`Iframe ready`);
+
+    const id = uuid4();
+    return new Promise<T>((resolve, reject) => {
+      try {
+        const handler = (event: MessageEvent) => {
+          if (event.data.id !== id || event.data.origin !== iframe.origin) return;
+
+          iframe.dispose();
+          window.removeEventListener("message", handler);
+          this.selector.logger?.log("postMessage", { result: event.data, request: { method, params } });
+
+          if (event.data.status === "failed") reject(event.data.result);
+          else resolve(event.data.result);
+        };
+
+        window.addEventListener("message", handler);
+        iframe.postMessage({ method, params, id });
+        iframe.on("close", () => reject(new Error("Wallet closed")));
+      } catch (e) {
+        this.selector.logger?.log(`Iframe error`, e);
+        reject(e);
+      }
     });
+    // });
   }
 
   async getAllStorage() {

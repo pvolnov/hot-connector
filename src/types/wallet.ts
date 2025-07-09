@@ -1,6 +1,10 @@
 import type { providers, utils } from "near-api-js";
 import type { Transaction, Action } from "./transactions";
 
+export type Logger = {
+  log: (...logs: any[]) => void;
+};
+
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
 export type Network = "mainnet" | "testnet";
@@ -105,22 +109,6 @@ export interface WalletFeatures {
 
 export interface NearWallet {
   manifest: WalletManifest;
-
-  signIntentsWithAuth(
-    domain: string,
-    intents?: Record<string, any>[]
-  ): Promise<{
-    intent: any;
-    address: string;
-    domain: string;
-    nonce: string;
-    chainId: 1010;
-  }>;
-
-  signIntents(
-    intents: Record<string, any>[],
-    options: { deadline?: number; nonce?: Buffer }
-  ): Promise<Record<string, any>>;
 
   /**
    * Programmatically sign in. Hardware wallets (e.g. Ledger) require `derivationPaths` to validate access key permissions.

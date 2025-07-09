@@ -10,12 +10,9 @@ import {
   SignMessageParams,
 } from "../types/wallet";
 import { WalletSelector } from "../selector";
-import { IntentsWallet } from "./IntentsWallet";
 
-export class InjectedWallet extends IntentsWallet implements NearWallet {
-  constructor(readonly selector: WalletSelector, readonly wallet: NearWallet) {
-    super();
-  }
+export class InjectedWallet implements NearWallet {
+  constructor(readonly selector: WalletSelector, readonly wallet: NearWallet) {}
 
   get manifest() {
     return this.wallet.manifest;

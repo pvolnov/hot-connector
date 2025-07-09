@@ -1,7 +1,11 @@
 import { EventEmitter } from "../../helpers/events";
+import { uuid4 } from "../../helpers/uuid";
+import getIframeCode from "./code";
 import SandboxExecutor from "./executor";
 
 class IframeExecutor {
+  readonly origin: string;
+
   private events = new EventEmitter<{ close: {} }>();
   private popup = document.createElement("div");
   private popupContent = document.createElement("div");
@@ -18,8 +22,22 @@ class IframeExecutor {
     code: string,
     onMessage: (iframe: IframeExecutor, event: MessageEvent) => void
   ) {
-    this.iframe.setAttribute("sandbox", "allow-scripts");
+    this.origin = uuid4();
+    this.handler = (event: MessageEvent<any>) => {
+      // Interact with parent frame, executor just a proxy between iframe and parent frame
+      if (event.origin === this.executor.parentOrigin && this.executor.checkPermissions("parentFrame")) {
+        this.postMessage(event.data);
+        return;
+      }
 
+      if (event.data.origin !== this.origin) return;
+      if (event.data.method === "wallet-ready") this.readyPromiseResolve();
+      onMessage(this, event);
+    };
+
+    window.addEventListener("message", this.handler);
+
+    this.iframe.setAttribute("sandbox", "allow-scripts");
     const iframeAllowedPersimissions = [];
     if (this.executor.checkPermissions("usb")) {
       iframeAllowedPersimissions.push("usb *;");
@@ -30,7 +48,10 @@ class IframeExecutor {
     }
 
     this.iframe.allow = iframeAllowedPersimissions.join(" ");
-    this.iframe.srcdoc = code;
+    getIframeCode({ id: this.origin, executor: this.executor, code }).then((code) => {
+      this.executor.selector.logger?.log(`Iframe code injected`);
+      this.iframe.srcdoc = code;
+    });
 
     this.popupContent.classList.add("iframe-widget__popup");
     this.popup.classList.add("iframe-widget__container");
@@ -44,14 +65,6 @@ class IframeExecutor {
       this.events.emit("close", {});
       this.popup.remove();
     });
-
-    this.handler = (event: MessageEvent<any>) => {
-      onMessage(this, event);
-      if (event.data.origin !== this.executor.origin) return;
-      if (event.data.method === "wallet-ready") this.readyPromiseResolve();
-    };
-
-    window.addEventListener("message", this.handler);
   }
 
   on(event: "close", callback: () => void) {
@@ -68,7 +81,7 @@ class IframeExecutor {
 
   postMessage(data: any) {
     if (!this.iframe.contentWindow) throw new Error("Iframe not loaded");
-    this.iframe.contentWindow.postMessage(data, "*");
+    this.iframe.contentWindow.postMessage({ ...data, origin: this.origin }, "*");
   }
 
   dispose() {

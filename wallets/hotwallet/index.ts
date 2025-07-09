@@ -104,7 +104,7 @@ class HOT {
       id,
     });
 
-    const link = `hotconnect-${baseEncode(requestId)}`;
+    const link = `hotconnect-${baseEncode(Buffer.from(requestId, "utf8"))}`;
     const qrcode = new QRCode({
       value: `https://t.me/hot_wallet/app?startapp=${link}`,
       logo: logoImage,
@@ -150,6 +150,7 @@ class HOT {
 class NearWallet {
   getAccounts = async (data: any) => {
     if (data.network === "testnet") throw "HOT Wallet not";
+    if (window.selector.parentFrame) return await HOT.shared.request("near:getAccounts", {});
     const hotAccount = await window.selector.storage.get("hot-account");
     if (hotAccount) return [JSON.parse(hotAccount)];
     return [];

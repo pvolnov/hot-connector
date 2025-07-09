@@ -1,12 +1,9 @@
-export interface EventMap {
-  "wallet:signIn": any;
-  "wallet:signOut": any;
-  "wallet:signMessage": any;
-  "wallet:signAndSendTransaction": any;
-  "wallet:signAndSendTransactions": any;
-  "wallet:getAccounts": any;
-  "wallet:verifyOwner": any;
+import { NearWallet } from "..";
+import { Account } from "./wallet";
 
+export interface EventMap {
+  "wallet:signIn": { wallet: NearWallet; accounts: Account[]; success: boolean };
+  "wallet:signOut": any;
   "selector:manifestUpdated": any;
   "selector:walletsChanged": any;
 }

@@ -1,12 +1,14 @@
-import { NearWallet, EventNearWalletInjected, WalletManifest, Network, WalletFeatures } from "./types/wallet";
+import { NearWallet, EventNearWalletInjected, WalletManifest, Network, WalletFeatures, Logger } from "./types/wallet";
 import { InjectedWallet } from "./wallets/InjectedWallet";
 import { SandboxWallet } from "./wallets/SandboxedWallet";
 import { LocalStorage, DataStorage } from "./storage";
 import { EventMap } from "./types/wallet-events";
 import { EventEmitter } from "./helpers/events";
+import IndexedDB from "./indexdb";
 
 interface WalletSelectorOptions {
   storage?: DataStorage;
+  logger?: Logger;
   events?: EventEmitter<EventMap>;
   manifest?: string | { wallets: WalletManifest[]; version: string };
   network?: Network;
@@ -19,12 +21,14 @@ interface WalletSelectorOptions {
 }
 
 export class WalletSelector {
-  readonly events: EventEmitter<EventMap>;
   private storage: DataStorage;
+  readonly events: EventEmitter<EventMap>;
+  readonly db: IndexedDB;
 
   wallets: NearWallet[] = [];
   manifest: { wallets: WalletManifest[]; version: string } = { wallets: [], version: "1.0.0" };
   features: Partial<WalletFeatures> = {};
+  logger?: Logger;
 
   network: Network = "mainnet";
   connectWithKey?: { contractId: string; methodNames?: string[]; allowance?: string };
@@ -32,8 +36,10 @@ export class WalletSelector {
   readonly whenManifestLoaded: Promise<void>;
 
   constructor(options?: WalletSelectorOptions) {
+    this.db = new IndexedDB("hot-connector", "wallets");
     this.storage = options?.storage ?? new LocalStorage();
     this.events = options?.events ?? new EventEmitter<EventMap>();
+    this.logger = options?.logger;
 
     this.network = options?.network ?? "mainnet";
     this.connectWithKey = options?.connectWithKey;
@@ -124,14 +130,23 @@ export class WalletSelector {
   }
 
   async connect(id: string) {
-    const wallet = await this.wallet(id);
+    try {
+      const wallet = await this.wallet(id);
+      this.logger?.log(`Wallet available to connect`, wallet);
 
-    await this.storage.set("selected-wallet", id);
-    const accounts = await wallet?.signIn(this.connectWithKey ?? { contractId: "" });
+      await this.storage.set("selected-wallet", id);
+      this.logger?.log(`Set preferred wallet, try to signIn`, id);
 
-    if (!accounts?.length) throw new Error("Failed to sign in");
-    this.events.emit("wallet:signIn", { wallet, accounts, success: true });
-    return wallet;
+      const accounts = await wallet.signIn(this.connectWithKey ?? { contractId: "" });
+      this.logger?.log(`Signed in to wallet`, id, accounts);
+
+      if (!accounts?.length) throw new Error("Failed to sign in");
+      this.events.emit("wallet:signIn", { wallet, accounts, success: true });
+      return wallet;
+    } catch (e) {
+      this.logger?.log("Failed to connect to wallet", e);
+      throw e;
+    }
   }
 
   async disconnect(wallet?: NearWallet) {
@@ -142,19 +157,27 @@ export class WalletSelector {
     this.events.emit("wallet:signOut", { success: true });
   }
 
+  async getConnectedWallet() {
+    await this.whenManifestLoaded.catch(() => {});
+    const id = await this.storage.get("selected-wallet");
+    const wallet = this.wallets.find((wallet) => wallet.manifest.id === id);
+    if (!wallet) throw new Error("No wallet selected");
+
+    const accounts = await wallet.getAccounts();
+    if (!accounts?.length) throw new Error("No accounts found");
+    return { wallet, accounts };
+  }
+
   async wallet(id?: string | null): Promise<NearWallet> {
     await this.whenManifestLoaded.catch(() => {});
 
     if (!id) {
-      const id = await this.storage.get("selected-wallet");
-      const wallet = this.wallets.find((wallet) => wallet.manifest.id === id);
-      if (!wallet) throw new Error("No wallet selected");
-
-      const accounts = await wallet.getAccounts();
-      if (accounts?.length) return wallet;
-
-      await this.disconnect(wallet);
-      throw new Error("No accounts found");
+      return this.getConnectedWallet()
+        .then(({ wallet }) => wallet)
+        .catch(async () => {
+          await this.storage.remove("selected-wallet");
+          throw new Error("No accounts found");
+        });
     }
 
     const wallet = this.wallets.find((wallet) => wallet.manifest.id === id);
