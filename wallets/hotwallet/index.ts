@@ -24,11 +24,7 @@ const renderUI = () => {
 export const proxyApi = "https://h4n.app";
 
 export const uuid4 = () => {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  return window.crypto.randomUUID();
 };
 
 export const wait = (timeout: number) => {
@@ -45,6 +41,12 @@ export class RequestFailed extends Error {
 class HOT {
   static shared = new HOT();
 
+  async getTimestamp() {
+    const { ts } = await fetch("https://api0.herewallet.app/api/v1/web/time").then((res) => res.json());
+    const seconds = BigInt(ts) / 10n ** 12n;
+    return Number(seconds) * 1000;
+  }
+
   async getResponse(id: string) {
     const res = await fetch(`${proxyApi}/${id}/response`, {
       headers: { "content-type": "application/json" },
@@ -57,10 +59,22 @@ class HOT {
   }
 
   async computeRequestId(request: object) {
-    const query = baseEncode(JSON.stringify({ ...request, _id: uuid4() }));
+    const origin = window.selector.location;
+    const timestamp = await this.getTimestamp().catch(() => Date.now());
+
+    const query = baseEncode(
+      JSON.stringify({
+        ...request,
+        deadline: timestamp + 60_000,
+        id: uuid4(),
+        $hot: true,
+        origin,
+      })
+    );
+
     const hashsum = crypto.createHash("sha1").update(query).digest("hex");
     const id = Buffer.from(hashsum, "hex").toString("base64");
-    const requestId = id.replaceAll("/", "_").replaceAll("-", "+").slice(0, 13);
+    const requestId = id.replaceAll("/", "_").replaceAll("-", "+");
     return { requestId, query };
   }
 
@@ -79,20 +93,11 @@ class HOT {
 
   async request(method: string, request: any): Promise<any> {
     renderUI();
-    const id = uuid4();
     const qr = document.querySelector(".qr-code");
     if (qr) qr.innerHTML = "";
 
     window.selector.ui.showIframe();
-    const requestId = await this.createRequest({
-      origin: window.selector.location,
-      inside: true,
-      $hot: true,
-      method,
-      request,
-      id,
-    });
-
+    const requestId = await this.createRequest({ method, request });
     const link = `hotconnect-${baseEncode(Buffer.from(requestId, "utf8"))}`;
     const qrcode = new QRCode({
       value: `https://t.me/hot_wallet/app?startapp=${link}`,
