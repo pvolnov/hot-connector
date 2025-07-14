@@ -73,9 +73,7 @@ class HOT {
     );
 
     const hashsum = crypto.createHash("sha1").update(query).digest("hex");
-    const id = Buffer.from(hashsum, "hex").toString("base64");
-    const requestId = id.replaceAll("/", "_").replaceAll("-", "+");
-    return { requestId, query };
+    return { requestId: hashsum, query };
   }
 
   async createRequest(request: object, signal?: AbortSignal) {
@@ -98,7 +96,7 @@ class HOT {
 
     window.selector.ui.showIframe();
     const requestId = await this.createRequest({ method, request });
-    const link = `hotconnect-${baseEncode(Buffer.from(requestId, "utf8"))}`;
+    const link = `hotcall-${requestId}`;
     const qrcode = new QRCode({
       value: `https://t.me/hot_wallet/app?startapp=${link}`,
       logo: logoImage,
