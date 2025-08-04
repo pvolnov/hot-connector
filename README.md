@@ -4,7 +4,7 @@
 
 Zero-dependenices, robust, secure and lightweight wallet connector for the NEAR blockchain with **easily updatable** wallets code
 
-`yarn add @hot-labs/connector`
+`yarn add @hot-labs/near-connect`
 
 ## How it works
 
@@ -13,7 +13,7 @@ Unlike near-wallet-selector, this library provides a secure execution environmen
 ## Dapp integration
 
 ```ts
-import { NearConnector } from "@hot-labs/connector";
+import { NearConnector } from "@hot-labs/near-connect";
 
 const connector = new NearConnector({ network: "mainnet" });
 

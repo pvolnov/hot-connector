@@ -1,5 +1,5 @@
 {
-  "name": "@hot-labs/connector",
+  "name": "@hot-labs/near-connect",
   "version": "0.3.0",
   "type": "commonjs",
   "main": "./build/index.js",
