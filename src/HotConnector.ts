@@ -118,8 +118,9 @@ export class HotConnector {
       const popup = new AuthPopup({
         onApprove: async () => {
           try {
-            const wallet = typeof type === "number" ? this.getWallet(type) : type;
+            const wallet = typeof type === "number" || typeof type === "string" ? this.getWallet(type) : type;
             if (!wallet) throw new Error("Wallet not found");
+
             const signed = await wallet.signIntentsWithAuth(domain, intents);
             resolve(signed);
             popup.destroy();

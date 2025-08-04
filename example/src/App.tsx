@@ -75,12 +75,13 @@ export const MultichainExample = () => {
   const [connector] = useState<HotConnector>(() => {
     return new HotConnector({
       onConnect: async (wallet) => {
+        if (!wallet) return;
         const address = await wallet.getAddress();
         setWallets((t) => ({ ...t, [wallet.type]: address }));
       },
 
       onDisconnect: (type) => {
-        setWallets({ ...wallets, [type]: null });
+        setWallets((t) => ({ ...t, [type]: null }));
       },
 
       chains: [WalletType.NEAR, WalletType.EVM, WalletType.SOLANA, WalletType.TON],
@@ -103,7 +104,7 @@ export const MultichainExample = () => {
           address != null && (
             <div key={type} style={{ width: 200 }}>
               <p style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{address}</p>
-              <button className={"input-button"} onClick={() => connector.auth(type, "auth", [])}>
+              <button className={"input-button"} onClick={() => connector.auth(+type, "auth", [])}>
                 Sign auth intents
               </button>
             </div>

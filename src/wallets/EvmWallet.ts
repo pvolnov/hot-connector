@@ -12,7 +12,7 @@ class EvmWallet implements ChainAbstracted {
 
   getAddress = async (): Promise<string> => {
     const addresses = (await this.wallet.request({ method: "eth_requestAccounts" })) as string[];
-    if (addresses.length === 0) throw new Error("No account found");
+    if (!addresses || addresses.length === 0) throw new Error("No account found");
     return addresses[0].toLowerCase();
   };
 
@@ -29,11 +29,12 @@ class EvmWallet implements ChainAbstracted {
     const seed = Buffer.from(window.crypto.getRandomValues(new Uint8Array(32))).toString("hex");
     const msgBuffer = new TextEncoder().encode(`${domain}_${seed}`);
     const nonce = await crypto.subtle.digest("SHA-256", msgBuffer);
+    const address = await this.getAddress();
 
     return {
       intent: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
-      address: this.getAddress(),
-      publicKey: this.getPublicKey(),
+      address: address,
+      publicKey: address,
       chainId: WalletType.EVM,
       nonce: seed,
     };

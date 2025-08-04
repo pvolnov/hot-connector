@@ -22,7 +22,7 @@ class TonWallet implements ChainAbstracted {
 
   async getIntentsAddress() {
     const publicKey = await this.getPublicKey();
-    return Buffer.from(baseDecode(publicKey)).toString("hex");
+    return publicKey.toLowerCase();
   }
 
   async sendTransaction(msgs: SendTransactionRequest) {
