@@ -24,7 +24,6 @@ export class HotConnector {
     readonly options: {
       onConnect: <T extends WalletType>(wallet: ConnectedWallets[T], type: T) => void;
       onDisconnect: <T extends WalletType>(type: T) => void;
-      nearUseOnlyPublicKeyAsSigner?: boolean;
       nearConnector?: NearConnector;
       chains: WalletType[];
       tonConnect?: TonConnectUI;
@@ -118,12 +117,16 @@ export class HotConnector {
     return new Promise<Record<string, any>>((resolve, reject) => {
       const popup = new AuthPopup({
         onApprove: async () => {
-          const wallet = typeof type === "number" ? this.getWallet(type) : type;
-          if (!wallet) throw new Error("Wallet not found");
-
-          const signed = await wallet.signIntentsWithAuth(domain, intents, this.options.nearUseOnlyPublicKeyAsSigner);
-          resolve(signed);
-          popup.destroy();
+          try {
+            const wallet = typeof type === "number" ? this.getWallet(type) : type;
+            if (!wallet) throw new Error("Wallet not found");
+            const signed = await wallet.signIntentsWithAuth(domain, intents);
+            resolve(signed);
+            popup.destroy();
+          } catch (e) {
+            reject(e);
+            popup.destroy();
+          }
         },
 
         onReject: () => {

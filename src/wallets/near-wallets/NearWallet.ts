@@ -44,7 +44,7 @@ export abstract class NearWallet implements ChainAbstracted {
     return Buffer.from(base58.decode(publicKey)).toString("hex");
   };
 
-  signIntentsWithAuth = async (domain: string, intents?: Record<string, any>[], useOnlyPublicKeyAsSigner = false) => {
+  signIntentsWithAuth = async (domain: string, intents?: Record<string, any>[]) => {
     const accounts = await this.getAccounts();
     if (accounts.length === 0) throw new Error("No account found");
 
@@ -52,9 +52,8 @@ export abstract class NearWallet implements ChainAbstracted {
     const msgBuffer = new TextEncoder().encode(`${domain}_${seed}`);
     const nonce = await crypto.subtle.digest("SHA-256", msgBuffer);
 
-    const signerId = useOnlyPublicKeyAsSigner ? await this.getIntentsAddress() : accounts[0].accountId;
     return {
-      intent: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce), signer_id: signerId }),
+      intent: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
       address: accounts[0].accountId,
       publicKey: accounts[0].publicKey,
       chainId: WalletType.NEAR,
@@ -65,13 +64,14 @@ export abstract class NearWallet implements ChainAbstracted {
 
   signIntents = async (
     intents: Record<string, any>[],
-    options?: { signer_id: string; deadline?: number; nonce?: Buffer | Uint8Array }
+    options?: { nonce?: Buffer | Uint8Array; deadline?: number }
   ): Promise<Record<string, any>> => {
     const nonce = new Uint8Array(options?.nonce || crypto.getRandomValues(new Uint8Array(32)));
+    const signerId = await this.getIntentsAddress();
 
     const message = JSON.stringify({
       deadline: options?.deadline ? new Date(options.deadline).toISOString() : "2100-01-01T00:00:00.000Z",
-      signer_id: options?.signer_id,
+      signer_id: signerId,
       intents: intents,
     });
 
