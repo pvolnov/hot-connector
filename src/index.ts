@@ -1,13 +1,20 @@
-export { WalletSelector } from "./selector";
 export { type DataStorage, LocalStorage } from "./storage";
-export { WalletSelectorUI } from "./ui-selector";
 export { EventEmitter } from "./helpers/events";
 
-export { SandboxWallet } from "./wallets/SandboxedWallet";
-export { InjectedWallet } from "./wallets/InjectedWallet";
+export { ParentFrameWallet } from "./wallets/near-wallets/ParentFrameWallet";
+export { SandboxWallet } from "./wallets/near-wallets/SandboxedWallet";
+export { InjectedWallet } from "./wallets/near-wallets/InjectedWallet";
+
+export { HotConnector } from "./HotConnector";
+export { NearConnector } from "./NearConnector";
+
+export { NearWallet } from "./wallets/near-wallets/NearWallet";
+export { default as EvmWallet } from "./wallets/EvmWallet";
+export { default as SolanaWallet } from "./wallets/SolanaWallet";
+export { default as TonWallet } from "./wallets/TonWallet";
 
 export type {
-  NearWallet,
+  NearWalletBase,
   WalletManifest,
   EventNearWalletInjected,
   SignInParams,

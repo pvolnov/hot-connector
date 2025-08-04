@@ -1,13 +1,16 @@
-import { NearWallet, EventNearWalletInjected, WalletManifest, Network, WalletFeatures, Logger } from "./types/wallet";
-import { ParentFrameWallet } from "./wallets/ParentFrameWallet";
-import { InjectedWallet } from "./wallets/InjectedWallet";
-import { SandboxWallet } from "./wallets/SandboxedWallet";
+import { EventNearWalletInjected, WalletManifest, Network, WalletFeatures, Logger } from "./types/wallet";
+import { ParentFrameWallet } from "./wallets/near-wallets/ParentFrameWallet";
+import { InjectedWallet } from "./wallets/near-wallets/InjectedWallet";
+import { SandboxWallet } from "./wallets/near-wallets/SandboxedWallet";
+import { NearWallet } from "./wallets/near-wallets/NearWallet";
+
+import { NearWalletsPopup } from "./popups/NearWalletsPopup";
 import { LocalStorage, DataStorage } from "./storage";
 import { EventMap } from "./types/wallet-events";
 import { EventEmitter } from "./helpers/events";
 import IndexedDB from "./indexdb";
 
-interface WalletSelectorOptions {
+interface NearConnectorOptions {
   storage?: DataStorage;
   logger?: Logger;
   events?: EventEmitter<EventMap>;
@@ -21,7 +24,7 @@ interface WalletSelectorOptions {
   };
 }
 
-export class WalletSelector {
+export class NearConnector {
   private storage: DataStorage;
   readonly events: EventEmitter<EventMap>;
   readonly db: IndexedDB;
@@ -36,7 +39,7 @@ export class WalletSelector {
 
   readonly whenManifestLoaded: Promise<void>;
 
-  constructor(options?: WalletSelectorOptions) {
+  constructor(options?: NearConnectorOptions) {
     this.db = new IndexedDB("hot-connector", "wallets");
     this.storage = options?.storage ?? new LocalStorage();
     this.events = options?.events ?? new EventEmitter<EventMap>();
@@ -81,11 +84,16 @@ export class WalletSelector {
   }
 
   get availableWallets() {
-    return this.wallets.filter((wallet) => {
+    const wallets = this.wallets.filter((wallet) => {
       return Object.entries(this.features).every(([key, value]) => {
         if (value && !wallet.manifest.features?.[key as keyof WalletFeatures]) return false;
         return true;
       });
+    });
+
+    return wallets.filter((wallet) => {
+      if (this.network === "testnet" && !wallet.manifest.features?.testnet) return false;
+      return true;
     });
   }
 
@@ -102,6 +110,12 @@ export class WalletSelector {
 
     const manifest = (await (await fetch(manifestEndpoint)).json()) as { wallets: WalletManifest[]; version: string };
     return manifest;
+  }
+
+  async switchNetwork(network: "mainnet" | "testnet") {
+    await this.disconnect().catch(() => {});
+    this.network = network;
+    await this.connect();
   }
 
   async registerWallet(manifest: WalletManifest) {
@@ -123,7 +137,29 @@ export class WalletSelector {
     this.storage.set("debug-wallets", JSON.stringify(debugWallets));
   }
 
-  async connect(id: string) {
+  async selectWallet() {
+    await this.whenManifestLoaded.catch(() => {});
+    return new Promise<string>((resolve, reject) => {
+      const popup = new NearWalletsPopup({
+        wallets: this.availableWallets.map((wallet) => wallet.manifest),
+        onSelect: (id: string) => {
+          resolve(id);
+          popup.destroy();
+        },
+        onReject: () => {
+          reject(new Error("User rejected"));
+          popup.destroy();
+        },
+      });
+
+      popup.create();
+    });
+  }
+
+  async connect(id?: string) {
+    await this.whenManifestLoaded.catch(() => {});
+    if (!id) id = await this.selectWallet();
+
     try {
       const wallet = await this.wallet(id);
       this.logger?.log(`Wallet available to connect`, wallet);

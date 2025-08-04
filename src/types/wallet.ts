@@ -72,7 +72,7 @@ export interface SignAndSendTransactionsParams {
   network?: Network;
 }
 
-export type EventNearWalletInjected = CustomEvent<NearWallet>;
+export type EventNearWalletInjected = CustomEvent<NearWalletBase>;
 
 export interface WalletPermissions {
   storage?: boolean;
@@ -104,10 +104,11 @@ export interface WalletFeatures {
   signAndSendTransaction: boolean;
   signAndSendTransactions: boolean;
   signInWithoutAddKey: boolean;
+  mainnet: boolean;
   testnet: boolean;
 }
 
-export interface NearWallet {
+export interface NearWalletBase {
   manifest: WalletManifest;
 
   /**

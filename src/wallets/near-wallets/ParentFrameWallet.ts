@@ -1,7 +1,6 @@
-import { FinalExecutionOutcome } from "@near-wallet-selector/core";
+import type { FinalExecutionOutcome } from "@near-wallet-selector/core";
 import {
   Account,
-  NearWallet,
   Network,
   SignAndSendTransactionParams,
   SignAndSendTransactionsParams,
@@ -9,12 +8,15 @@ import {
   SignInParams,
   SignMessageParams,
   WalletManifest,
-} from "../types/wallet";
-import { WalletSelector } from "../selector";
-import { uuid4 } from "../helpers/uuid";
+} from "../../types/wallet";
+import { NearConnector } from "../../NearConnector";
+import { uuid4 } from "../../helpers/uuid";
+import { NearWallet } from "./NearWallet";
 
-export class ParentFrameWallet implements NearWallet {
-  constructor(readonly selector: WalletSelector, readonly manifest: WalletManifest) {}
+export class ParentFrameWallet extends NearWallet {
+  constructor(readonly connector: NearConnector, readonly manifest: WalletManifest) {
+    super();
+  }
 
   callParentFrame(method: string, params: any) {
     const id = uuid4();

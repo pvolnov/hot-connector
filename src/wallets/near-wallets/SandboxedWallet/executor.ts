@@ -1,17 +1,15 @@
-import { WalletManifest, WalletPermissions } from "../../types/wallet";
-import { WalletSelector } from "../../selector";
-import { AutoQueue } from "../../helpers/queue";
-import { parseUrl } from "../../helpers/url";
-import { uuid4 } from "../../helpers/uuid";
+import { WalletManifest, WalletPermissions } from "../../../types/wallet";
+import { NearConnector } from "../../../NearConnector";
+import { parseUrl } from "../../../helpers/url";
+import { uuid4 } from "../../../helpers/uuid";
 
 import IframeExecutor from "./iframe";
 
 class SandboxExecutor {
-  private queue = new AutoQueue();
   private activePanels: Record<string, Window> = {};
   readonly storageSpace: string;
 
-  constructor(readonly selector: WalletSelector, readonly manifest: WalletManifest) {
+  constructor(readonly connector: NearConnector, readonly manifest: WalletManifest) {
     this.storageSpace = manifest.id;
   }
 
@@ -162,29 +160,29 @@ class SandboxExecutor {
   private actualCode: string | null = null;
   async checkNewVersion(executor: SandboxExecutor, currentVersion: string | null) {
     if (this.actualCode) {
-      this.selector.logger?.log(`New version of code already checked`);
+      this.connector.logger?.log(`New version of code already checked`);
       return this.actualCode;
     }
 
     const newVersion = await fetch(executor.manifest.executor).then((res) => res.text());
-    this.selector.logger?.log(`New version of code fetched`);
+    this.connector.logger?.log(`New version of code fetched`);
     this.actualCode = newVersion;
 
     if (newVersion === currentVersion) {
-      this.selector.logger?.log(`New version of code is the same as the current version`);
+      this.connector.logger?.log(`New version of code is the same as the current version`);
       return this.actualCode;
     }
 
-    await this.selector.db.setItem(`${this.manifest.id}:${this.manifest.version}`, newVersion);
-    this.selector.logger?.log(`New version of code saved to cache`);
+    await this.connector.db.setItem(`${this.manifest.id}:${this.manifest.version}`, newVersion);
+    this.connector.logger?.log(`New version of code saved to cache`);
     return newVersion;
   }
 
   async loadCode(): Promise<string> {
-    const cachedCode = await this.selector.db
+    const cachedCode = await this.connector.db
       .getItem<string>(`${this.manifest.id}:${this.manifest.version}`)
       .catch(() => null);
-    this.selector.logger?.log(`Code loaded from cache`, cachedCode !== null);
+    this.connector.logger?.log(`Code loaded from cache`, cachedCode !== null);
 
     const task = this.checkNewVersion(this, cachedCode as string | null);
     if (cachedCode) return cachedCode;
@@ -192,19 +190,19 @@ class SandboxExecutor {
   }
 
   async call<T>(method: string, params: any): Promise<T> {
-    this.selector.logger?.log(`Add to queue`, method, params);
+    this.connector.logger?.log(`Add to queue`, method, params);
 
     // return this.queue.enqueue(async () => {
-    this.selector.logger?.log(`Calling method`, method, params);
+    this.connector.logger?.log(`Calling method`, method, params);
 
     const code = await this.loadCode();
-    this.selector.logger?.log(`Code loaded, preparing`);
+    this.connector.logger?.log(`Code loaded, preparing`);
 
     const iframe = new IframeExecutor(this, code, this._onMessage);
-    this.selector.logger?.log(`Code loaded, iframe initialized`);
+    this.connector.logger?.log(`Code loaded, iframe initialized`);
 
     await iframe.readyPromise;
-    this.selector.logger?.log(`Iframe ready`);
+    this.connector.logger?.log(`Iframe ready`);
 
     const id = uuid4();
     return new Promise<T>((resolve, reject) => {
@@ -214,7 +212,7 @@ class SandboxExecutor {
 
           iframe.dispose();
           window.removeEventListener("message", handler);
-          this.selector.logger?.log("postMessage", { result: event.data, request: { method, params } });
+          this.connector.logger?.log("postMessage", { result: event.data, request: { method, params } });
 
           if (event.data.status === "failed") reject(event.data.result);
           else resolve(event.data.result);
@@ -224,7 +222,7 @@ class SandboxExecutor {
         iframe.postMessage({ method, params, id });
         iframe.on("close", () => reject(new Error("Wallet closed")));
       } catch (e) {
-        this.selector.logger?.log(`Iframe error`, e);
+        this.connector.logger?.log(`Iframe error`, e);
         reject(e);
       }
     });

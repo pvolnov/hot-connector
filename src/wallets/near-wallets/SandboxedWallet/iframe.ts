@@ -1,17 +1,18 @@
-import { EventEmitter } from "../../helpers/events";
-import { uuid4 } from "../../helpers/uuid";
+import { EventEmitter } from "../../../helpers/events";
+import { uuid4 } from "../../../helpers/uuid";
+import { IframeWalletPopup } from "../../../popups/IframeWalletPopup";
+
 import getIframeCode from "./code";
 import SandboxExecutor from "./executor";
 
 class IframeExecutor {
   readonly origin: string;
 
-  private events = new EventEmitter<{ close: {} }>();
-  private popup = document.createElement("div");
-  private popupContent = document.createElement("div");
   private iframe = document.createElement("iframe");
-  private handler: (event: MessageEvent<any>) => void;
+  private events = new EventEmitter<{ close: {} }>();
+  private popup: IframeWalletPopup;
 
+  private handler: (event: MessageEvent<any>) => void;
   private readyPromiseResolve!: (value: void) => void;
   readonly readyPromise = new Promise<void>((resolve) => {
     this.readyPromiseResolve = resolve;
@@ -43,22 +44,21 @@ class IframeExecutor {
 
     this.iframe.allow = iframeAllowedPersimissions.join(" ");
     getIframeCode({ id: this.origin, executor: this.executor, code }).then((code) => {
-      this.executor.selector.logger?.log(`Iframe code injected`);
+      this.executor.connector.logger?.log(`Iframe code injected`);
       this.iframe.srcdoc = code;
     });
 
-    this.popupContent.classList.add("iframe-widget__popup");
-    this.popup.classList.add("iframe-widget__container");
-
-    this.popupContent.appendChild(this.iframe);
-    this.popup.appendChild(this.popupContent);
-    document.body.appendChild(this.popup);
-
-    this.popup.addEventListener("click", () => {
-      window.removeEventListener("message", this.handler);
-      this.events.emit("close", {});
-      this.popup.remove();
+    this.popup = new IframeWalletPopup({
+      iframe: this.iframe,
+      onApprove: () => {},
+      onReject: () => {
+        window.removeEventListener("message", this.handler);
+        this.events.emit("close", {});
+        this.popup.destroy();
+      },
     });
+
+    this.popup.create();
   }
 
   on(event: "close", callback: () => void) {
@@ -66,11 +66,11 @@ class IframeExecutor {
   }
 
   show() {
-    this.popup.style.display = "flex";
+    this.popup.show();
   }
 
   hide() {
-    this.popup.style.display = "none";
+    this.popup.hide();
   }
 
   postMessage(data: any) {
@@ -80,7 +80,7 @@ class IframeExecutor {
 
   dispose() {
     window.removeEventListener("message", this.handler);
-    this.popup.remove();
+    this.popup.destroy();
   }
 }
 
