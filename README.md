@@ -4,7 +4,7 @@
 
 Zero-dependenices, robust, secure and lightweight wallet connector for the NEAR blockchain with **easily updatable** wallets code
 
-`yarn add @hot-labs/near-selector`
+`yarn add @hot-labs/connector`
 
 ## How it works
 
@@ -13,15 +13,13 @@ Unlike near-wallet-selector, this library provides a secure execution environmen
 ## Dapp integration
 
 ```ts
-import { WalletSelector, WalletSelectorUI } from "@hot-labs/near-connect";
-import "@hot-labs/near-connect/modal-ui.css";
+import { NearConnector } from "@hot-labs/connector";
 
-const selector = new WalletSelector({ network: "mainnet" });
-const modal = new WalletSelectorUI(selector);
+const connector = new NearConnector({ network: "mainnet" });
 
-selector.on("wallet:signOut", async () => {});
-selector.on("wallet:signIn", async (t) => {
-  const wallet = await selector.wallet(); // api like near-wallet-selector
+connector.on("wallet:signOut", async () => {});
+connector.on("wallet:signIn", async (t) => {
+  const wallet = await connector.wallet(); // api like near-wallet-selector
   const address = t.accounts[0].accountId;
   wallet.signMessage(); // all methods like near-wallet-selector
 });
@@ -117,7 +115,7 @@ Each wallet must specify in the manifest a list of features that are supported.
 This will help dApps filter wallets by the required features. As soon as the wallet starts supporting the required feature -- it simply adds it to the manifest and updates its execution script, all dapps automatically download the updates without the need to update the frontend.
 
 ```ts
-const selector = new WalletSelector({
+const selector = new NearConnector({
   // Show wallets that support signMessage and testnet env
   features: { signMessage: true, testnet: true },
 });
