@@ -151,3 +151,46 @@ All these problems prompted us to write a new solution that will:
 - Support all near-wallet-selector wallets
 - Custom manifests for debugging mode
 - Full backward compatibility with near-wallet-selector
+
+## Multichain Connector
+
+```ts
+const multichainConnector = new HotConnector({
+  chains: [WalletType.NEAR, WalletType.EVM, WalletType.SOLANA, WalletType.TON],
+
+  onConnect: async (wallet) => {
+    const address = await wallet.getAddress();
+    setWallets((t) => ({ ...t, [wallet.type]: address }));
+  },
+
+  onDisconnect: (type) => {
+    setWallets({ ...wallets, [type]: null });
+  },
+
+  // NearConnector from @hot-labs/connector // NearConnector from @hot-labs/connector
+  nearConnector: new NearConnector({
+    manifest: manifest as any,
+    network: "mainnet",
+    logger: console,
+  }),
+
+  // ton-connect
+  tonConnect: new TonConnectUI({ connector: new TonConnect(), buttonRootId: "ton-connect" }),
+
+  // reown for evm and solana
+  appKit: createAppKit({
+    adapters: [new EthersAdapter(), new SolanaAdapter()],
+    networks: [mainnet, solana, base, bsc],
+    projectId: "4e23423b97d8d587e69801d",
+    metadata: {
+      name: "HOT Connector demo",
+      description: "HOT Connector demo",
+      url: "https://hotconnector.demo.hotlabs.io",
+      icons: ["https://hotconnector.demo.hotlabs.io/favicon-beige.ico"],
+    },
+  }),
+});
+
+// Call any wallet for intents.near protocol
+multichainConnector.signIntents(WalletType.EVM, []);
+```
