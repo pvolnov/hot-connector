@@ -1,62 +1,8 @@
 export const css = (id: string) => /*css*/ `
-${id} .connect-item {
-  display: flex;
-  padding: 12px;
-  align-items: center;
-  gap: 12px;
-  align-self: stretch;
-  cursor: pointer;
-
-  transition: background 0.2s ease-in-out;
-  border-radius: 24px;
-}
-
-${id} .connect-item img {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-${id} .connect-item-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  text-align: left;
-  flex: 1;
-  margin-top: -2px;
-}
-
-${id} .connect-item-info .wallet-address {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: normal;
-}
-
-${id} .connect-item:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-${id} .connect-item img {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-${id} .connect-item p {
-  color: rgba(255, 255, 255, 0.9);
-  text-align: center;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: normal;
-  letter-spacing: -0.36px;
-  margin: 0;
+${id} * {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  color: #fff;
 }
 
 ${id} .modal-container {
@@ -198,4 +144,64 @@ ${id} .get-wallet-link:hover {
   color: rgba(255, 255, 255, 1);
 }
 
+
+${id} .connect-item {
+  display: flex;
+  padding: 12px;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
+  cursor: pointer;
+
+  transition: background 0.2s ease-in-out;
+  border-radius: 24px;
+}
+
+${id} .connect-item img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+${id} .connect-item-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  flex: 1;
+  margin-top: -2px;
+}
+
+${id} .connect-item-info .wallet-address {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+${id} .connect-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+${id} .connect-item img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+${id} .connect-item p {
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  letter-spacing: -0.36px;
+  margin: 0;
+}
 `;

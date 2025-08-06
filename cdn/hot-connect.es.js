@@ -33,8 +33,8 @@ class $ {
    * @param payload Data to pass to event handlers
    */
   emit(e, t) {
-    var n;
-    (n = this.events[e]) == null || n.forEach((s) => s(t));
+    var s;
+    (s = this.events[e]) == null || s.forEach((n) => n(t));
   }
   /**
    * Unsubscribe from an event
@@ -43,8 +43,8 @@ class $ {
    * @param callback Function to remove from event handlers
    */
   off(e, t) {
-    var n;
-    this.events[e] = (n = this.events[e]) == null ? void 0 : n.filter((s) => s !== t);
+    var s;
+    this.events[e] = (s = this.events[e]) == null ? void 0 : s.filter((n) => n !== t);
   }
   /**
    * Subscribe to an event for a single emission
@@ -53,10 +53,10 @@ class $ {
    * @param callback Function to be called when event is emitted
    */
   once(e, t) {
-    const n = (s) => {
-      t(s), this.off(e, n);
+    const s = (n) => {
+      t(n), this.off(e, s);
     };
-    this.on(e, n);
+    this.on(e, s);
   }
   /**
    * Remove all event listeners
@@ -80,16 +80,16 @@ const A = () => typeof window.crypto < "u" && typeof window.crypto.randomUUID ==
       throw new Error(`Expected base58 string but got “${o}”`);
     if (o.match(/[IOl0]/gmu))
       throw new Error(`Invalid base58 character “${o.match(/[IOl0]/gmu)}”`);
-    const e = o.match(/^1+/gmu), t = e ? e[0].length : 0, n = (o.length - t) * (Math.log(58) / Math.log(256)) + 1 >>> 0;
+    const e = o.match(/^1+/gmu), t = e ? e[0].length : 0, s = (o.length - t) * (Math.log(58) / Math.log(256)) + 1 >>> 0;
     return new Uint8Array([
       ...new Uint8Array(t),
-      ...o.match(/.{1}/gmu).map((s) => y.indexOf(s)).reduce((s, r) => (s = s.map((a) => {
+      ...o.match(/.{1}/gmu).map((n) => y.indexOf(n)).reduce((n, r) => (n = n.map((a) => {
         const i = a * 58 + r;
         return r = i >> 8, i;
-      }), s), new Uint8Array(n)).reverse().filter(
-        /* @__PURE__ */ ((s) => (r) => (
+      }), n), new Uint8Array(s)).reverse().filter(
+        /* @__PURE__ */ ((n) => (r) => (
           // @ts-ignore
-          s = s || r
+          n = n || r
         ))(!1)
       )
     ]);
@@ -97,13 +97,13 @@ const A = () => typeof window.crypto < "u" && typeof window.crypto.randomUUID ==
   encode(o) {
     const e = [];
     for (const t of o) {
-      let n = t;
-      for (let s = 0; s < e.length; ++s) {
-        const r = (T[e[s]] << 8) + n;
-        e[s] = y.charCodeAt(r % 58), n = r / 58 | 0;
+      let s = t;
+      for (let n = 0; n < e.length; ++n) {
+        const r = (T[e[n]] << 8) + s;
+        e[n] = y.charCodeAt(r % 58), s = r / 58 | 0;
       }
-      for (; n; )
-        e.push(y.charCodeAt(n % 58)), n = n / 58 | 0;
+      for (; s; )
+        e.push(y.charCodeAt(s % 58)), s = s / 58 | 0;
     }
     for (const t of o) {
       if (t) break;
@@ -118,22 +118,22 @@ const u = {
     return [...o].map((e) => e.toString(16).padStart(2, "0")).join("");
   },
   decode(o) {
-    const t = o.replace(/^0x/, "").match(/[\dA-F]{2}/gi), n = (t == null ? void 0 : t.map((s) => parseInt(s, 16))) || [];
-    return new Uint8Array(n);
+    const t = o.replace(/^0x/, "").match(/[\dA-F]{2}/gi), s = (t == null ? void 0 : t.map((n) => parseInt(n, 16))) || [];
+    return new Uint8Array(s);
   }
 }, m = {
   decode(o) {
-    for (var e = atob(o), t = new Uint8Array(e.length), n = 0; n < e.length; n++)
-      t[n] = e.charCodeAt(n);
+    for (var e = atob(o), t = new Uint8Array(e.length), s = 0; s < e.length; s++)
+      t[s] = e.charCodeAt(s);
     return new Uint8Array(t.buffer);
   },
   encode(o) {
-    for (var e = "", t = o.byteLength, n = 0; n < t; n++)
-      e += String.fromCharCode(o[n]);
+    for (var e = "", t = o.byteLength, s = 0; s < t; s++)
+      e += String.fromCharCode(o[s]);
     return window.btoa(e);
   }
 };
-class S {
+class k {
   constructor() {
     c(this, "getAddress", async () => {
       const e = await this.getAccounts();
@@ -150,29 +150,29 @@ class S {
       return u.encode(g.decode(e));
     });
     c(this, "signIntentsWithAuth", async (e, t) => {
-      const n = await this.getAccounts();
-      if (n.length === 0) throw new Error("No account found");
-      const s = u.encode(window.crypto.getRandomValues(new Uint8Array(32))), r = new TextEncoder().encode(`${e}_${s}`), a = await window.crypto.subtle.digest("SHA-256", r);
+      const s = await this.getAccounts();
+      if (s.length === 0) throw new Error("No account found");
+      const n = u.encode(window.crypto.getRandomValues(new Uint8Array(32))), r = new TextEncoder().encode(`${e}_${n}`), a = await window.crypto.subtle.digest("SHA-256", r);
       return {
         intent: await this.signIntents(t || [], { nonce: new Uint8Array(a) }),
-        address: n[0].accountId,
-        publicKey: n[0].publicKey,
+        address: s[0].accountId,
+        publicKey: s[0].publicKey,
         chainId: l.NEAR,
-        nonce: s,
+        nonce: n,
         domain: e
       };
     });
     c(this, "signIntents", async (e, t) => {
-      const n = new Uint8Array((t == null ? void 0 : t.nonce) || window.crypto.getRandomValues(new Uint8Array(32))), s = await this.getIntentsAddress(), r = JSON.stringify({
+      const s = new Uint8Array((t == null ? void 0 : t.nonce) || window.crypto.getRandomValues(new Uint8Array(32))), n = await this.getIntentsAddress(), r = JSON.stringify({
         deadline: t != null && t.deadline ? new Date(t.deadline).toISOString() : "2100-01-01T00:00:00.000Z",
-        signer_id: s,
+        signer_id: n,
         intents: e
-      }), a = await this.signMessage({ message: r, recipient: "intents.near", nonce: n });
+      }), a = await this.signMessage({ message: r, recipient: "intents.near", nonce: s });
       if (!a) throw new Error("Failed to sign message");
       const { signature: i, publicKey: d } = a;
       return {
         standard: "nep413",
-        payload: { nonce: m.encode(n), recipient: "intents.near", message: r },
+        payload: { nonce: m.encode(s), recipient: "intents.near", message: r },
         signature: `ed25519:${g.encode(m.decode(i))}`,
         public_key: d
       };
@@ -182,15 +182,15 @@ class S {
     return l.NEAR;
   }
 }
-class j extends S {
+class j extends k {
   constructor(e, t) {
     super(), this.connector = e, this.manifest = t;
   }
   callParentFrame(e, t) {
-    const n = A();
-    return window.parent.postMessage({ type: "near-wallet-injected-request", id: n, method: e, params: t }, "*"), new Promise((s, r) => {
+    const s = A();
+    return window.parent.postMessage({ type: "near-wallet-injected-request", id: s, method: e, params: t }, "*"), new Promise((n, r) => {
       const a = (i) => {
-        i.data.type === "near-wallet-injected-response" && i.data.id === n && (window.removeEventListener("message", a), i.data.success ? s(i.data.result) : r(i.data.error));
+        i.data.type === "near-wallet-injected-response" && i.data.id === s && (window.removeEventListener("message", a), i.data.success ? n(i.data.result) : r(i.data.error));
       };
       window.addEventListener("message", a);
     });
@@ -215,7 +215,7 @@ class j extends S {
     return this.callParentFrame("near:signMessage", e);
   }
 }
-const b = (o) => {
+const v = (o) => {
   try {
     return new URL(o);
   } catch {
@@ -224,64 +224,10 @@ const b = (o) => {
 }, K = (o) => (
   /*css*/
   `
-${o} .connect-item {
-  display: flex;
-  padding: 12px;
-  align-items: center;
-  gap: 12px;
-  align-self: stretch;
-  cursor: pointer;
-
-  transition: background 0.2s ease-in-out;
-  border-radius: 24px;
-}
-
-${o} .connect-item img {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-${o} .connect-item-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  text-align: left;
-  flex: 1;
-  margin-top: -2px;
-}
-
-${o} .connect-item-info .wallet-address {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: normal;
-}
-
-${o} .connect-item:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-${o} .connect-item img {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-${o} .connect-item p {
-  color: rgba(255, 255, 255, 0.9);
-  text-align: center;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: normal;
-  letter-spacing: -0.36px;
-  margin: 0;
+${o} * {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  color: #fff;
 }
 
 ${o} .modal-container {
@@ -423,6 +369,66 @@ ${o} .get-wallet-link:hover {
   color: rgba(255, 255, 255, 1);
 }
 
+
+${o} .connect-item {
+  display: flex;
+  padding: 12px;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
+  cursor: pointer;
+
+  transition: background 0.2s ease-in-out;
+  border-radius: 24px;
+}
+
+${o} .connect-item img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+${o} .connect-item-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  flex: 1;
+  margin-top: -2px;
+}
+
+${o} .connect-item-info .wallet-address {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+${o} .connect-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+${o} .connect-item img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+${o} .connect-item p {
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  letter-spacing: -0.36px;
+  margin: 0;
+}
 `
 ), M = "hot-connector-popup", C = document.createElement("style");
 C.textContent = K(`.${M}`);
@@ -442,8 +448,8 @@ class x {
   }
   create({ show: e = !0 }) {
     this.root.className = M, this.root.innerHTML = this.dom, document.body.append(this.root);
-    const t = this.root.querySelector(".modal-container"), n = this.root.querySelector(".modal-content"), s = this.root.querySelector(".get-wallet-link");
-    n.style.transform = "translateY(50px)", t.style.opacity = "0", this.root.style.display = "none", n.addEventListener("click", (r) => r.stopPropagation()), s.addEventListener("click", () => window.open("https://download.hot-labs.org?hotconnector", "_blank")), t.addEventListener("click", () => {
+    const t = this.root.querySelector(".modal-container"), s = this.root.querySelector(".modal-content"), n = this.root.querySelector(".get-wallet-link");
+    s.style.transform = "translateY(50px)", t.style.opacity = "0", this.root.style.display = "none", s.addEventListener("click", (r) => r.stopPropagation()), n.addEventListener("click", () => window.open("https://download.hot-labs.org?hotconnector", "_blank")), t.addEventListener("click", () => {
       this.delegate.onReject(), this.destroy();
     }), e && setTimeout(() => this.show(), 10);
   }
@@ -465,7 +471,7 @@ class x {
     }, 200));
   }
 }
-class D extends x {
+class U extends x {
   constructor(e) {
     super(e), this.delegate = e;
   }
@@ -489,8 +495,8 @@ class D extends x {
       </div>`;
   }
 }
-async function U(o) {
-  const e = await o.executor.getAllStorage(), t = o.executor.manifest, n = o.id, s = o.code.replaceAll("window.localStorage", "window.sandboxedLocalStorage").replaceAll("window.top", "window.selector").replaceAll("window.open", "window.selector.open");
+async function D(o) {
+  const e = await o.executor.getAllStorage(), t = o.executor.manifest, s = o.id, n = o.code.replaceAll("window.localStorage", "window.sandboxedLocalStorage").replaceAll("window.top", "window.selector").replaceAll("window.open", "window.selector.open");
   return (
     /* html */
     `
@@ -634,7 +640,7 @@ async function U(o) {
           this.windowIdPromise = window.selector.call("open", { url, features });
 
           window.addEventListener("message", async (event) => {            
-            if (event.data.origin !== "${n}") return;
+            if (event.data.origin !== "${s}") return;
             if (!event.data.method?.startsWith("proxy-window:")) return;
             const method = event.data.method.replace("proxy-window:", "");
             if (method === "closed" && event.data.windowId === await this.id()) this.closed = true;
@@ -676,17 +682,17 @@ async function U(o) {
         },
       
         async ready(wallet) {
-          window.parent.postMessage({ method: "wallet-ready", origin: "${n}" }, "*");
+          window.parent.postMessage({ method: "wallet-ready", origin: "${s}" }, "*");
           window.selector.wallet = wallet;
         },
 
         async call(method, params) {
           const id = window.selector.uuid();
-          window.parent.postMessage({ method, params, id, origin: "${n}" }, "*");
+          window.parent.postMessage({ method, params, id, origin: "${s}" }, "*");
 
           return new Promise((resolve, reject) => {
             const handler = (event) => {
-              if (event.data.id !== id || event.data.origin !== "${n}") return;
+              if (event.data.id !== id || event.data.origin !== "${s}") return;
               window.removeEventListener("message", handler);
 
               if (event.data.status === "failed") reject(event.data.result);
@@ -700,7 +706,7 @@ async function U(o) {
         panelClosed(windowId) {
           window.parent.postMessage({ 
             method: "panel.closed", 
-            origin: "${n}", 
+            origin: "${s}", 
             result: { windowId } 
           }, "*");
         },
@@ -745,12 +751,12 @@ async function U(o) {
       };
 
       window.addEventListener("message", async (event) => {
-        if (event.data.origin !== "${n}") return;
+        if (event.data.origin !== "${s}") return;
         if (!event.data.method?.startsWith("wallet:")) return;
       
         const wallet = window.selector.wallet;
         const method = event.data.method.replace("wallet:", "");
-        const payload = { id: event.data.id, origin: "${n}", method };
+        const payload = { id: event.data.id, origin: "${s}", method };
       
         if (wallet == null || typeof wallet[method] !== "function") {
           const data = { ...payload, status: "failed", result: "Method not found" };
@@ -768,14 +774,14 @@ async function U(o) {
       });
       <\/script>
 
-      <script type="module">${s}<\/script>
+      <script type="module">${n}<\/script>
     </body>
   </html>
     `
   );
 }
-class _ {
-  constructor(e, t, n) {
+class R {
+  constructor(e, t, s) {
     c(this, "origin");
     c(this, "iframe", document.createElement("iframe"));
     c(this, "events", new $());
@@ -786,13 +792,13 @@ class _ {
       this.readyPromiseResolve = e;
     }));
     this.executor = e, this.origin = A(), this.handler = (r) => {
-      r.data.origin === this.origin && (r.data.method === "wallet-ready" && this.readyPromiseResolve(), n(this, r));
+      r.data.origin === this.origin && (r.data.method === "wallet-ready" && this.readyPromiseResolve(), s(this, r));
     }, window.addEventListener("message", this.handler), this.iframe.setAttribute("sandbox", "allow-scripts");
-    const s = [];
-    this.executor.checkPermissions("usb") && s.push("usb *;"), this.executor.checkPermissions("hid") && s.push("hid *;"), this.iframe.allow = s.join(" "), U({ id: this.origin, executor: this.executor, code: t }).then((r) => {
+    const n = [];
+    this.executor.checkPermissions("usb") && n.push("usb *;"), this.executor.checkPermissions("hid") && n.push("hid *;"), this.iframe.allow = n.join(" "), D({ id: this.origin, executor: this.executor, code: t }).then((r) => {
       var a;
       (a = this.executor.connector.logger) == null || a.log("Iframe code injected"), this.iframe.srcdoc = r;
-    }), this.popup = new D({
+    }), this.popup = new U({
       iframe: this.iframe,
       onApprove: () => {
       },
@@ -818,12 +824,12 @@ class _ {
     window.removeEventListener("message", this.handler), this.popup.destroy();
   }
 }
-class R {
+class _ {
   constructor(e, t) {
     c(this, "activePanels", {});
     c(this, "storageSpace");
     c(this, "_onMessage", async (e, t) => {
-      var n;
+      var s;
       if (t.data.method === "ui.showIframe") {
         e.show(), e.postMessage({ ...t.data, status: "success", result: null });
         return;
@@ -837,13 +843,13 @@ class R {
         return;
       }
       if (t.data.method === "storage.get" && this.checkPermissions("storage")) {
-        const s = localStorage.getItem(`${this.storageSpace}:${t.data.params.key}`);
-        e.postMessage({ ...t.data, status: "success", result: s });
+        const n = localStorage.getItem(`${this.storageSpace}:${t.data.params.key}`);
+        e.postMessage({ ...t.data, status: "success", result: n });
         return;
       }
       if (t.data.method === "storage.keys" && this.checkPermissions("storage")) {
-        const s = Object.keys(localStorage).filter((r) => r.startsWith(`${this.storageSpace}:`));
-        e.postMessage({ ...t.data, status: "success", result: s });
+        const n = Object.keys(localStorage).filter((r) => r.startsWith(`${this.storageSpace}:`));
+        e.postMessage({ ...t.data, status: "success", result: n });
         return;
       }
       if (t.data.method === "storage.remove" && this.checkPermissions("storage")) {
@@ -851,18 +857,18 @@ class R {
         return;
       }
       if (t.data.method === "panel.focus") {
-        const s = this.activePanels[t.data.params.windowId];
-        s && s.focus(), e.postMessage({ ...t.data, status: "success", result: null });
+        const n = this.activePanels[t.data.params.windowId];
+        n && n.focus(), e.postMessage({ ...t.data, status: "success", result: null });
         return;
       }
       if (t.data.method === "panel.postMessage") {
-        const s = this.activePanels[t.data.params.windowId];
-        s && s.postMessage(t.data.params.data, "*"), e.postMessage({ ...t.data, status: "success", result: null });
+        const n = this.activePanels[t.data.params.windowId];
+        n && n.postMessage(t.data.params.data, "*"), e.postMessage({ ...t.data, status: "success", result: null });
         return;
       }
       if (t.data.method === "panel.close") {
-        const s = this.activePanels[t.data.params.windowId];
-        s && s.close(), delete this.activePanels[t.data.params.windowId], e.postMessage({ ...t.data, status: "success", result: null });
+        const n = this.activePanels[t.data.params.windowId];
+        n && n.close(), delete this.activePanels[t.data.params.windowId], e.postMessage({ ...t.data, status: "success", result: null });
         return;
       }
       if (t.data.method === "parentFrame.postMessage" && this.checkPermissions("parentFrame")) {
@@ -870,13 +876,13 @@ class R {
         return;
       }
       if (t.data.method === "open" && this.checkPermissions("open", t.data.params)) {
-        const s = typeof window < "u" ? (n = window == null ? void 0 : window.Telegram) == null ? void 0 : n.WebApp : null;
-        if (s && t.data.params.url.startsWith("https://t.me")) {
-          s.openTelegramLink(t.data.params.url);
+        const n = typeof window < "u" ? (s = window == null ? void 0 : window.Telegram) == null ? void 0 : s.WebApp : null;
+        if (n && t.data.params.url.startsWith("https://t.me")) {
+          n.openTelegramLink(t.data.params.url);
           return;
         }
         const r = window.open(t.data.params.url, "_blank", t.data.params.features), a = r ? A() : null, i = (d) => {
-          const h = b(t.data.params.url);
+          const h = v(t.data.params.url);
           h && h.origin === d.origin && e.postMessage(d.data);
         };
         if (e.postMessage({ ...t.data, status: "success", result: a }), window.addEventListener("message", i), r && a) {
@@ -899,17 +905,17 @@ class R {
     this.connector = e, this.manifest = t, this.storageSpace = t.id;
   }
   checkPermissions(e, t) {
-    var n;
+    var s;
     if (e === "open") {
-      const s = b((t == null ? void 0 : t.url) || ""), r = this.manifest.permissions[e];
-      return !s || typeof r != "object" || !r.allows ? !1 : r.allows.some((i) => {
-        const d = b(i);
-        return !(!d || s.protocol !== d.protocol || d.hostname && s.hostname !== d.hostname || d.pathname && d.pathname !== "/" && s.pathname !== d.pathname);
+      const n = v((t == null ? void 0 : t.url) || ""), r = this.manifest.permissions[e];
+      return !n || typeof r != "object" || !r.allows ? !1 : r.allows.some((i) => {
+        const d = v(i);
+        return !(!d || n.protocol !== d.protocol || d.hostname && n.hostname !== d.hostname || d.pathname && d.pathname !== "/" && n.pathname !== d.pathname);
       });
     }
     if (e === "parentFrame") {
-      const s = ((n = window.location.ancestorOrigins) == null ? void 0 : n[0]) ?? "", r = this.manifest.permissions[e];
-      return r ? r.includes(s) : !1;
+      const n = ((s = window.location.ancestorOrigins) == null ? void 0 : s[0]) ?? "", r = this.manifest.permissions[e];
+      return r ? r.includes(n) : !1;
     }
     return this.manifest.permissions[e];
   }
@@ -922,44 +928,44 @@ class R {
     return (e = this.manifest.permissions.parentFrame) == null ? void 0 : e.includes(this.parentOrigin);
   }
   async checkNewVersion(e, t) {
-    var s, r, a, i;
+    var n, r, a, i;
     if (this.actualCode)
-      return (s = this.connector.logger) == null || s.log("New version of code already checked"), this.actualCode;
-    const n = await fetch(e.manifest.executor).then((d) => d.text());
-    return (r = this.connector.logger) == null || r.log("New version of code fetched"), this.actualCode = n, n === t ? ((a = this.connector.logger) == null || a.log("New version of code is the same as the current version"), this.actualCode) : (await this.connector.db.setItem(`${this.manifest.id}:${this.manifest.version}`, n), (i = this.connector.logger) == null || i.log("New version of code saved to cache"), n);
+      return (n = this.connector.logger) == null || n.log("New version of code already checked"), this.actualCode;
+    const s = await fetch(e.manifest.executor).then((d) => d.text());
+    return (r = this.connector.logger) == null || r.log("New version of code fetched"), this.actualCode = s, s === t ? ((a = this.connector.logger) == null || a.log("New version of code is the same as the current version"), this.actualCode) : (await this.connector.db.setItem(`${this.manifest.id}:${this.manifest.version}`, s), (i = this.connector.logger) == null || i.log("New version of code saved to cache"), s);
   }
   async loadCode() {
-    var n;
+    var s;
     const e = await this.connector.db.getItem(`${this.manifest.id}:${this.manifest.version}`).catch(() => null);
-    (n = this.connector.logger) == null || n.log("Code loaded from cache", e !== null);
+    (s = this.connector.logger) == null || s.log("Code loaded from cache", e !== null);
     const t = this.checkNewVersion(this, e);
     return e || await t;
   }
   async call(e, t) {
     var a, i, d, h, p;
     (a = this.connector.logger) == null || a.log("Add to queue", e, t), (i = this.connector.logger) == null || i.log("Calling method", e, t);
-    const n = await this.loadCode();
+    const s = await this.loadCode();
     (d = this.connector.logger) == null || d.log("Code loaded, preparing");
-    const s = new _(this, n, this._onMessage);
-    (h = this.connector.logger) == null || h.log("Code loaded, iframe initialized"), await s.readyPromise, (p = this.connector.logger) == null || p.log("Iframe ready");
+    const n = new R(this, s, this._onMessage);
+    (h = this.connector.logger) == null || h.log("Code loaded, iframe initialized"), await n.readyPromise, (p = this.connector.logger) == null || p.log("Iframe ready");
     const r = A();
-    return new Promise((v, k) => {
+    return new Promise((b, S) => {
       var E;
       try {
         const f = (w) => {
           var I;
-          w.data.id !== r || w.data.origin !== s.origin || (s.dispose(), window.removeEventListener("message", f), (I = this.connector.logger) == null || I.log("postMessage", { result: w.data, request: { method: e, params: t } }), w.data.status === "failed" ? k(w.data.result) : v(w.data.result));
+          w.data.id !== r || w.data.origin !== n.origin || (n.dispose(), window.removeEventListener("message", f), (I = this.connector.logger) == null || I.log("postMessage", { result: w.data, request: { method: e, params: t } }), w.data.status === "failed" ? S(w.data.result) : b(w.data.result));
         };
-        window.addEventListener("message", f), s.postMessage({ method: e, params: t, id: r }), s.on("close", () => k(new Error("Wallet closed")));
+        window.addEventListener("message", f), n.postMessage({ method: e, params: t, id: r }), n.on("close", () => S(new Error("Wallet closed")));
       } catch (f) {
-        (E = this.connector.logger) == null || E.log("Iframe error", f), k(f);
+        (E = this.connector.logger) == null || E.log("Iframe error", f), S(f);
       }
     });
   }
   async getAllStorage() {
-    const e = Object.keys(localStorage).filter((n) => n.startsWith(`${this.storageSpace}:`)), t = {};
-    for (const n of e)
-      t[n.replace(`${this.storageSpace}:`, "")] = localStorage.getItem(n);
+    const e = Object.keys(localStorage).filter((s) => s.startsWith(`${this.storageSpace}:`)), t = {};
+    for (const s of e)
+      t[s.replace(`${this.storageSpace}:`, "")] = localStorage.getItem(s);
     return t;
   }
   async clearStorage() {
@@ -968,11 +974,11 @@ class R {
       localStorage.removeItem(t);
   }
 }
-class N extends S {
-  constructor(t, n) {
+class N extends k {
+  constructor(t, s) {
     super();
     c(this, "executor");
-    this.connector = t, this.manifest = n, this.executor = new R(t, n);
+    this.connector = t, this.manifest = s, this.executor = new _(t, s);
   }
   async signIn(t) {
     return this.executor.call("wallet:signIn", { ...t, network: t.network || this.connector.network });
@@ -984,19 +990,19 @@ class N extends S {
     return this.executor.call("wallet:getAccounts", { network: this.connector.network });
   }
   async signAndSendTransaction(t) {
-    const n = t.network || this.connector.network;
-    return this.executor.call("wallet:signAndSendTransaction", { ...t, network: n });
+    const s = t.network || this.connector.network;
+    return this.executor.call("wallet:signAndSendTransaction", { ...t, network: s });
   }
   async signAndSendTransactions(t) {
-    const n = t.network || this.connector.network;
-    return this.executor.call("wallet:signAndSendTransactions", { ...t, network: n });
+    const s = t.network || this.connector.network;
+    return this.executor.call("wallet:signAndSendTransactions", { ...t, network: s });
   }
   async signMessage(t) {
-    const n = t.network || this.connector.network;
-    return this.executor.call("wallet:signMessage", { ...t, network: n });
+    const s = t.network || this.connector.network;
+    return this.executor.call("wallet:signMessage", { ...t, network: s });
   }
 }
-class H extends S {
+class H extends k {
   constructor(e, t) {
     super(), this.connector = e, this.wallet = t;
   }
@@ -1167,13 +1173,13 @@ class F {
     });
     c(this, "getIntentsAddress", async () => (await this.getAddress()).toLowerCase());
     c(this, "signIntentsWithAuth", async (e, t) => {
-      const n = u.encode(window.crypto.getRandomValues(new Uint8Array(32))), s = new TextEncoder().encode(`${e}_${n}`), r = await window.crypto.subtle.digest("SHA-256", s), a = await this.getAddress();
+      const s = u.encode(window.crypto.getRandomValues(new Uint8Array(32))), n = new TextEncoder().encode(`${e}_${s}`), r = await window.crypto.subtle.digest("SHA-256", n), a = await this.getAddress();
       return {
         intent: await this.signIntents(t || [], { nonce: new Uint8Array(r) }),
         address: a,
         publicKey: a,
         chainId: l.EVM,
-        nonce: n
+        nonce: s
       };
     });
     this.wallet = e;
@@ -1182,18 +1188,18 @@ class F {
     return l.EVM;
   }
   async signMessage(e) {
-    const t = await this.getAddress(), n = await this.wallet.request({ method: "personal_sign", params: [e, t] }), s = u.decode(n.slice(2)), r = s.slice(-1, 0), a = parseInt(`0x${u.encode(r)}`, 16), i = u.decode("00"), d = u.decode("01");
-    return new Uint8Array([...s.slice(0, -1), ...a === 27 || a === 0 ? i : d]);
+    const t = await this.getAddress(), s = await this.wallet.request({ method: "personal_sign", params: [e, t] }), n = u.decode(s.slice(2)), r = n.slice(-1, 0), a = parseInt(`0x${u.encode(r)}`, 16), i = u.decode("00"), d = u.decode("01");
+    return new Uint8Array([...n.slice(0, -1), ...a === 27 || a === 0 ? i : d]);
   }
   async sendTransaction(e) {
     return await this.wallet.request({ method: "eth_sendTransaction", params: [e] });
   }
   async signIntents(e, t) {
-    const n = await this.getAddress(), s = new Uint8Array((t == null ? void 0 : t.nonce) || window.crypto.getRandomValues(new Uint8Array(32))), r = JSON.stringify({
+    const s = await this.getAddress(), n = new Uint8Array((t == null ? void 0 : t.nonce) || window.crypto.getRandomValues(new Uint8Array(32))), r = JSON.stringify({
       deadline: t != null && t.deadline ? new Date(t.deadline).toISOString() : "2100-01-01T00:00:00.000Z",
-      nonce: m.encode(s),
       verifying_contract: "intents.near",
-      signer_id: n.toLowerCase(),
+      signer_id: s.toLowerCase(),
+      nonce: m.encode(n),
       intents: e
     }), a = await this.signMessage(r);
     return {
@@ -1221,27 +1227,27 @@ class B {
     return l.SOLANA;
   }
   async signIntentsWithAuth(e, t) {
-    const n = await this.getAddress(), s = u.encode(window.crypto.getRandomValues(new Uint8Array(32))), r = new TextEncoder().encode(`${e}_${s}`), a = await window.crypto.subtle.digest("SHA-256", r);
+    const s = await this.getAddress(), n = u.encode(window.crypto.getRandomValues(new Uint8Array(32))), r = new TextEncoder().encode(`${e}_${n}`), a = await window.crypto.subtle.digest("SHA-256", r);
     return {
       intent: await this.signIntents(t || [], { nonce: new Uint8Array(a) }),
-      publicKey: `ed25519:${n}`,
+      publicKey: `ed25519:${s}`,
       chainId: l.SOLANA,
-      address: n,
-      nonce: s
+      address: s,
+      nonce: n
     };
   }
-  async sendTransaction(e, t, n) {
-    return await this.wallet.sendTransaction(e, t, n);
+  async sendTransaction(e, t, s) {
+    return await this.wallet.sendTransaction(e, t, s);
   }
   async signMessage(e) {
     return await this.wallet.signMessage(new TextEncoder().encode(e));
   }
   async signIntents(e, t) {
-    const n = new Uint8Array((t == null ? void 0 : t.nonce) || window.crypto.getRandomValues(new Uint8Array(32))), s = await this.getIntentsAddress(), r = await this.getPublicKey(), a = JSON.stringify({
+    const s = new Uint8Array((t == null ? void 0 : t.nonce) || window.crypto.getRandomValues(new Uint8Array(32))), n = await this.getIntentsAddress(), r = await this.getPublicKey(), a = JSON.stringify({
       deadline: t != null && t.deadline ? new Date(t.deadline).toISOString() : "2100-01-01T00:00:00.000Z",
-      nonce: m.encode(n),
+      nonce: m.encode(s),
       verifying_contract: "intents.near",
-      signer_id: s,
+      signer_id: n,
       intents: e
     }), i = await this.signMessage(a);
     return {
@@ -1275,28 +1281,28 @@ class Y {
     return this.wallet.sendTransaction(e);
   }
   async signIntentsWithAuth(e, t) {
-    const n = u.encode(window.crypto.getRandomValues(new Uint8Array(32))), s = new TextEncoder().encode(`${e}_${n}`), r = await window.crypto.subtle.digest("SHA-256", s), a = await this.getPublicKey(), i = await this.getAddress();
+    const s = u.encode(window.crypto.getRandomValues(new Uint8Array(32))), n = new TextEncoder().encode(`${e}_${s}`), r = await window.crypto.subtle.digest("SHA-256", n), a = await this.getPublicKey(), i = await this.getAddress();
     return {
       intent: await this.signIntents(t || [], { nonce: new Uint8Array(r) }),
       publicKey: `ed25519:${a}`,
       chainId: l.TON,
       address: i,
-      nonce: n
+      nonce: s
     };
   }
   async signIntents(e, t) {
-    const n = await this.getPublicKey(), s = new Uint8Array((t == null ? void 0 : t.nonce) || window.crypto.getRandomValues(new Uint8Array(32))), r = {
+    const s = await this.getPublicKey(), n = new Uint8Array((t == null ? void 0 : t.nonce) || window.crypto.getRandomValues(new Uint8Array(32))), r = {
       deadline: new Date(Date.now() + 24 * 36e5 * 365).toISOString(),
       signer_id: await this.getIntentsAddress(),
       verifying_contract: "intents.near",
-      nonce: m.encode(s),
+      nonce: m.encode(n),
       intents: e
     }, a = await this.wallet.signData({ text: JSON.stringify(r), type: "text" });
     return {
       ...a,
       standard: "ton_connect",
       signature: "ed25519:" + g.encode(m.decode(a.signature)),
-      public_key: `ed25519:${n}`
+      public_key: `ed25519:${s}`
     };
   }
 }
@@ -1309,15 +1315,15 @@ class G {
       [l.TON]: null
     });
     c(this, "signIntents", async (e, t) => this.getWallet(e).signIntents(t));
-    var t, n, s, r, a, i, d;
+    var t, s, n, r, a, i, d;
     this.options = e, (t = this.options.tonConnect) == null || t.onStatusChange(async (h) => {
       if (!h) return this.removeWallet(l.TON);
       this.setWallet(l.TON, new Y(this.options.tonConnect));
-    }), (n = this.options.tonConnect) == null || n.setConnectRequestParameters({ state: "ready", value: { tonProof: "hot-connector" } }), (s = this.options.tonConnect) == null || s.connector.restoreConnection(), (r = this.options.nearConnector) == null || r.on("wallet:signOut", () => this.removeWallet(l.NEAR)), (a = this.options.nearConnector) == null || a.on("wallet:signIn", ({ wallet: h }) => this.setWallet(l.NEAR, h)), (i = this.options.nearConnector) == null || i.getConnectedWallet().then(({ wallet: h }) => this.setWallet(l.NEAR, h)), (d = this.options.appKit) == null || d.subscribeProviders(async (h) => {
+    }), (s = this.options.tonConnect) == null || s.setConnectRequestParameters({ state: "ready", value: { tonProof: "hot-connector" } }), (n = this.options.tonConnect) == null || n.connector.restoreConnection(), (r = this.options.nearConnector) == null || r.on("wallet:signOut", () => this.removeWallet(l.NEAR)), (a = this.options.nearConnector) == null || a.on("wallet:signIn", ({ wallet: h }) => this.setWallet(l.NEAR, h)), (i = this.options.nearConnector) == null || i.getConnectedWallet().then(({ wallet: h }) => this.setWallet(l.NEAR, h)), (d = this.options.appKit) == null || d.subscribeProviders(async (h) => {
       const p = h.solana;
       p ? this.setWallet(l.SOLANA, new B(p)) : this.removeWallet(l.SOLANA);
-      const v = h.eip155;
-      v ? this.setWallet(l.EVM, new F(v)) : this.removeWallet(l.EVM);
+      const b = h.eip155;
+      b ? this.setWallet(l.EVM, new F(b)) : this.removeWallet(l.EVM);
     });
   }
   setWallet(e, t) {
@@ -1331,19 +1337,19 @@ class G {
     return this.wallets[e];
   }
   async connectWallet(e) {
-    var t, n, s, r;
+    var t, s, n, r;
     if (e === l.NEAR) return (t = this.options.nearConnector) == null ? void 0 : t.connect();
-    if (e === l.EVM) return (n = this.options.appKit) == null ? void 0 : n.open({ namespace: "eip155" });
-    if (e === l.SOLANA) return (s = this.options.appKit) == null ? void 0 : s.open({ namespace: "solana" });
+    if (e === l.EVM) return (s = this.options.appKit) == null ? void 0 : s.open({ namespace: "eip155" });
+    if (e === l.SOLANA) return (n = this.options.appKit) == null ? void 0 : n.open({ namespace: "solana" });
     if (e === l.TON) return (r = this.options.tonConnect) == null ? void 0 : r.openModal();
   }
   async connect() {
     return new Promise(async (e, t) => {
-      var s, r, a, i;
-      const n = new V({
+      var n, r, a, i;
+      const s = new V({
         chains: this.options.chains,
         wallets: {
-          [l.NEAR]: await ((s = this.wallets[l.NEAR]) == null ? void 0 : s.getAddress().catch(() => {
+          [l.NEAR]: await ((n = this.wallets[l.NEAR]) == null ? void 0 : n.getAddress().catch(() => {
           })),
           [l.EVM]: await ((r = this.wallets[l.EVM]) == null ? void 0 : r.getAddress().catch(() => {
           })),
@@ -1353,27 +1359,27 @@ class G {
           }))
         },
         onConnect: (d) => {
-          this.connectWallet(d), n.destroy(), e();
+          this.connectWallet(d), s.destroy(), e();
         },
         onDisconnect: (d) => {
-          this.disconnect(d), n.destroy(), e();
+          this.disconnect(d), s.destroy(), e();
         },
         onReject: () => {
-          t(new Error("User rejected")), n.destroy();
+          t(new Error("User rejected")), s.destroy();
         }
       });
-      n.create();
+      s.create();
     });
   }
-  async auth(e, t, n) {
-    return new Promise((s, r) => {
+  async auth(e, t, s) {
+    return new Promise((n, r) => {
       const a = new q({
         onApprove: async () => {
           try {
             const i = typeof e == "number" || typeof e == "string" ? this.getWallet(e) : e;
             if (!i) throw new Error("Wallet not found");
-            const d = await i.signIntentsWithAuth(t, n);
-            s(d), a.destroy();
+            const d = await i.signIntentsWithAuth(t, s);
+            n(d), a.destroy();
           } catch (i) {
             r(i), a.destroy();
           }
@@ -1386,17 +1392,17 @@ class G {
     });
   }
   async disconnect(e) {
-    return new Promise((t, n) => {
-      const s = new z({
+    return new Promise((t, s) => {
+      const n = new z({
         onApprove: async () => {
           var r, a, i, d;
-          e === l.NEAR && await ((r = this.options.nearConnector) == null ? void 0 : r.disconnect().catch(() => null)), e === l.SOLANA && await ((a = this.options.appKit) == null ? void 0 : a.disconnect("solana").catch(() => null)), e === l.EVM && await ((i = this.options.appKit) == null ? void 0 : i.disconnect("eip155").catch(() => null)), e === l.TON && await ((d = this.options.tonConnect) == null ? void 0 : d.connector.disconnect().catch(() => null)), this.removeWallet(e), s.destroy(), t();
+          e === l.NEAR && await ((r = this.options.nearConnector) == null ? void 0 : r.disconnect().catch(() => null)), e === l.SOLANA && await ((a = this.options.appKit) == null ? void 0 : a.disconnect("solana").catch(() => null)), e === l.EVM && await ((i = this.options.appKit) == null ? void 0 : i.disconnect("eip155").catch(() => null)), e === l.TON && await ((d = this.options.tonConnect) == null ? void 0 : d.connector.disconnect().catch(() => null)), this.removeWallet(e), n.destroy(), t();
         },
         onReject: () => {
-          n(new Error("User rejected")), s.destroy();
+          s(new Error("User rejected")), n.destroy();
         }
       });
-      s.create();
+      n.create();
     });
   }
 }
@@ -1421,7 +1427,7 @@ class J extends x {
 				<img style="background: #333" src="${e.icon}" alt="${e.name}" />
 				<div class="connect-item-info">
 					<span>${e.name}</span>
-					<span class="wallet-address">${(t = b(e.website)) == null ? void 0 : t.hostname}</span>
+					<span class="wallet-address">${(t = v(e.website)) == null ? void 0 : t.hostname}</span>
 				</div>
 			</div>
     `;
@@ -1456,13 +1462,13 @@ class Z {
   }
   getDb() {
     return new Promise((e, t) => {
-      const n = indexedDB.open(this.dbName, this.version);
-      n.onerror = (s) => {
-        console.error("Error opening database:", s.target.error), t(new Error("Error opening database"));
-      }, n.onsuccess = (s) => {
-        e(n.result);
-      }, n.onupgradeneeded = (s) => {
-        const r = n.result;
+      const s = indexedDB.open(this.dbName, this.version);
+      s.onerror = (n) => {
+        console.error("Error opening database:", n.target.error), t(new Error("Error opening database"));
+      }, s.onsuccess = (n) => {
+        e(s.result);
+      }, s.onupgradeneeded = (n) => {
+        const r = s.result;
         r.objectStoreNames.contains(this.storeName) || r.createObjectStore(this.storeName);
       };
     });
@@ -1471,33 +1477,33 @@ class Z {
     const t = await this.getDb();
     if (typeof e == "number" && (e = e.toString()), typeof e != "string")
       throw new Error("Key must be a string");
-    return new Promise((n, s) => {
+    return new Promise((s, n) => {
       if (!this.storeName) {
-        s(new Error("Store name not set"));
+        n(new Error("Store name not set"));
         return;
       }
       const r = t.transaction(this.storeName, "readonly");
-      r.onerror = (d) => s(r.error);
+      r.onerror = (d) => n(r.error);
       const i = r.objectStore(this.storeName).get(e);
-      i.onerror = (d) => s(i.error), i.onsuccess = () => {
-        n(i.result), t.close();
+      i.onerror = (d) => n(i.error), i.onsuccess = () => {
+        s(i.result), t.close();
       };
     });
   }
   async setItem(e, t) {
-    const n = await this.getDb();
+    const s = await this.getDb();
     if (typeof e == "number" && (e = e.toString()), typeof e != "string")
       throw new Error("Key must be a string");
-    return new Promise((s, r) => {
+    return new Promise((n, r) => {
       if (!this.storeName) {
         r(new Error("Store name not set"));
         return;
       }
-      const a = n.transaction(this.storeName, "readwrite");
+      const a = s.transaction(this.storeName, "readwrite");
       a.onerror = (h) => r(a.error);
       const d = a.objectStore(this.storeName).put(t, e);
       d.onerror = (h) => r(d.error), d.onsuccess = () => {
-        n.close(), s();
+        s.close(), n();
       };
     });
   }
@@ -1505,45 +1511,45 @@ class Z {
     const t = await this.getDb();
     if (typeof e == "number" && (e = e.toString()), typeof e != "string")
       throw new Error("Key must be a string");
-    return new Promise((n, s) => {
+    return new Promise((s, n) => {
       if (!this.storeName) {
-        s(new Error("Store name not set"));
+        n(new Error("Store name not set"));
         return;
       }
       const r = t.transaction(this.storeName, "readwrite");
-      r.onerror = (d) => s(r.error);
+      r.onerror = (d) => n(r.error);
       const i = r.objectStore(this.storeName).delete(e);
-      i.onerror = (d) => s(i.error), i.onsuccess = () => {
-        t.close(), n();
+      i.onerror = (d) => n(i.error), i.onsuccess = () => {
+        t.close(), s();
       };
     });
   }
   async keys() {
     const e = await this.getDb();
-    return new Promise((t, n) => {
+    return new Promise((t, s) => {
       if (!this.storeName) {
-        n(new Error("Store name not set"));
+        s(new Error("Store name not set"));
         return;
       }
-      const s = e.transaction(this.storeName, "readonly");
-      s.onerror = (i) => n(s.error);
-      const a = s.objectStore(this.storeName).getAllKeys();
-      a.onerror = (i) => n(a.error), a.onsuccess = () => {
+      const n = e.transaction(this.storeName, "readonly");
+      n.onerror = (i) => s(n.error);
+      const a = n.objectStore(this.storeName).getAllKeys();
+      a.onerror = (i) => s(a.error), a.onsuccess = () => {
         t(a.result), e.close();
       };
     });
   }
   async count() {
     const e = await this.getDb();
-    return new Promise((t, n) => {
+    return new Promise((t, s) => {
       if (!this.storeName) {
-        n(new Error("Store name not set"));
+        s(new Error("Store name not set"));
         return;
       }
-      const s = e.transaction(this.storeName, "readonly");
-      s.onerror = (i) => n(s.error);
-      const a = s.objectStore(this.storeName).count();
-      a.onerror = (i) => n(a.error), a.onsuccess = () => {
+      const n = e.transaction(this.storeName, "readonly");
+      n.onerror = (i) => s(n.error);
+      const a = n.objectStore(this.storeName).count();
+      a.onerror = (i) => s(a.error), a.onsuccess = () => {
         t(a.result), e.close();
       };
     });
@@ -1553,15 +1559,15 @@ class Z {
   }
   async clear() {
     const e = await this.getDb();
-    return new Promise((t, n) => {
+    return new Promise((t, s) => {
       if (!this.storeName) {
-        n(new Error("Store name not set"));
+        s(new Error("Store name not set"));
         return;
       }
-      const s = e.transaction(this.storeName, "readwrite");
-      s.onerror = (i) => n(s.error);
-      const a = s.objectStore(this.storeName).clear();
-      a.onerror = (i) => n(a.error), a.onsuccess = () => {
+      const n = e.transaction(this.storeName, "readwrite");
+      n.onerror = (i) => s(n.error);
+      const a = n.objectStore(this.storeName).clear();
+      a.onerror = (i) => s(a.error), a.onsuccess = () => {
         e.close(), t();
       };
     });
@@ -1583,23 +1589,23 @@ class Q {
       this.wallets = this.wallets.filter((t) => t.manifest.id !== e.detail.manifest.id), this.wallets.unshift(new H(this, e.detail)), this.events.emit("selector:walletsChanged", {});
     });
     this.db = new Z("hot-connector", "wallets"), this.storage = (e == null ? void 0 : e.storage) ?? new L(), this.events = (e == null ? void 0 : e.events) ?? new $(), this.logger = e == null ? void 0 : e.logger, this.network = (e == null ? void 0 : e.network) ?? "mainnet", this.connectWithKey = e == null ? void 0 : e.connectWithKey, this.features = (e == null ? void 0 : e.features) ?? {}, this.whenManifestLoaded = new Promise(async (t) => {
-      (e == null ? void 0 : e.manifest) == null || typeof e.manifest == "string" ? this.manifest = await this._loadManifest(e == null ? void 0 : e.manifest).catch(() => ({ wallets: [], version: "1.0.0" })) : this.manifest = (e == null ? void 0 : e.manifest) ?? { wallets: [], version: "1.0.0" }, await new Promise((n) => setTimeout(n, 100)), t();
+      (e == null ? void 0 : e.manifest) == null || typeof e.manifest == "string" ? this.manifest = await this._loadManifest(e == null ? void 0 : e.manifest).catch(() => ({ wallets: [], version: "1.0.0" })) : this.manifest = (e == null ? void 0 : e.manifest) ?? { wallets: [], version: "1.0.0" }, await new Promise((s) => setTimeout(s, 100)), t();
     }), window.addEventListener("near-wallet-injected", this._handleNearWalletInjected), window.dispatchEvent(new Event("near-selector-ready")), this.whenManifestLoaded.then(() => {
       window.parent.postMessage({ type: "near-selector-ready" }, "*"), this.manifest.wallets.forEach((t) => this.registerWallet(t)), this.storage.get("debug-wallets").then((t) => {
-        JSON.parse(t ?? "[]").forEach((s) => this.registerDebugWallet(s));
+        JSON.parse(t ?? "[]").forEach((n) => this.registerDebugWallet(n));
       });
     }), window.addEventListener("message", async (t) => {
       t.data.type === "near-wallet-injected" && (await this.whenManifestLoaded.catch(() => {
-      }), this.wallets = this.wallets.filter((n) => n.manifest.id !== t.data.manifest.id), this.wallets.unshift(new j(this, t.data.manifest)), this.events.emit("selector:walletsChanged", {}), this.connect(t.data.manifest.id));
+      }), this.wallets = this.wallets.filter((s) => s.manifest.id !== t.data.manifest.id), this.wallets.unshift(new j(this, t.data.manifest)), this.events.emit("selector:walletsChanged", {}), this.connect(t.data.manifest.id));
     });
   }
   get availableWallets() {
-    return this.wallets.filter((t) => Object.entries(this.features).every(([n, s]) => {
+    return this.wallets.filter((t) => Object.entries(this.features).every(([s, n]) => {
       var r;
-      return !(s && !((r = t.manifest.features) != null && r[n]));
+      return !(n && !((r = t.manifest.features) != null && r[s]));
     })).filter((t) => {
-      var n;
-      return !(this.network === "testnet" && !((n = t.manifest.features) != null && n.testnet));
+      var s;
+      return !(this.network === "testnet" && !((s = t.manifest.features) != null && s.testnet));
     });
   }
   async _loadManifest(e) {
@@ -1615,35 +1621,35 @@ class Q {
   }
   async registerDebugWallet(e) {
     if (e.type !== "sandbox") throw new Error("Only sandbox wallets are supported");
-    if (this.wallets.find((n) => n.manifest.id === e.id)) throw new Error("Wallet already registered");
+    if (this.wallets.find((s) => s.manifest.id === e.id)) throw new Error("Wallet already registered");
     e.debug = !0, this.wallets.push(new N(this, e)), this.events.emit("selector:walletsChanged", {});
-    const t = this.wallets.filter((n) => n.manifest.debug).map((n) => n.manifest);
+    const t = this.wallets.filter((s) => s.manifest.debug).map((s) => s.manifest);
     this.storage.set("debug-wallets", JSON.stringify(t));
   }
   async selectWallet() {
     return await this.whenManifestLoaded.catch(() => {
     }), new Promise((e, t) => {
-      const n = new J({
-        wallets: this.availableWallets.map((s) => s.manifest),
-        onSelect: (s) => {
-          e(s), n.destroy();
+      const s = new J({
+        wallets: this.availableWallets.map((n) => n.manifest),
+        onSelect: (n) => {
+          e(n), s.destroy();
         },
         onReject: () => {
-          t(new Error("User rejected")), n.destroy();
+          t(new Error("User rejected")), s.destroy();
         }
       });
-      n.create();
+      s.create();
     });
   }
   async connect(e) {
-    var t, n, s, r;
+    var t, s, n, r;
     await this.whenManifestLoaded.catch(() => {
     }), e || (e = await this.selectWallet());
     try {
       const a = await this.wallet(e);
-      (t = this.logger) == null || t.log("Wallet available to connect", a), await this.storage.set("selected-wallet", e), (n = this.logger) == null || n.log("Set preferred wallet, try to signIn", e);
+      (t = this.logger) == null || t.log("Wallet available to connect", a), await this.storage.set("selected-wallet", e), (s = this.logger) == null || s.log("Set preferred wallet, try to signIn", e);
       const i = await a.signIn(this.connectWithKey ?? { contractId: "" });
-      if ((s = this.logger) == null || s.log("Signed in to wallet", e, i), !(i != null && i.length)) throw new Error("Failed to sign in");
+      if ((n = this.logger) == null || n.log("Signed in to wallet", e, i), !(i != null && i.length)) throw new Error("Failed to sign in");
       return this.events.emit("wallet:signIn", { wallet: a, accounts: i, success: !0 }), a;
     } catch (a) {
       throw (r = this.logger) == null || r.log("Failed to connect to wallet", a), a;
@@ -1655,19 +1661,19 @@ class Q {
   async getConnectedWallet() {
     await this.whenManifestLoaded.catch(() => {
     });
-    const e = await this.storage.get("selected-wallet"), t = this.wallets.find((s) => s.manifest.id === e);
+    const e = await this.storage.get("selected-wallet"), t = this.wallets.find((n) => n.manifest.id === e);
     if (!t) throw new Error("No wallet selected");
-    const n = await t.getAccounts();
-    if (!(n != null && n.length)) throw new Error("No accounts found");
-    return { wallet: t, accounts: n };
+    const s = await t.getAccounts();
+    if (!(s != null && s.length)) throw new Error("No accounts found");
+    return { wallet: t, accounts: s };
   }
   async wallet(e) {
     if (await this.whenManifestLoaded.catch(() => {
     }), !e)
-      return this.getConnectedWallet().then(({ wallet: n }) => n).catch(async () => {
+      return this.getConnectedWallet().then(({ wallet: s }) => s).catch(async () => {
         throw await this.storage.remove("selected-wallet"), new Error("No accounts found");
       });
-    const t = this.wallets.find((n) => n.manifest.id === e);
+    const t = this.wallets.find((s) => s.manifest.id === e);
     if (!t) throw new Error("Wallet not found");
     return t;
   }
@@ -1694,7 +1700,7 @@ export {
   H as InjectedWallet,
   L as LocalStorage,
   Q as NearConnector,
-  S as NearWallet,
+  k as NearWallet,
   j as ParentFrameWallet,
   N as SandboxWallet,
   B as SolanaWallet,

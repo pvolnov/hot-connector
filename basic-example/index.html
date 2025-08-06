@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="../cdn/hot-connect.iife.js"></script>
+    <title>Document</title>
+    <style>
+      * {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
+          "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      }
+    </style>
+  </head>
+  <body>
+    <button id="connect">CONNECT NEAR</button>
+
+    <div style="margin-top: 24px" id="wallet" style="display: none">
+      <div id="wallet-id"></div>
+      <button id="disconnect">DISCONNECT</button>
+      <button id="sign-message">SIGN MESSAGE</button>
+    </div>
+
+    <script>
+      const connect = new HOTConnect.NearConnector();
+
+      connect.on("wallet:signIn", (t) => {
+        document.getElementById("wallet").style.display = "block";
+        document.getElementById("wallet-id").innerHTML = t.accounts[0].accountId;
+      });
+
+      connect.on("wallet:signOut", () => {
+        document.getElementById("wallet").style.display = "none";
+        document.getElementById("wallet-id").innerHTML = "";
+      });
+
+      connect.getConnectedWallet().then(({ accounts }) => {
+        document.getElementById("wallet").style.display = "block";
+        document.getElementById("wallet-id").innerHTML = accounts[0].accountId;
+      });
+
+      document.getElementById("connect").addEventListener("click", () => connect.connect());
+      document.getElementById("disconnect").addEventListener("click", () => connect.disconnect());
+      document.getElementById("sign-message").addEventListener("click", async () => {
+        const wallet = await connect.wallet();
+        const signed = await wallet.signMessage({ message: "Hello, world!" });
+        alert(signed);
+      });
+    </script>
+  </body>
+</html>
