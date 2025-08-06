@@ -20,7 +20,8 @@
     "modal-ui.css"
   ],
   "scripts": {
-    "build": "yarn vite build",
+    "build": "yarn tsc",
+    "cdn": "yarn vite build",
     "example": "cd example && yarn start",
     "build:example": "cd example && yarn build",
     "build:meteor": "PACKAGE=meteor vite build --config ./wallets/vite.config.ts",
