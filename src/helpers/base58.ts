@@ -12,8 +12,10 @@ const base58 = {
   decode(base58String: string) {
     if (!base58String || typeof base58String !== "string")
       throw new Error(`Expected base58 string but got “${base58String}”`);
+
     if (base58String.match(/[IOl0]/gmu))
       throw new Error(`Invalid base58 character “${base58String.match(/[IOl0]/gmu)}”`);
+
     const lz = base58String.match(/^1+/gmu);
     const psz = lz ? lz[0].length : 0;
     const size = ((base58String.length - psz) * (Math.log(58) / Math.log(256)) + 1) >>> 0;
@@ -52,6 +54,7 @@ const base58 = {
         result[j] = base58_chars.charCodeAt(x % 58);
         carry = (x / 58) | 0;
       }
+
       while (carry) {
         result.push(base58_chars.charCodeAt(carry % 58));
         carry = (carry / 58) | 0;
@@ -63,7 +66,6 @@ const base58 = {
       else result.push("1".charCodeAt(0));
 
     result.reverse();
-
     return String.fromCharCode(...result);
   },
 };

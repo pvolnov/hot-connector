@@ -13,6 +13,8 @@ import {
 import base58 from "../../helpers/base58";
 import { WalletType } from "../../types/multichain";
 import { ChainAbstracted } from "../ChainAbstracted";
+import { hex } from "../../helpers/hex";
+import base64 from "../../helpers/base64";
 
 export abstract class NearWallet implements ChainAbstracted {
   abstract get manifest(): WalletManifest;
@@ -41,16 +43,16 @@ export abstract class NearWallet implements ChainAbstracted {
 
   getIntentsAddress = async (): Promise<string> => {
     const publicKey = await this.getPublicKey();
-    return Buffer.from(base58.decode(publicKey)).toString("hex");
+    return hex.encode(base58.decode(publicKey));
   };
 
   signIntentsWithAuth = async (domain: string, intents?: Record<string, any>[]) => {
     const accounts = await this.getAccounts();
     if (accounts.length === 0) throw new Error("No account found");
 
-    const seed = Buffer.from(window.crypto.getRandomValues(new Uint8Array(32))).toString("hex");
+    const seed = hex.encode(window.crypto.getRandomValues(new Uint8Array(32)));
     const msgBuffer = new TextEncoder().encode(`${domain}_${seed}`);
-    const nonce = await crypto.subtle.digest("SHA-256", msgBuffer);
+    const nonce = await window.crypto.subtle.digest("SHA-256", msgBuffer);
 
     return {
       intent: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
@@ -64,9 +66,9 @@ export abstract class NearWallet implements ChainAbstracted {
 
   signIntents = async (
     intents: Record<string, any>[],
-    options?: { nonce?: Buffer | Uint8Array; deadline?: number }
+    options?: { nonce?: Uint8Array; deadline?: number }
   ): Promise<Record<string, any>> => {
-    const nonce = new Uint8Array(options?.nonce || crypto.getRandomValues(new Uint8Array(32)));
+    const nonce = new Uint8Array(options?.nonce || window.crypto.getRandomValues(new Uint8Array(32)));
     const signerId = await this.getIntentsAddress();
 
     const message = JSON.stringify({
@@ -75,14 +77,14 @@ export abstract class NearWallet implements ChainAbstracted {
       intents: intents,
     });
 
-    const result = await this.signMessage({ message, recipient: "intents.near", nonce: Buffer.from(nonce) });
+    const result = await this.signMessage({ message, recipient: "intents.near", nonce });
     if (!result) throw new Error("Failed to sign message");
 
     const { signature, publicKey } = result;
     return {
       standard: "nep413",
-      payload: { nonce: Buffer.from(nonce).toString("base64"), recipient: "intents.near", message },
-      signature: `ed25519:${base58.encode(Buffer.from(signature, "base64"))}`,
+      payload: { nonce: base64.encode(nonce), recipient: "intents.near", message },
+      signature: `ed25519:${base58.encode(base64.decode(signature))}`,
       public_key: publicKey,
     };
   };

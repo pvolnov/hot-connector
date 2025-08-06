@@ -1,7 +1,10 @@
 import type { Provider as EvmProvider } from "@reown/appkit-utils/ethers";
+
+import { ChainAbstracted } from "./ChainAbstracted";
 import { WalletType } from "../types/multichain";
 import base58 from "../helpers/base58";
-import { ChainAbstracted } from "./ChainAbstracted";
+import { hex } from "../helpers/hex";
+import base64 from "../helpers/base64";
 
 class EvmWallet implements ChainAbstracted {
   constructor(readonly wallet: EvmProvider) {}
@@ -26,9 +29,9 @@ class EvmWallet implements ChainAbstracted {
   };
 
   signIntentsWithAuth = async (domain: string, intents?: Record<string, any>[]) => {
-    const seed = Buffer.from(window.crypto.getRandomValues(new Uint8Array(32))).toString("hex");
+    const seed = hex.encode(window.crypto.getRandomValues(new Uint8Array(32)));
     const msgBuffer = new TextEncoder().encode(`${domain}_${seed}`);
-    const nonce = await crypto.subtle.digest("SHA-256", msgBuffer);
+    const nonce = await window.crypto.subtle.digest("SHA-256", msgBuffer);
     const address = await this.getAddress();
 
     return {
@@ -44,14 +47,14 @@ class EvmWallet implements ChainAbstracted {
     const address = await this.getAddress();
     const result: string = await this.wallet.request({ method: "personal_sign", params: [msg, address] });
 
-    const bytes = new Uint8Array(Buffer.from(result.slice(2), "hex"));
+    const bytes = hex.decode(result.slice(2));
     const y = bytes.slice(-1, 0);
-    const yInt = parseInt(`0x${Buffer.from(y).toString("hex")}`, 16);
+    const yInt = parseInt(`0x${hex.encode(y)}`, 16);
 
-    const zero = Buffer.from("00", "hex");
-    const one = Buffer.from("01", "hex");
+    const zero = hex.decode("00");
+    const one = hex.decode("01");
 
-    return Buffer.concat([bytes.slice(0, -1), yInt === 27 || yInt === 0 ? zero : one]);
+    return new Uint8Array([...bytes.slice(0, -1), ...(yInt === 27 || yInt === 0 ? zero : one)]);
   }
 
   async sendTransaction(tx: string) {
@@ -60,16 +63,16 @@ class EvmWallet implements ChainAbstracted {
 
   async signIntents(
     intents: Record<string, any>[],
-    options?: { deadline?: number; nonce?: Buffer | Uint8Array }
+    options?: { deadline?: number; nonce?: Uint8Array }
   ): Promise<Record<string, any>> {
     const address = await this.getAddress();
-    const nonce = new Uint8Array(options?.nonce || crypto.getRandomValues(new Uint8Array(32)));
+    const nonce = new Uint8Array(options?.nonce || window.crypto.getRandomValues(new Uint8Array(32)));
 
     const message = JSON.stringify({
       deadline: options?.deadline ? new Date(options.deadline).toISOString() : "2100-01-01T00:00:00.000Z",
-      nonce: Buffer.from(nonce).toString("base64"),
       verifying_contract: "intents.near",
       signer_id: address.toLowerCase(),
+      nonce: base64.encode(nonce),
       intents: intents,
     });
 

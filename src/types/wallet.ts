@@ -32,7 +32,7 @@ export interface SignInParams {
 export interface SignMessageParams {
   message: string;
   recipient: string;
-  nonce: Buffer | Uint8Array;
+  nonce: Uint8Array;
   network?: Network;
 }
 

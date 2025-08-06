@@ -1,6 +1,14 @@
 import { defineConfig } from "vite";
-import preact from "@preact/preset-vite";
 
 export default defineConfig({
-  plugins: [preact()],
+  build: {
+    outDir: "cdn",
+    minify: true,
+    lib: {
+      entry: "src/index.ts",
+      name: "HOTConnect",
+      formats: ["es", "cjs", "iife"],
+      fileName: (format) => `hot-connect.${format}.js`,
+    },
+  },
 });

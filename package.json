@@ -16,10 +16,11 @@
   },
   "files": [
     "build/*",
+    "cdn/*",
     "modal-ui.css"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "yarn vite build",
     "example": "cd example && yarn start",
     "build:example": "cd example && yarn build",
     "build:meteor": "PACKAGE=meteor vite build --config ./wallets/vite.config.ts",

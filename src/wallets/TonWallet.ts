@@ -1,7 +1,9 @@
-import { baseDecode, baseEncode } from "@near-js/utils";
 import type { SendTransactionRequest, TonConnectUI } from "@tonconnect/ui";
 import { ChainAbstracted } from "./ChainAbstracted";
 import { WalletType } from "../types/multichain";
+import base58 from "../helpers/base58";
+import { hex } from "../helpers/hex";
+import base64 from "../helpers/base64";
 
 class TonWallet implements ChainAbstracted {
   constructor(readonly wallet: TonConnectUI) {}
@@ -30,9 +32,9 @@ class TonWallet implements ChainAbstracted {
   }
 
   async signIntentsWithAuth(domain: string, intents?: Record<string, any>[]) {
-    const seed = Buffer.from(window.crypto.getRandomValues(new Uint8Array(32))).toString("hex");
+    const seed = hex.encode(window.crypto.getRandomValues(new Uint8Array(32)));
     const msgBuffer = new TextEncoder().encode(`${domain}_${seed}`);
-    const nonce = await crypto.subtle.digest("SHA-256", msgBuffer);
+    const nonce = await window.crypto.subtle.digest("SHA-256", msgBuffer);
     const publicKey = await this.getPublicKey();
     const address = await this.getAddress();
 
@@ -45,14 +47,14 @@ class TonWallet implements ChainAbstracted {
     };
   }
 
-  async signIntents(intents: Record<string, any>[], options?: { deadline?: number; nonce?: Buffer | Uint8Array }) {
+  async signIntents(intents: Record<string, any>[], options?: { deadline?: number; nonce?: Uint8Array }) {
     const publicKey = await this.getPublicKey();
-    const nonce = new Uint8Array(options?.nonce || crypto.getRandomValues(new Uint8Array(32)));
+    const nonce = new Uint8Array(options?.nonce || window.crypto.getRandomValues(new Uint8Array(32)));
     const message = {
       deadline: new Date(Date.now() + 24 * 3_600_000 * 365).toISOString(),
-      nonce: Buffer.from(nonce).toString("base64"),
       signer_id: await this.getIntentsAddress(),
       verifying_contract: "intents.near",
+      nonce: base64.encode(nonce),
       intents,
     };
 
@@ -60,7 +62,7 @@ class TonWallet implements ChainAbstracted {
     return {
       ...result,
       standard: "ton_connect",
-      signature: "ed25519:" + baseEncode(Buffer.from(result.signature, "base64")),
+      signature: "ed25519:" + base58.encode(base64.decode(result.signature)),
       public_key: `ed25519:${publicKey}`,
     };
   }
