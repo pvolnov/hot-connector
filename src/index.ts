@@ -24,4 +24,5 @@ export type {
   SignAndSendTransactionsParams,
 } from "./types/wallet";
 
+export * from "./types/multichain";
 export * as tx from "./types/transactions";

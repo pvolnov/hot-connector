@@ -70,11 +70,11 @@ class $ {
 const A = () => typeof window.crypto < "u" && typeof window.crypto.randomUUID == "function" ? window.crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(o) {
   const e = Math.random() * 16 | 0;
   return (o === "x" ? e : e & 3 | 8).toString(16);
-}), y = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz", W = () => {
+}), f = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz", W = () => {
   const o = Array(256).fill(-1);
-  for (let e = 0; e < y.length; ++e) o[y.charCodeAt(e)] = e;
+  for (let e = 0; e < f.length; ++e) o[f.charCodeAt(e)] = e;
   return o;
-}, T = W(), g = {
+}, T = W(), y = {
   decode(o) {
     if (!o || typeof o != "string")
       throw new Error(`Expected base58 string but got “${o}”`);
@@ -83,7 +83,7 @@ const A = () => typeof window.crypto < "u" && typeof window.crypto.randomUUID ==
     const e = o.match(/^1+/gmu), t = e ? e[0].length : 0, s = (o.length - t) * (Math.log(58) / Math.log(256)) + 1 >>> 0;
     return new Uint8Array([
       ...new Uint8Array(t),
-      ...o.match(/.{1}/gmu).map((n) => y.indexOf(n)).reduce((n, r) => (n = n.map((a) => {
+      ...o.match(/.{1}/gmu).map((n) => f.indexOf(n)).reduce((n, r) => (n = n.map((a) => {
         const i = a * 58 + r;
         return r = i >> 8, i;
       }), n), new Uint8Array(s)).reverse().filter(
@@ -100,10 +100,10 @@ const A = () => typeof window.crypto < "u" && typeof window.crypto.randomUUID ==
       let s = t;
       for (let n = 0; n < e.length; ++n) {
         const r = (T[e[n]] << 8) + s;
-        e[n] = y.charCodeAt(r % 58), s = r / 58 | 0;
+        e[n] = f.charCodeAt(r % 58), s = r / 58 | 0;
       }
       for (; s; )
-        e.push(y.charCodeAt(s % 58)), s = s / 58 | 0;
+        e.push(f.charCodeAt(s % 58)), s = s / 58 | 0;
     }
     for (const t of o) {
       if (t) break;
@@ -121,7 +121,7 @@ const u = {
     const t = o.replace(/^0x/, "").match(/[\dA-F]{2}/gi), s = (t == null ? void 0 : t.map((n) => parseInt(n, 16))) || [];
     return new Uint8Array(s);
   }
-}, m = {
+}, g = {
   decode(o) {
     for (var e = atob(o), t = new Uint8Array(e.length), s = 0; s < e.length; s++)
       t[s] = e.charCodeAt(s);
@@ -145,10 +145,7 @@ class k {
       if (e.length === 0) throw new Error("No account found");
       return e[0].publicKey;
     });
-    c(this, "getIntentsAddress", async () => {
-      const e = await this.getPublicKey();
-      return u.encode(g.decode(e));
-    });
+    c(this, "getIntentsAddress", async () => await this.getAddress());
     c(this, "signIntentsWithAuth", async (e, t) => {
       const s = await this.getAccounts();
       if (s.length === 0) throw new Error("No account found");
@@ -172,8 +169,8 @@ class k {
       const { signature: i, publicKey: d } = a;
       return {
         standard: "nep413",
-        payload: { nonce: m.encode(s), recipient: "intents.near", message: r },
-        signature: `ed25519:${g.encode(m.decode(i))}`,
+        payload: { nonce: g.encode(s), recipient: "intents.near", message: r },
+        signature: `ed25519:${y.encode(g.decode(i))}`,
         public_key: d
       };
     });
@@ -221,7 +218,7 @@ const v = (o) => {
   } catch {
     return null;
   }
-}, K = (o) => (
+}, U = (o) => (
   /*css*/
   `
 ${o} * {
@@ -435,7 +432,7 @@ ${o} .connect-item p {
 }
 `
 ), M = "hot-connector-popup", C = document.createElement("style");
-C.textContent = K(`.${M}`);
+C.textContent = U(`.${M}`);
 document.head.append(C);
 class x {
   constructor(e) {
@@ -475,7 +472,7 @@ class x {
     }, 200));
   }
 }
-class U extends x {
+class K extends x {
   constructor(e) {
     super(e), this.delegate = e;
   }
@@ -802,7 +799,7 @@ class R {
     this.executor.checkPermissions("usb") && n.push("usb *;"), this.executor.checkPermissions("hid") && n.push("hid *;"), this.iframe.allow = n.join(" "), D({ id: this.origin, executor: this.executor, code: t }).then((r) => {
       var a;
       (a = this.executor.connector.logger) == null || a.log("Iframe code injected"), this.iframe.srcdoc = r;
-    }), this.popup = new U({
+    }), this.popup = new K({
       iframe: this.iframe,
       onApprove: () => {
       },
@@ -946,23 +943,23 @@ class _ {
     return e || await t;
   }
   async call(e, t) {
-    var a, i, d, h, p;
+    var a, i, d, h, m;
     (a = this.connector.logger) == null || a.log("Add to queue", e, t), (i = this.connector.logger) == null || i.log("Calling method", e, t);
     const s = await this.loadCode();
     (d = this.connector.logger) == null || d.log("Code loaded, preparing");
     const n = new R(this, s, this._onMessage);
-    (h = this.connector.logger) == null || h.log("Code loaded, iframe initialized"), await n.readyPromise, (p = this.connector.logger) == null || p.log("Iframe ready");
+    (h = this.connector.logger) == null || h.log("Code loaded, iframe initialized"), await n.readyPromise, (m = this.connector.logger) == null || m.log("Iframe ready");
     const r = A();
     return new Promise((b, S) => {
       var E;
       try {
-        const f = (w) => {
+        const p = (w) => {
           var I;
-          w.data.id !== r || w.data.origin !== n.origin || (n.dispose(), window.removeEventListener("message", f), (I = this.connector.logger) == null || I.log("postMessage", { result: w.data, request: { method: e, params: t } }), w.data.status === "failed" ? S(w.data.result) : b(w.data.result));
+          w.data.id !== r || w.data.origin !== n.origin || (n.dispose(), window.removeEventListener("message", p), (I = this.connector.logger) == null || I.log("postMessage", { result: w.data, request: { method: e, params: t } }), w.data.status === "failed" ? S(w.data.result) : b(w.data.result));
         };
-        window.addEventListener("message", f), n.postMessage({ method: e, params: t, id: r }), n.on("close", () => S(new Error("Wallet closed")));
-      } catch (f) {
-        (E = this.connector.logger) == null || E.log("Iframe error", f), S(f);
+        window.addEventListener("message", p), n.postMessage({ method: e, params: t, id: r }), n.on("close", () => S(new Error("Wallet closed")));
+      } catch (p) {
+        (E = this.connector.logger) == null || E.log("Iframe error", p), S(p);
       }
     });
   }
@@ -1203,11 +1200,11 @@ class F {
       deadline: t != null && t.deadline ? new Date(t.deadline).toISOString() : "2100-01-01T00:00:00.000Z",
       verifying_contract: "intents.near",
       signer_id: s.toLowerCase(),
-      nonce: m.encode(n),
+      nonce: g.encode(n),
       intents: e
     }), a = await this.signMessage(r);
     return {
-      signature: `secp256k1:${g.encode(a)}`,
+      signature: `secp256k1:${y.encode(a)}`,
       payload: r,
       standard: "erc191"
     };
@@ -1223,7 +1220,7 @@ class B {
     c(this, "getPublicKey", async () => this.getAddress());
     c(this, "getIntentsAddress", async () => {
       const e = await this.getAddress();
-      return u.encode(g.decode(e)).toLowerCase();
+      return u.encode(y.decode(e)).toLowerCase();
     });
     this.wallet = e;
   }
@@ -1249,13 +1246,13 @@ class B {
   async signIntents(e, t) {
     const s = new Uint8Array((t == null ? void 0 : t.nonce) || window.crypto.getRandomValues(new Uint8Array(32))), n = await this.getIntentsAddress(), r = await this.getPublicKey(), a = JSON.stringify({
       deadline: t != null && t.deadline ? new Date(t.deadline).toISOString() : "2100-01-01T00:00:00.000Z",
-      nonce: m.encode(s),
+      nonce: g.encode(s),
       verifying_contract: "intents.near",
       signer_id: n,
       intents: e
     }), i = await this.signMessage(a);
     return {
-      signature: `ed25519:${g.encode(i)}`,
+      signature: `ed25519:${y.encode(i)}`,
       public_key: `ed25519:${r}`,
       standard: "raw_ed25519",
       payload: a
@@ -1299,13 +1296,13 @@ class Y {
       deadline: new Date(Date.now() + 24 * 36e5 * 365).toISOString(),
       signer_id: await this.getIntentsAddress(),
       verifying_contract: "intents.near",
-      nonce: m.encode(n),
+      nonce: g.encode(n),
       intents: e
     }, a = await this.wallet.signData({ text: JSON.stringify(r), type: "text" });
     return {
       ...a,
       standard: "ton_connect",
-      signature: "ed25519:" + g.encode(m.decode(a.signature)),
+      signature: "ed25519:" + y.encode(g.decode(a.signature)),
       public_key: `ed25519:${s}`
     };
   }
@@ -1324,8 +1321,8 @@ class G {
       if (!h) return this.removeWallet(l.TON);
       this.setWallet(l.TON, new Y(this.options.tonConnect));
     }), (s = this.options.tonConnect) == null || s.setConnectRequestParameters({ state: "ready", value: { tonProof: "hot-connector" } }), (n = this.options.tonConnect) == null || n.connector.restoreConnection(), (r = this.options.nearConnector) == null || r.on("wallet:signOut", () => this.removeWallet(l.NEAR)), (a = this.options.nearConnector) == null || a.on("wallet:signIn", ({ wallet: h }) => this.setWallet(l.NEAR, h)), (i = this.options.nearConnector) == null || i.getConnectedWallet().then(({ wallet: h }) => this.setWallet(l.NEAR, h)), (d = this.options.appKit) == null || d.subscribeProviders(async (h) => {
-      const p = h.solana;
-      p ? this.setWallet(l.SOLANA, new B(p)) : this.removeWallet(l.SOLANA);
+      const m = h.solana;
+      m ? this.setWallet(l.SOLANA, new B(m)) : this.removeWallet(l.SOLANA);
       const b = h.eip155;
       b ? this.setWallet(l.EVM, new F(b)) : this.removeWallet(l.EVM);
     });
@@ -1709,5 +1706,6 @@ export {
   N as SandboxWallet,
   B as SolanaWallet,
   Y as TonWallet,
+  l as WalletType,
   ee as tx
 };

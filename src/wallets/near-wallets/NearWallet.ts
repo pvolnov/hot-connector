@@ -42,8 +42,7 @@ export abstract class NearWallet implements ChainAbstracted {
   };
 
   getIntentsAddress = async (): Promise<string> => {
-    const publicKey = await this.getPublicKey();
-    return hex.encode(base58.decode(publicKey));
+    return await this.getAddress();
   };
 
   signIntentsWithAuth = async (domain: string, intents?: Record<string, any>[]) => {
