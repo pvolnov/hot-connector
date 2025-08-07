@@ -69,6 +69,12 @@ export class HotConnector {
     return this.wallets[type];
   }
 
+  resolveWallet(type: WalletType | ConnectedWallets[keyof ConnectedWallets]) {
+    const wallet = typeof type === "number" || typeof type === "string" ? this.getWallet(type) : type;
+    if (!wallet) throw new Error("Wallet not found");
+    return wallet;
+  }
+
   async connectWallet(type?: WalletType) {
     if (type === WalletType.NEAR) return this.options.nearConnector?.connect();
     if (type === WalletType.EVM) return this.options.appKit?.open({ namespace: "eip155" });
@@ -114,13 +120,11 @@ export class HotConnector {
     domain: string,
     intents: Record<string, any>[]
   ) {
+    const wallet = this.resolveWallet(type);
     return new Promise<Record<string, any>>((resolve, reject) => {
       const popup = new AuthPopup({
         onApprove: async () => {
           try {
-            const wallet = typeof type === "number" || typeof type === "string" ? this.getWallet(type) : type;
-            if (!wallet) throw new Error("Wallet not found");
-
             const signed = await wallet.signIntentsWithAuth(domain, intents);
             resolve(signed);
             popup.destroy();
@@ -140,15 +144,16 @@ export class HotConnector {
     });
   }
 
-  async disconnect(type: WalletType) {
+  async disconnect(type: WalletType | ConnectedWallets[keyof ConnectedWallets]) {
+    const wallet = this.resolveWallet(type);
     return new Promise<void>((resolve, reject) => {
       const popup = new LogoutPopup({
         onApprove: async () => {
-          if (type === WalletType.NEAR) await this.options.nearConnector?.disconnect().catch(() => null);
-          if (type === WalletType.SOLANA) await this.options.appKit?.disconnect("solana").catch(() => null);
-          if (type === WalletType.EVM) await this.options.appKit?.disconnect("eip155").catch(() => null);
-          if (type === WalletType.TON) await this.options.tonConnect?.connector.disconnect().catch(() => null);
-          this.removeWallet(type);
+          if (wallet.type === WalletType.NEAR) await this.options.nearConnector?.disconnect().catch(() => null);
+          if (wallet.type === WalletType.SOLANA) await this.options.appKit?.disconnect("solana").catch(() => null);
+          if (wallet.type === WalletType.EVM) await this.options.appKit?.disconnect("eip155").catch(() => null);
+          if (wallet.type === WalletType.TON) await this.options.tonConnect?.connector.disconnect().catch(() => null);
+          this.removeWallet(wallet.type);
           popup.destroy();
           resolve();
         },
@@ -163,8 +168,62 @@ export class HotConnector {
     });
   }
 
-  signIntents = async (type: WalletType, intents: Record<string, any>[]) => {
-    const wallet = this.getWallet(type);
-    return wallet.signIntents(intents);
-  };
+  async signIntents(type: WalletType | ConnectedWallets[keyof ConnectedWallets], intents: Record<string, any>[]) {
+    const wallet = this.resolveWallet(type);
+    return await wallet.signIntents(intents);
+  }
+
+  async executeIntents(
+    type: WalletType | ConnectedWallets[keyof ConnectedWallets],
+    intents: Record<string, any>[],
+    hashes: string[] = []
+  ) {
+    const signed = await this.signIntents(type, intents);
+    return await this.publishSignedIntents([signed], hashes);
+  }
+
+  async publishSignedIntents(signed: Record<string, any>[], hashes: string[] = []) {
+    const res = await fetch("https://api0.herewallet.app/api/v1/evm/intent-solver", {
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+      body: JSON.stringify({
+        params: [{ signed_datas: signed, quote_hashes: hashes }],
+        method: "publish_intents",
+        id: "dontcare",
+        jsonrpc: "2.0",
+      }),
+    });
+
+    const { result } = await res.json();
+    if (result.status === "FAILED") throw result.reason;
+    const intentResult = result.intent_hashes[0];
+
+    const getStatus = async () => {
+      const statusRes = await fetch("https://api0.herewallet.app/api/v1/evm/intent-solver", {
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+        body: JSON.stringify({
+          id: "dontcare",
+          jsonrpc: "2.0",
+          method: "get_status",
+          params: [{ intent_hash: intentResult }],
+        }),
+      });
+
+      const { result } = await statusRes.json();
+      return result;
+    };
+
+    const fetchResult = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await getStatus().catch(() => null);
+      if (result == null) return await fetchResult();
+      if (result.status === "SETTLED") return result.data.hash;
+      if (result.status === "FAILED") throw result.reason || "Failed to publish intents";
+      return await fetchResult();
+    };
+
+    const hash = await fetchResult();
+    return hash;
+  }
 }

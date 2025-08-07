@@ -41,7 +41,7 @@ class SolanaWallet implements ChainAbstracted {
       publicKey: `ed25519:${address}`,
       chainId: WalletType.SOLANA,
       address: address,
-      nonce: seed,
+      seed,
     };
   }
 

@@ -43,7 +43,7 @@ class TonWallet implements ChainAbstracted {
       publicKey: `ed25519:${publicKey}`,
       chainId: WalletType.TON,
       address: address,
-      nonce: seed,
+      seed,
     };
   }
 

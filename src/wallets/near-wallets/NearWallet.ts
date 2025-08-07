@@ -58,8 +58,8 @@ export abstract class NearWallet implements ChainAbstracted {
       address: accounts[0].accountId,
       publicKey: accounts[0].publicKey,
       chainId: WalletType.NEAR,
-      nonce: seed,
       domain,
+      seed,
     };
   };
 

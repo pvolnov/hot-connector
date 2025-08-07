@@ -39,7 +39,7 @@ class EvmWallet implements ChainAbstracted {
       address: address,
       publicKey: address,
       chainId: WalletType.EVM,
-      nonce: seed,
+      seed,
     };
   };
 

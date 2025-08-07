@@ -174,7 +174,7 @@ const multichainConnector = new HotConnector({
     logger: console,
   }),
 
-  // ton-connect
+  // ton-connect, IMPORTANT: Declarate <div id="ton-connect" style="display: none"></div> in root of your app
   tonConnect: new TonConnectUI({ connector: new TonConnect(), buttonRootId: "ton-connect" }),
 
   // reown for evm and solana
@@ -192,5 +192,20 @@ const multichainConnector = new HotConnector({
 });
 
 // Call any wallet for intents.near protocol
-multichainConnector.signIntents(WalletType.EVM, []);
+multichainConnector.executeIntents(WalletType.EVM, [
+  { intent: "transfer", tokens: { "nep141:wrap.near": "10000" }, receiver: "address" },
+]);
+```
+
+## Multichain Auth via Intents
+
+```ts
+const { seed, signed } = (await = connector.auth(WalletType.EVM, "myapp", []));
+
+// Verify that nonce of signed intent is your (app prefix + uniq seed)
+const nonce = base64(sha256(`myapp_${seed}`));
+if (signed.payload.nonce !== nonce) throw "Incorrect intent nonce";
+
+// Than just call simulate intent to verify signature
+await viewMethod("intents.near", "simulate_intents", { signed: [signed] });
 ```
