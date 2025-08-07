@@ -3,7 +3,7 @@ import type { Provider as SolanaProvider } from "@reown/appkit-utils/solana";
 import type { Provider as EvmProvider } from "@reown/appkit-utils/ethers";
 import type { TonConnectUI } from "@tonconnect/ui";
 
-import { ConnectedWallets, WalletType } from "./types/multichain";
+import { ConnectedWallets, SignedAuth, WalletType } from "./wallets/ChainAbstracted";
 import { AuthPopup } from "./popups/AuthIntentPopup";
 import { MultichainPopup } from "./popups/MultichainPopup";
 import { LogoutPopup } from "./popups/LogoutPopup";
@@ -119,9 +119,9 @@ export class HotConnector {
     type: WalletType | ConnectedWallets[keyof ConnectedWallets],
     domain: string,
     intents: Record<string, any>[]
-  ) {
+  ): Promise<SignedAuth> {
     const wallet = this.resolveWallet(type);
-    return new Promise<Record<string, any>>((resolve, reject) => {
+    return new Promise<SignedAuth>((resolve, reject) => {
       const popup = new AuthPopup({
         onApprove: async () => {
           try {

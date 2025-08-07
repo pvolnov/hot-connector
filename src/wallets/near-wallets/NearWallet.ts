@@ -11,8 +11,7 @@ import {
   WalletManifest,
 } from "../../types/wallet";
 import base58 from "../../helpers/base58";
-import { WalletType } from "../../types/multichain";
-import { ChainAbstracted } from "../ChainAbstracted";
+import { ChainAbstracted, WalletType } from "../ChainAbstracted";
 import { hex } from "../../helpers/hex";
 import base64 from "../../helpers/base64";
 
@@ -54,7 +53,7 @@ export abstract class NearWallet implements ChainAbstracted {
     const nonce = await window.crypto.subtle.digest("SHA-256", msgBuffer);
 
     return {
-      intent: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
+      signed: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
       address: accounts[0].accountId,
       publicKey: accounts[0].publicKey,
       chainId: WalletType.NEAR,

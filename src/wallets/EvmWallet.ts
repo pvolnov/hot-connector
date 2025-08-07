@@ -1,7 +1,6 @@
 import type { Provider as EvmProvider } from "@reown/appkit-utils/ethers";
 
-import { ChainAbstracted } from "./ChainAbstracted";
-import { WalletType } from "../types/multichain";
+import { ChainAbstracted, WalletType } from "./ChainAbstracted";
 import base58 from "../helpers/base58";
 import { hex } from "../helpers/hex";
 import base64 from "../helpers/base64";
@@ -35,7 +34,7 @@ class EvmWallet implements ChainAbstracted {
     const address = await this.getAddress();
 
     return {
-      intent: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
+      signed: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
       address: address,
       publicKey: address,
       chainId: WalletType.EVM,

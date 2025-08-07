@@ -2,8 +2,7 @@ import type { SendTransactionOptions } from "@reown/appkit-adapter-solana";
 import type { Provider as SolanaProvider } from "@reown/appkit-utils/solana";
 import type { Connection, Transaction, VersionedTransaction } from "@solana/web3.js";
 
-import { ChainAbstracted } from "./ChainAbstracted";
-import { WalletType } from "../types/multichain";
+import { ChainAbstracted, WalletType } from "./ChainAbstracted";
 import base58 from "../helpers/base58";
 import base64 from "../helpers/base64";
 import { hex } from "../helpers/hex";
@@ -37,7 +36,7 @@ class SolanaWallet implements ChainAbstracted {
     const nonce = await window.crypto.subtle.digest("SHA-256", msgBuffer);
 
     return {
-      intent: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
+      signed: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
       publicKey: `ed25519:${address}`,
       chainId: WalletType.SOLANA,
       address: address,

@@ -1,5 +1,5 @@
 import { parseUrl } from "../helpers/url";
-import { WalletType } from "../types/multichain";
+import { WalletType } from "../wallets/ChainAbstracted";
 import { WalletManifest } from "../types/wallet";
 import { Popup } from "./Popup";
 

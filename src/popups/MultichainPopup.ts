@@ -1,4 +1,4 @@
-import { WalletType } from "../types/multichain";
+import { WalletType } from "../wallets/ChainAbstracted";
 import { Popup } from "./Popup";
 
 export class MultichainPopup extends Popup {

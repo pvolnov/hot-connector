@@ -151,7 +151,7 @@ class k {
       if (s.length === 0) throw new Error("No account found");
       const n = w.encode(window.crypto.getRandomValues(new Uint8Array(32))), r = new TextEncoder().encode(`${e}_${n}`), o = await window.crypto.subtle.digest("SHA-256", r);
       return {
-        intent: await this.signIntents(t || [], { nonce: new Uint8Array(o) }),
+        signed: await this.signIntents(t || [], { nonce: new Uint8Array(o) }),
         address: s[0].accountId,
         publicKey: s[0].publicKey,
         chainId: d.NEAR,
@@ -1176,7 +1176,7 @@ class z {
     c(this, "signIntentsWithAuth", async (e, t) => {
       const s = w.encode(window.crypto.getRandomValues(new Uint8Array(32))), n = new TextEncoder().encode(`${e}_${s}`), r = await window.crypto.subtle.digest("SHA-256", n), o = await this.getAddress();
       return {
-        intent: await this.signIntents(t || [], { nonce: new Uint8Array(r) }),
+        signed: await this.signIntents(t || [], { nonce: new Uint8Array(r) }),
         address: o,
         publicKey: o,
         chainId: d.EVM,
@@ -1230,7 +1230,7 @@ class B {
   async signIntentsWithAuth(e, t) {
     const s = await this.getAddress(), n = w.encode(window.crypto.getRandomValues(new Uint8Array(32))), r = new TextEncoder().encode(`${e}_${n}`), o = await window.crypto.subtle.digest("SHA-256", r);
     return {
-      intent: await this.signIntents(t || [], { nonce: new Uint8Array(o) }),
+      signed: await this.signIntents(t || [], { nonce: new Uint8Array(o) }),
       publicKey: `ed25519:${s}`,
       chainId: d.SOLANA,
       address: s,
@@ -1284,7 +1284,7 @@ class J {
   async signIntentsWithAuth(e, t) {
     const s = w.encode(window.crypto.getRandomValues(new Uint8Array(32))), n = new TextEncoder().encode(`${e}_${s}`), r = await window.crypto.subtle.digest("SHA-256", n), o = await this.getPublicKey(), i = await this.getAddress();
     return {
-      intent: await this.signIntents(t || [], { nonce: new Uint8Array(r) }),
+      signed: await this.signIntents(t || [], { nonce: new Uint8Array(r) }),
       publicKey: `ed25519:${o}`,
       chainId: d.TON,
       address: i,

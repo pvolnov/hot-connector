@@ -8,6 +8,7 @@ export { InjectedWallet } from "./wallets/near-wallets/InjectedWallet";
 export { HotConnector } from "./HotConnector";
 export { NearConnector } from "./NearConnector";
 
+export * from "./wallets/ChainAbstracted";
 export { NearWallet } from "./wallets/near-wallets/NearWallet";
 export { default as EvmWallet } from "./wallets/EvmWallet";
 export { default as SolanaWallet } from "./wallets/SolanaWallet";
@@ -24,5 +25,4 @@ export type {
   SignAndSendTransactionsParams,
 } from "./types/wallet";
 
-export * from "./types/multichain";
 export * as tx from "./types/transactions";
