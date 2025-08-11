@@ -22,7 +22,7 @@ export const toUserFriendlyAddress = (hexAddress: string, testOnly = false) => {
 
   const addressWithChecksum = new Uint8Array(36);
   addressWithChecksum.set(addr);
-  addressWithChecksum.set(crc16(addr), 34);
+  addressWithChecksum.set(crc16(new Uint8Array(addr)), 34);
   let addressBase64 = base64.encode(addressWithChecksum);
   return addressBase64.replace(/\+/g, "-").replace(/\//g, "_");
 };
@@ -42,14 +42,14 @@ export const parseHexAddress = (hexAddress: string) => {
     throw `Wrong address ${hexAddress}. WC must be eq 0 or -1, but ${wc} received.`;
   }
 
-  const hex = parts[1];
-  if ((hex === null || hex === void 0 ? void 0 : hex.length) !== 64) {
+  const hexStr = parts[1];
+  if ((hexStr === null || hex === void 0 ? void 0 : hexStr.length) !== 64) {
     throw `Wrong address ${hexAddress}. Hex part must be 64bytes length, but ${
-      hex === null || hex === void 0 ? void 0 : hex.length
+      hexStr === null || hex === void 0 ? void 0 : hexStr.length
     } received.`;
   }
 
-  return { wc, hex: hex.decode(hex) };
+  return { wc, hex: hex.decode(hexStr) };
 };
 
 export const crc16 = (data: Uint8Array) => {
