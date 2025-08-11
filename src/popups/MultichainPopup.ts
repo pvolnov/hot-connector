@@ -47,6 +47,8 @@ export class MultichainPopup extends Popup {
         return "TON Wallet";
       case WalletType.NEAR:
         return "NEAR Wallet";
+      case WalletType.STELLAR:
+        return "Stellar Wallet";
       default:
         return type;
     }

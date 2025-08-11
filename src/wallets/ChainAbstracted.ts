@@ -2,18 +2,21 @@ import SolanaAccount from "../wallets/SolanaWallet";
 import { NearWallet } from "../wallets/near-wallets/NearWallet";
 import EvmAccount from "../wallets/EvmWallet";
 import TonAccount from "../wallets/TonWallet";
+import StellarAccount from "../wallets/StellarWallet";
 
 export interface ConnectedWallets {
   [WalletType.SOLANA]: SolanaAccount | null;
   [WalletType.NEAR]: NearWallet | null;
   [WalletType.EVM]: EvmAccount | null;
   [WalletType.TON]: TonAccount | null;
+  [WalletType.STELLAR]: StellarAccount | null;
 }
 
 export enum WalletType {
   NEAR = 1010,
   EVM = 1,
   SOLANA = 1001,
+  STELLAR = 1100,
   TON = 1111,
 }
 

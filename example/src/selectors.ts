@@ -1,4 +1,5 @@
 import { createAppKit } from "@reown/appkit";
+import { StellarWalletsKit, allowAllModules, WalletNetwork } from "@creit.tech/stellar-wallets-kit";
 import { base, bsc, mainnet, solana } from "@reown/appkit/networks";
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import { SolanaAdapter } from "@reown/appkit-adapter-solana";
@@ -38,4 +39,9 @@ export const appKitModal = createAppKit({
     smartSessions: false,
     legalCheckbox: false,
   },
+});
+
+export const stellarKit = new StellarWalletsKit({
+  network: WalletNetwork.PUBLIC,
+  modules: allowAllModules(),
 });

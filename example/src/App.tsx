@@ -1,13 +1,11 @@
 import { FC, useEffect, useState } from "react";
 
-import { HotConnector, NearWallet } from "../../src";
+import { HotConnector, WalletType, NearWallet } from "../../src";
 import { Account } from "../../src/types/wallet.ts";
-import { WalletType } from "../../src/types/multichain.ts";
 
 import { WalletActions } from "./WalletActions.tsx";
 import { NetworkSelector } from "./form-component/NetworkSelector.tsx";
-import { nearConnector, tonConnectUI } from "./selectors.ts";
-import { appKitModal } from "./selectors.ts";
+import { nearConnector, stellarKit, tonConnectUI, appKitModal } from "./selectors.ts";
 import "./index.css";
 
 export const ExampleNEAR: FC = () => {
@@ -70,6 +68,7 @@ export const MultichainExample = () => {
     [WalletType.EVM]: null,
     [WalletType.SOLANA]: null,
     [WalletType.TON]: null,
+    [WalletType.STELLAR]: null,
   });
 
   const [connector] = useState<HotConnector>(() => {
@@ -84,7 +83,8 @@ export const MultichainExample = () => {
         setWallets((t) => ({ ...t, [type]: null }));
       },
 
-      chains: [WalletType.NEAR, WalletType.EVM, WalletType.SOLANA, WalletType.TON],
+      chains: [WalletType.NEAR, WalletType.EVM, WalletType.SOLANA, WalletType.TON, WalletType.STELLAR],
+      stellarKit: stellarKit,
       nearConnector: nearConnector,
       tonConnect: tonConnectUI,
       appKit: appKitModal,
@@ -104,7 +104,21 @@ export const MultichainExample = () => {
           address != null && (
             <div key={type} style={{ width: 200 }}>
               <p style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{address}</p>
-              <button className={"input-button"} onClick={() => connector.auth(+type, "auth", [])}>
+              <button
+                className={"input-button"}
+                onClick={async () => {
+                  try {
+                    const { signed } = await connector.auth(+type, "auth", []);
+                    console.log({ signed });
+                    const result = await connector.simulateIntents([signed]);
+                    console.log(result);
+                    alert("Verified!");
+                  } catch (e) {
+                    console.error(e);
+                    alert("Something wrong, check DevTools");
+                  }
+                }}
+              >
                 Sign auth intents
               </button>
             </div>

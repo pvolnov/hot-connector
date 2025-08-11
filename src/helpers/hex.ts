@@ -10,3 +10,5 @@ export const hex = {
     return new Uint8Array(integers);
   },
 };
+
+export default hex;

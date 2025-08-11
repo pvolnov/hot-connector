@@ -1,8 +1,9 @@
 import type { SendTransactionRequest, TonConnectUI } from "@tonconnect/ui";
 import { ChainAbstracted, WalletType } from "./ChainAbstracted";
+import { toUserFriendlyAddress } from "../helpers/ton";
 import base58 from "../helpers/base58";
-import { hex } from "../helpers/hex";
 import base64 from "../helpers/base64";
+import hex from "../helpers/hex";
 
 class TonWallet implements ChainAbstracted {
   constructor(readonly wallet: TonConnectUI) {}
@@ -13,7 +14,7 @@ class TonWallet implements ChainAbstracted {
 
   getAddress = async (): Promise<string> => {
     if (!this.wallet.account) throw new Error("No account found");
-    return this.wallet.account.address;
+    return toUserFriendlyAddress(this.wallet.account.address);
   };
 
   getPublicKey = async (): Promise<string> => {
@@ -33,7 +34,7 @@ class TonWallet implements ChainAbstracted {
   async signIntentsWithAuth(domain: string, intents?: Record<string, any>[]) {
     const seed = hex.encode(window.crypto.getRandomValues(new Uint8Array(32)));
     const msgBuffer = new TextEncoder().encode(`${domain}_${seed}`);
-    const nonce = await window.crypto.subtle.digest("SHA-256", msgBuffer);
+    const nonce = await window.crypto.subtle.digest("SHA-256", new Uint8Array(msgBuffer));
     const publicKey = await this.getPublicKey();
     const address = await this.getAddress();
 

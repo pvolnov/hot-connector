@@ -30,7 +30,7 @@ class EvmWallet implements ChainAbstracted {
   signIntentsWithAuth = async (domain: string, intents?: Record<string, any>[]) => {
     const seed = hex.encode(window.crypto.getRandomValues(new Uint8Array(32)));
     const msgBuffer = new TextEncoder().encode(`${domain}_${seed}`);
-    const nonce = await window.crypto.subtle.digest("SHA-256", msgBuffer);
+    const nonce = await window.crypto.subtle.digest("SHA-256", new Uint8Array(msgBuffer));
     const address = await this.getAddress();
 
     return {

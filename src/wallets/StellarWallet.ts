@@ -1,59 +1,51 @@
-import type { SendTransactionOptions } from "@reown/appkit-adapter-solana";
-import type { Provider as SolanaProvider } from "@reown/appkit-utils/solana";
-import type { Connection, Transaction, VersionedTransaction } from "@solana/web3.js";
-
+import type { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit";
 import { ChainAbstracted, WalletType } from "./ChainAbstracted";
 import base58 from "../helpers/base58";
 import base64 from "../helpers/base64";
+import base32 from "../helpers/base32";
 import { hex } from "../helpers/hex";
 
-class SolanaWallet implements ChainAbstracted {
-  constructor(readonly wallet: SolanaProvider) {}
+class StellarWallet implements ChainAbstracted {
+  constructor(readonly kit: StellarWalletsKit, readonly address: string) {
+    this.address = address;
+  }
 
   get type() {
-    return WalletType.SOLANA;
+    return WalletType.STELLAR;
   }
 
   getAddress = async (): Promise<string> => {
-    const addresses = await this.wallet.getAccounts();
-    if (addresses.length === 0) throw new Error("No account found");
-    return addresses[0].address;
+    return this.address;
   };
 
   getPublicKey = async (): Promise<string> => {
-    return this.getAddress();
+    const payload = base32.decode(this.address);
+    return base58.encode(payload.slice(1, -2));
   };
 
   getIntentsAddress = async (): Promise<string> => {
-    const address = await this.getAddress();
-    return hex.encode(base58.decode(address)).toLowerCase();
+    const payload = base32.decode(this.address);
+    return hex.encode(payload.slice(1, -2));
   };
 
   async signIntentsWithAuth(domain: string, intents?: Record<string, any>[]) {
     const address = await this.getAddress();
+    const publicKey = await this.getPublicKey();
     const seed = hex.encode(window.crypto.getRandomValues(new Uint8Array(32)));
     const msgBuffer = new TextEncoder().encode(`${domain}_${seed}`);
     const nonce = await window.crypto.subtle.digest("SHA-256", new Uint8Array(msgBuffer));
 
     return {
       signed: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
-      publicKey: `ed25519:${address}`,
-      chainId: WalletType.SOLANA,
+      publicKey: `ed25519:${publicKey}`,
+      chainId: WalletType.STELLAR,
       address: address,
       seed,
     };
   }
 
-  async sendTransaction(
-    transaction: Transaction | VersionedTransaction,
-    connection: Connection,
-    options?: SendTransactionOptions
-  ): Promise<string> {
-    return await this.wallet.sendTransaction(transaction, connection, options);
-  }
-
   async signMessage(message: string) {
-    return await this.wallet.signMessage(new TextEncoder().encode(message));
+    return await this.kit.signMessage(message);
   }
 
   async signIntents(
@@ -73,13 +65,14 @@ class SolanaWallet implements ChainAbstracted {
     });
 
     const signature = await this.signMessage(message);
+
     return {
-      signature: `ed25519:${base58.encode(signature)}`,
+      signature: `ed25519:${base58.encode(base64.decode(signature.signedMessage))}`,
       public_key: `ed25519:${publicKey}`,
-      standard: "raw_ed25519",
+      standard: "sep53",
       payload: message,
     };
   }
 }
 
-export default SolanaWallet;
+export default StellarWallet;

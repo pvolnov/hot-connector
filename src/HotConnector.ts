@@ -1,6 +1,7 @@
 import type { AppKit } from "@reown/appkit";
 import type { Provider as SolanaProvider } from "@reown/appkit-utils/solana";
 import type { Provider as EvmProvider } from "@reown/appkit-utils/ethers";
+import type { ISupportedWallet, StellarWalletsKit } from "@creit.tech/stellar-wallets-kit";
 import type { TonConnectUI } from "@tonconnect/ui";
 
 import { ConnectedWallets, SignedAuth, WalletType } from "./wallets/ChainAbstracted";
@@ -11,25 +12,34 @@ import EvmAccount from "./wallets/EvmWallet";
 import SolanaAccount from "./wallets/SolanaWallet";
 import TonAccount from "./wallets/TonWallet";
 import { NearConnector } from "./NearConnector";
+import { DataStorage, LocalStorage } from "./storage";
+import StellarAccount from "./wallets/StellarWallet";
+import base64 from "./helpers/base64";
 
 export class HotConnector {
+  storage: DataStorage;
   wallets: ConnectedWallets = {
     [WalletType.NEAR]: null,
     [WalletType.EVM]: null,
     [WalletType.SOLANA]: null,
     [WalletType.TON]: null,
+    [WalletType.STELLAR]: null,
   };
 
   constructor(
     readonly options: {
+      chains: WalletType[];
       onConnect: <T extends WalletType>(wallet: ConnectedWallets[T], type: T) => void;
       onDisconnect: <T extends WalletType>(type: T) => void;
       nearConnector?: NearConnector;
-      chains: WalletType[];
+      stellarKit: StellarWalletsKit;
       tonConnect?: TonConnectUI;
+      storage?: DataStorage;
       appKit?: AppKit;
     }
   ) {
+    this.storage = options.storage || new LocalStorage();
+
     this.options.tonConnect?.onStatusChange(async (wallet) => {
       if (!wallet) return this.removeWallet(WalletType.TON);
       this.setWallet(WalletType.TON, new TonAccount(this.options.tonConnect!));
@@ -41,6 +51,17 @@ export class HotConnector {
     this.options.nearConnector?.on("wallet:signOut", () => this.removeWallet(WalletType.NEAR));
     this.options.nearConnector?.on("wallet:signIn", ({ wallet }) => this.setWallet(WalletType.NEAR, wallet));
     this.options.nearConnector?.getConnectedWallet().then(({ wallet }) => this.setWallet(WalletType.NEAR, wallet));
+
+    this.storage.get("hot-connector:stellar").then((data) => {
+      try {
+        if (!data) throw "No wallet";
+        const { id, address } = JSON.parse(data);
+        this.options.stellarKit.setWallet(id);
+        this.setWallet(WalletType.STELLAR, new StellarAccount(this.options.stellarKit!, address));
+      } catch {
+        this.removeWallet(WalletType.STELLAR);
+      }
+    });
 
     this.options.appKit?.subscribeProviders(async (state) => {
       const solanaProvider = state["solana"] as SolanaProvider;
@@ -80,6 +101,16 @@ export class HotConnector {
     if (type === WalletType.EVM) return this.options.appKit?.open({ namespace: "eip155" });
     if (type === WalletType.SOLANA) return this.options.appKit?.open({ namespace: "solana" });
     if (type === WalletType.TON) return this.options.tonConnect?.openModal();
+
+    if (type === WalletType.STELLAR)
+      return this.options.stellarKit?.openModal({
+        onWalletSelected: async (option: ISupportedWallet) => {
+          this.options.stellarKit?.setWallet(option.id);
+          const { address } = await this.options.stellarKit?.getAddress();
+          this.setWallet(WalletType.STELLAR, new StellarAccount(this.options.stellarKit!, address));
+          this.storage.set("hot-connector:stellar", JSON.stringify({ id: option.id, address }));
+        },
+      });
   }
 
   async connect() {
@@ -91,6 +122,7 @@ export class HotConnector {
           [WalletType.EVM]: await this.wallets[WalletType.EVM]?.getAddress().catch(() => undefined),
           [WalletType.SOLANA]: await this.wallets[WalletType.SOLANA]?.getAddress().catch(() => undefined),
           [WalletType.TON]: await this.wallets[WalletType.TON]?.getAddress().catch(() => undefined),
+          [WalletType.STELLAR]: await this.wallets[WalletType.STELLAR]?.getAddress().catch(() => undefined),
         },
 
         onConnect: (type) => {
@@ -153,6 +185,12 @@ export class HotConnector {
           if (wallet.type === WalletType.SOLANA) await this.options.appKit?.disconnect("solana").catch(() => null);
           if (wallet.type === WalletType.EVM) await this.options.appKit?.disconnect("eip155").catch(() => null);
           if (wallet.type === WalletType.TON) await this.options.tonConnect?.connector.disconnect().catch(() => null);
+
+          if (wallet.type === WalletType.STELLAR) {
+            await this.options.stellarKit?.disconnect().catch(() => null);
+            this.storage.remove("hot-connector:stellar");
+          }
+
           this.removeWallet(wallet.type);
           popup.destroy();
           resolve();
@@ -225,5 +263,39 @@ export class HotConnector {
 
     const hash = await fetchResult();
     return hash;
+  }
+
+  async simulateIntents(signed: Record<string, any>[]) {
+    return await this.viewMethod("intents.near", "simulate_intents", { signed: signed });
+  }
+
+  async viewMethod(contractId: string, method: string, args: Record<string, any> = {}) {
+    const rpc = "https://rpc.mainnet.near.org";
+    const res = await fetch(rpc, {
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "query",
+        params: {
+          request_type: "call_function",
+          finality: "final",
+          account_id: contractId,
+          method_name: method,
+          args_base64: base64.encode(new TextEncoder().encode(JSON.stringify(args))),
+        },
+      }),
+    });
+
+    const { result } = await res.json();
+    if (result.error) throw result.error;
+    if (!result?.result) throw new Error("Failed to call view method");
+
+    try {
+      return JSON.parse(Buffer.from(result.result).toString());
+    } catch {
+      return result.result;
+    }
   }
 }

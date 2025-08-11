@@ -32,9 +32,9 @@
     "build:mnw": "PACKAGE=mnw vite build --config ./wallets/vite.config.ts"
   },
   "devDependencies": {
+    "@creit.tech/stellar-wallets-kit": "^1.7.7",
     "@eslint/js": "^9.32.0",
     "@here-wallet/core": "^3.4.0",
-    "@hot-wallet/sdk": "^1.0.11",
     "@meteorwallet/sdk": "^1.0.9",
     "@near-wallet-selector/core": "^8.9.12",
     "@near-wallet-selector/ledger": "^8.10.1",
