@@ -13,6 +13,7 @@ export { NearWallet } from "./wallets/near-wallets/NearWallet";
 export { default as EvmWallet } from "./wallets/EvmWallet";
 export { default as SolanaWallet } from "./wallets/SolanaWallet";
 export { default as TonWallet } from "./wallets/TonWallet";
+export { default as StellarWallet } from "./wallets/StellarWallet";
 
 export type {
   NearWalletBase,

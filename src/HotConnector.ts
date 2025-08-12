@@ -32,7 +32,7 @@ export class HotConnector {
       onConnect: <T extends WalletType>(wallet: ConnectedWallets[T], type: T) => void;
       onDisconnect: <T extends WalletType>(type: T) => void;
       nearConnector?: NearConnector;
-      stellarKit: StellarWalletsKit;
+      stellarKit?: StellarWalletsKit;
       tonConnect?: TonConnectUI;
       storage?: DataStorage;
       appKit?: AppKit;
@@ -54,7 +54,7 @@ export class HotConnector {
 
     this.storage.get("hot-connector:stellar").then((data) => {
       try {
-        if (!data) throw "No wallet";
+        if (!data || !this.options.stellarKit) throw "No wallet";
         const { id, address } = JSON.parse(data);
         this.options.stellarKit.setWallet(id);
         this.setWallet(WalletType.STELLAR, new StellarAccount(this.options.stellarKit!, address));
@@ -105,6 +105,7 @@ export class HotConnector {
     if (type === WalletType.STELLAR)
       return this.options.stellarKit?.openModal({
         onWalletSelected: async (option: ISupportedWallet) => {
+          if (!this.options.stellarKit) return;
           this.options.stellarKit?.setWallet(option.id);
           const { address } = await this.options.stellarKit?.getAddress();
           this.setWallet(WalletType.STELLAR, new StellarAccount(this.options.stellarKit!, address));
