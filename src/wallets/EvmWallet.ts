@@ -46,14 +46,9 @@ class EvmWallet implements ChainAbstracted {
     const address = await this.getAddress();
     const result: string = await this.wallet.request({ method: "personal_sign", params: [msg, address] });
 
-    const bytes = hex.decode(result.slice(2));
-    const y = bytes.slice(-1, 0);
-    const yInt = parseInt(`0x${hex.encode(y)}`, 16);
-
-    const zero = hex.decode("00");
-    const one = hex.decode("01");
-
-    return new Uint8Array([...bytes.slice(0, -1), ...(yInt === 27 || yInt === 0 ? zero : one)]);
+    const yInt = parseInt(result.slice(-2), 16);
+    const isZero = yInt === 27 || yInt === 0;
+    return hex.decode(result.slice(2, -2) + (isZero ? "00" : "01"));
   }
 
   async sendTransaction(tx: string) {

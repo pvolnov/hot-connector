@@ -19,12 +19,12 @@ class TonWallet implements ChainAbstracted {
 
   getPublicKey = async (): Promise<string> => {
     if (!this.wallet.account?.publicKey) throw new Error("No public key found");
-    return this.wallet.account.publicKey;
+    return base58.encode(hex.decode(this.wallet.account.publicKey));
   };
 
   async getIntentsAddress() {
-    const publicKey = await this.getPublicKey();
-    return publicKey.toLowerCase();
+    if (!this.wallet.account?.publicKey) throw new Error("No public key found");
+    return this.wallet.account.publicKey.toLowerCase();
   }
 
   async sendTransaction(msgs: SendTransactionRequest) {
@@ -32,11 +32,13 @@ class TonWallet implements ChainAbstracted {
   }
 
   async signIntentsWithAuth(domain: string, intents?: Record<string, any>[]) {
+    const address = this.wallet.account?.address;
+    if (!address) throw new Error("Wallet not connected");
+
     const seed = hex.encode(window.crypto.getRandomValues(new Uint8Array(32)));
     const msgBuffer = new TextEncoder().encode(`${domain}_${seed}`);
     const nonce = await window.crypto.subtle.digest("SHA-256", new Uint8Array(msgBuffer));
     const publicKey = await this.getPublicKey();
-    const address = await this.getAddress();
 
     return {
       signed: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
@@ -59,6 +61,7 @@ class TonWallet implements ChainAbstracted {
     };
 
     const result = await this.wallet.signData({ text: JSON.stringify(message), type: "text" });
+
     return {
       ...result,
       standard: "ton_connect",
