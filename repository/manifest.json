@@ -133,7 +133,7 @@
       "name": "Intear Wallet",
       "icon": "https://wallet.intear.tech/favicon.svg",
       "description": "A fast and secure wallet for everyday interactions with dapps",
-      "website": "https://intea.rs/",
+      "website": "https://intea.rs",
       "version": "1.0.0",
       "executor": "https://wallet.intear.tech/near-selector.js",
       "type": "sandbox",
@@ -147,13 +147,24 @@
         "testnet": true
       },
       "platform": {
-        "web": "https://wallet.intear.tech"
+        "web": "https://wallet.intear.tech",
+        "windows": "https://github.com/INTEARnear/wallet/releases",
+        "linux": "https://github.com/INTEARnear/wallet/releases",
+        "macos": "https://github.com/INTEARnear/wallet/releases"
       },
       "permissions": {
         "storage": true,
         "location": true,
         "open": {
-          "allows": ["https://wallet.intear.tech", "https://logout-bridge-service.intear.tech"]
+          "allows": [
+            "https://wallet.intear.tech",
+            "https://staging.wallet.intear.tech",
+            "http://intearwallet.local",
+            "https://intearwallet.local",
+            "http://intearwallet.localhost:3000",
+            "intear://",
+            "https://logout-bridge-service.intear.tech"
+          ]
         }
       }
     }
