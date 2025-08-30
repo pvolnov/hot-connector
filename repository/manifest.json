@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "wallets": [
     {
       "id": "hot-wallet",
@@ -28,16 +28,14 @@
 
       "permissions": {
         "storage": true,
-        "open": {
-          "allows": [
-            "https://download.hot-labs.org",
-            "https://hot-labs.org/wallet",
-            "https://t.me/hot_wallet/app",
-            "https://play.google.com",
-            "https://apps.apple.com",
-            "hotwallet://"
-          ]
-        }
+        "allowsOpen": [
+          "https://download.hot-labs.org",
+          "https://hot-labs.org/wallet",
+          "https://t.me/hot_wallet/app",
+          "https://play.google.com",
+          "https://apps.apple.com",
+          "hotwallet://"
+        ]
       }
     },
     {
@@ -65,9 +63,7 @@
 
       "permissions": {
         "storage": true,
-        "open": {
-          "allows": ["https://nearmobile.app", "https://play.google.com", "https://apps.apple.com"]
-        }
+        "allowsOpen": ["https://nearmobile.app", "https://play.google.com", "https://apps.apple.com"]
       }
     },
     {
@@ -93,9 +89,7 @@
 
       "permissions": {
         "storage": true,
-        "open": {
-          "allows": ["https://app.mynearwallet.com"]
-        }
+        "allowsOpen": ["https://app.mynearwallet.com"]
       }
     },
     {
@@ -105,7 +99,7 @@
       "description": "The most simple and secure wallet to manage your crypto, access DeFi, and explore Web3",
       "website": "https://meteorwallet.app/",
       "version": "1.0.0",
-      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/meteor.js",
+      "executor": "/repository/meteor.js",
       "type": "sandbox",
 
       "features": {
@@ -123,9 +117,7 @@
 
       "permissions": {
         "storage": true,
-        "open": {
-          "allows": ["https://wallet.meteorwallet.app"]
-        }
+        "allowsOpen": ["https://wallet.meteorwallet.app"]
       }
     },
     {
@@ -152,9 +144,59 @@
       "permissions": {
         "storage": true,
         "location": true,
-        "open": {
-          "allows": ["https://wallet.intear.tech", "https://logout-bridge-service.intear.tech"]
-        }
+        "allowsOpen": ["https://wallet.intear.tech", "https://logout-bridge-service.intear.tech"]
+      }
+    },
+    {
+      "id": "nightly-wallet",
+      "name": "Nightly Wallet",
+      "icon": "https://framerusercontent.com/images/jjSD3FGBBB1dyMzV6YIk0Y1g0I.png",
+      "description": "Surf through the multichain Metaverse with Nightly",
+      "website": "https://nightly.app",
+      "version": "1.0.0",
+      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/nightly.js",
+      "type": "sandbox",
+      "platform": {
+        "chrome": "https://chromewebstore.google.com/detail/nightly/fiikommddbeccaoicoejoniammnalkfa?pli=1"
+      },
+      "permissions": {
+        "storage": true,
+        "external": ["nightly.near"],
+        "allowsOpen": ["https://nightly.app"]
+      },
+      "features": {
+        "signMessage": true,
+        "signInWithoutAddKey": true,
+        "signAndSendTransaction": true,
+        "signAndSendTransactions": true,
+        "testnet": true
+      }
+    },
+    {
+      "id": "unity-wallet",
+      "name": "Unity Wallet",
+      "icon": "https://framerusercontent.com/images/FeQXWfCR1lxfEWo6ka790vBZnI.png",
+      "description": "Discover the most secure, feature-packed, self-custodial crypto and Web3 wallet. Unlock limitless possibilities.",
+      "website": "https://unitywallet.com",
+      "version": "1.0.0",
+      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/wallet-connect.js",
+      "type": "sandbox",
+      "platform": {
+        "web": "https://unitywallet.com",
+        "android": "https://unitywallet.oneclick.me",
+        "ios": "https://unitywallet.oneclick.me"
+      },
+      "permissions": {
+        "storage": true,
+        "clipboardWrite": true,
+        "walletConnect": true
+      },
+      "features": {
+        "signMessage": true,
+        "signInWithoutAddKey": true,
+        "signAndSendTransaction": true,
+        "signAndSendTransactions": true,
+        "testnet": true
       }
     }
   ]

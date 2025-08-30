@@ -151,7 +151,8 @@ export class HotConnector {
   async auth(
     type: WalletType | ConnectedWallets[keyof ConnectedWallets],
     domain: string,
-    intents: Record<string, any>[]
+    intents: Record<string, any>[],
+    then?: (signed: SignedAuth) => Promise<void>
   ): Promise<SignedAuth> {
     const wallet = this.resolveWallet(type);
     return new Promise<SignedAuth>((resolve, reject) => {
@@ -159,6 +160,7 @@ export class HotConnector {
         onApprove: async () => {
           try {
             const signed = await wallet.signIntentsWithAuth(domain, intents);
+            await then?.(signed);
             resolve(signed);
             popup.destroy();
           } catch (e) {

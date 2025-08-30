@@ -1,6 +1,6 @@
 # NEAR Connect
 
-![image.png](./media/image.png)
+![preview.mp4](./media/preview.mp4)
 
 Zero-dependenices, robust, secure and lightweight wallet connector for the NEAR blockchain with **easily updatable** wallets code
 

@@ -2,9 +2,19 @@
 
 interface Window {
   selector: {
+    walletConnect: {
+      connect: (params: EngineTypes.ConnectParams) => Promise<SessionTypes.Struct>;
+      disconnect: (params: EngineTypes.DisconnectParams) => Promise<void>;
+      request: (params: EngineTypes.RequestParams) => Promise<any>;
+      getSession: () => Promise<SessionTypes.Struct>;
+      getProjectId: () => Promise<string>;
+    };
+
     network: "testnet" | "mainnet";
     location: string;
+
     ready: (wallet: any) => void;
+    external: (entity: string, key: string, ...args: any[]) => Promise<any>;
 
     parentFrame?: {
       postMessage: (data: any) => Promise<void>;

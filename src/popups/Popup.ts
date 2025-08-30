@@ -2,9 +2,11 @@ import { css } from "./styles";
 
 const ID = "hot-connector-popup";
 
-const style = document.createElement("style");
-style.textContent = css(`.${ID}`);
-document.head.append(style);
+if (typeof document !== "undefined") {
+  const style = document.createElement("style");
+  style.textContent = css(`.${ID}`);
+  document.head.append(style);
+}
 
 export class Popup {
   isClosed = false;

@@ -13,13 +13,23 @@ class SandboxExecutor {
     this.storageSpace = manifest.id;
   }
 
-  checkPermissions(action: keyof WalletPermissions, params?: { url?: string }) {
-    if (action === "open") {
-      const openUrl = parseUrl(params?.url || "");
-      const config = this.manifest.permissions[action];
+  checkPermissions(action: keyof WalletPermissions, params?: { url?: string; entity?: string }) {
+    if (action === "walletConnect") {
+      return !!this.manifest.permissions.walletConnect;
+    }
 
-      if (!openUrl || typeof config !== "object" || !config.allows) return false;
-      const isAllowed = config.allows.some((path) => {
+    if (action === "external") {
+      const external = this.manifest.permissions.external;
+      if (!external || !params?.entity) return false;
+      return external.includes(params.entity);
+    }
+
+    if (action === "allowsOpen") {
+      const openUrl = parseUrl(params?.url || "");
+      const allowsOpen = this.manifest.permissions.allowsOpen;
+
+      if (!openUrl || !allowsOpen || !Array.isArray(allowsOpen) || allowsOpen.length === 0) return false;
+      const isAllowed = allowsOpen.some((path) => {
         const url = parseUrl(path);
         if (!url) return false;
 
@@ -32,22 +42,14 @@ class SandboxExecutor {
       return isAllowed;
     }
 
-    if (action === "parentFrame") {
-      const origin = window.location.ancestorOrigins?.[0] ?? "";
-      const parentFrame = this.manifest.permissions[action] as WalletPermissions["parentFrame"];
-      if (!parentFrame) return false;
-      return parentFrame.includes(origin);
-    }
-
     return this.manifest.permissions[action];
   }
 
-  get parentOrigin() {
-    return window.location.ancestorOrigins?.[0];
-  }
-
-  get isParentFrame() {
-    return this.manifest.permissions.parentFrame?.includes(this.parentOrigin);
+  assertPermissions(iframe: IframeExecutor, action: keyof WalletPermissions, event: MessageEvent) {
+    if (!this.checkPermissions(action, event.data.params)) {
+      iframe.postMessage({ ...event.data, status: "failed", result: "Permission denied" });
+      throw new Error("Permission denied");
+    }
   }
 
   _onMessage = async (iframe: IframeExecutor, event: MessageEvent) => {
@@ -63,25 +65,29 @@ class SandboxExecutor {
       return;
     }
 
-    if (event.data.method === "storage.set" && this.checkPermissions("storage")) {
+    if (event.data.method === "storage.set") {
+      this.assertPermissions(iframe, "storage", event);
       localStorage.setItem(`${this.storageSpace}:${event.data.params.key}`, event.data.params.value);
       iframe.postMessage({ ...event.data, status: "success", result: null });
       return;
     }
 
-    if (event.data.method === "storage.get" && this.checkPermissions("storage")) {
+    if (event.data.method === "storage.get") {
+      this.assertPermissions(iframe, "storage", event);
       const value = localStorage.getItem(`${this.storageSpace}:${event.data.params.key}`);
       iframe.postMessage({ ...event.data, status: "success", result: value });
       return;
     }
 
-    if (event.data.method === "storage.keys" && this.checkPermissions("storage")) {
+    if (event.data.method === "storage.keys") {
+      this.assertPermissions(iframe, "storage", event);
       const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.storageSpace}:`));
       iframe.postMessage({ ...event.data, status: "success", result: keys });
       return;
     }
 
-    if (event.data.method === "storage.remove" && this.checkPermissions("storage")) {
+    if (event.data.method === "storage.remove") {
+      this.assertPermissions(iframe, "storage", event);
       localStorage.removeItem(`${this.storageSpace}:${event.data.params.key}`);
       iframe.postMessage({ ...event.data, status: "success", result: null });
       return;
@@ -110,13 +116,78 @@ class SandboxExecutor {
       return;
     }
 
-    if (event.data.method === "parentFrame.postMessage" && this.checkPermissions("parentFrame")) {
-      window.parent.postMessage(event.data.params.data, "*");
-      iframe.postMessage({ ...event.data, status: "success", result: null });
+    if (event.data.method === "walletConnect.connect") {
+      this.assertPermissions(iframe, "walletConnect", event);
+      try {
+        const client = await this.connector.getWalletConnect();
+        const result = await client.connect(event.data.params);
+        result.approval();
+        iframe.postMessage({ ...event.data, status: "success", result: { uri: result.uri } });
+      } catch (e) {
+        iframe.postMessage({ ...event.data, status: "failed", result: e });
+      }
+    }
+
+    if (event.data.method === "walletConnect.getProjectId") {
+      this.assertPermissions(iframe, "walletConnect", event);
+      iframe.postMessage({ ...event.data, status: "success", result: this.connector.walletConnect?.projectId });
+    }
+
+    if (event.data.method === "walletConnect.disconnect") {
+      this.assertPermissions(iframe, "walletConnect", event);
+      try {
+        const client = await this.connector.getWalletConnect();
+        const result = await client.disconnect(event.data.params);
+        iframe.postMessage({ ...event.data, status: "success", result: result });
+      } catch (e) {
+        iframe.postMessage({ ...event.data, status: "failed", result: e });
+      }
+    }
+
+    if (event.data.method === "walletConnect.getSession") {
+      this.assertPermissions(iframe, "walletConnect", event);
+      try {
+        const client = await this.connector.getWalletConnect();
+        const key = client.session.keys[client.session.keys.length - 1];
+        const session = key ? client.session.get(key) : null;
+        iframe.postMessage({
+          ...event.data,
+          status: "success",
+          result: session ? { topic: session.topic, namespaces: session.namespaces } : null,
+        });
+      } catch (e) {
+        iframe.postMessage({ ...event.data, status: "failed", result: e });
+      }
+    }
+
+    if (event.data.method === "walletConnect.request") {
+      this.assertPermissions(iframe, "walletConnect", event);
+      try {
+        const client = await this.connector.getWalletConnect();
+        const result = await client.request(event.data.params);
+        iframe.postMessage({ ...event.data, status: "success", result: result });
+      } catch (e) {
+        iframe.postMessage({ ...event.data, status: "failed", result: e });
+      }
+    }
+
+    if (event.data.method === "external") {
+      this.assertPermissions(iframe, "external", event);
+      try {
+        const { entity, key, args } = event.data.params;
+        const obj = entity.split(".").reduce((acc: any, key: string) => acc[key], window);
+        const result = typeof obj[key] === "function" ? await obj[key](...(args || [])) : obj[key];
+        iframe.postMessage({ ...event.data, status: "success", result: result });
+      } catch (e) {
+        iframe.postMessage({ ...event.data, status: "failed", result: e });
+      }
+
       return;
     }
 
-    if (event.data.method === "open" && this.checkPermissions("open", event.data.params)) {
+    if (event.data.method === "open") {
+      this.assertPermissions(iframe, "allowsOpen", event);
+
       // Open in Telegram Mini App
       const tgapp = typeof window !== "undefined" ? (window as any)?.Telegram?.WebApp : null;
       if (tgapp && event.data.params.url.startsWith("https://t.me")) {
@@ -154,6 +225,23 @@ class SandboxExecutor {
       }
 
       return;
+    }
+
+    if (event.data.method === "open.nativeApp") {
+      this.assertPermissions(iframe, "allowsOpen", event);
+
+      const url = parseUrl(event.data.params.url);
+      if (!url || (url.protocol !== "https" && url.protocol !== "http")) {
+        iframe.postMessage({ ...event.data, status: "failed", result: "Invalid URL" });
+        throw new Error("[open.nativeApp] Invalid URL");
+      }
+
+      const linkIframe = document.createElement("iframe");
+      linkIframe.setAttribute("sandbox", "");
+      linkIframe.src = event.data.params.url;
+      linkIframe.style.display = "none";
+      document.body.appendChild(linkIframe);
+      iframe.postMessage({ ...event.data, status: "success", result: null });
     }
   };
 

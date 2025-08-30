@@ -14,14 +14,8 @@ export const head = /* html */ `
     <title>HOT Connector</title>
 `;
 
-export const body = /* html */ `
+export const bodyMobile = /* html */ `
     <div class="popup">
-      <h1 class="title" style="margin-bottom: 14px">
-        Scan in <span>HOT Wallet</span>
-      </h1>
-      <div class="qr-code"></div>
-
-      <h2 class="divider">OR</h2>
       <h2 class="title">Approve in <span>App</span></h2>
 
       <div style="display: flex; gap: 12px;">

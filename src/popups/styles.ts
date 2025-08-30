@@ -36,7 +36,7 @@ ${id} .modal-content {
   align-items: center;
 
   max-width: 420px;
-  max-height: 600px;
+  max-height: 615px;
   width: 100%;
   border-radius: 24px;
   background: #0d0d0d;

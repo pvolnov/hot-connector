@@ -13,6 +13,7 @@ import IndexedDB from "./indexdb";
 interface NearConnectorOptions {
   storage?: DataStorage;
   logger?: Logger;
+  walletConnect?: { projectId: string; metadata: any };
   events?: EventEmitter<EventMap>;
   manifest?: string | { wallets: WalletManifest[]; version: string };
   network?: Network;
@@ -36,6 +37,7 @@ export class NearConnector {
 
   network: Network = "mainnet";
   connectWithKey?: { contractId: string; methodNames?: string[]; allowance?: string };
+  walletConnect?: { projectId: string; metadata: any };
 
   readonly whenManifestLoaded: Promise<void>;
 
@@ -48,6 +50,7 @@ export class NearConnector {
     this.network = options?.network ?? "mainnet";
     this.connectWithKey = options?.connectWithKey;
     this.features = options?.features ?? {};
+    this.walletConnect = options?.walletConnect;
 
     this.whenManifestLoaded = new Promise(async (resolve) => {
       if (options?.manifest == null || typeof options.manifest === "string") {
@@ -81,6 +84,20 @@ export class NearConnector {
         this.connect(event.data.manifest.id);
       }
     });
+  }
+
+  _client: import("@walletconnect/sign-client").default | null = null;
+  async getWalletConnect() {
+    const WalletConnect = await import("@walletconnect/sign-client");
+    if (this._client) return this._client;
+
+    this._client = await WalletConnect.default.init({
+      projectId: this.walletConnect?.projectId,
+      metadata: this.walletConnect?.metadata,
+      relayUrl: "wss://relay.walletconnect.com",
+    });
+
+    return this._client;
   }
 
   get availableWallets() {

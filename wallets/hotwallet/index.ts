@@ -2,7 +2,7 @@ import { baseEncode } from "@near-js/utils";
 import { QRCode } from "@here-wallet/core/qrcode-strategy";
 import crypto from "crypto";
 
-import { head, body, bodyDesktop } from "./view";
+import { head, bodyMobile, bodyDesktop } from "./view";
 
 const isMobile = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -17,7 +17,7 @@ const renderUI = () => {
   document.body.appendChild(root);
   document.head.innerHTML = head;
 
-  if (isMobile()) root.innerHTML = body;
+  if (isMobile()) root.innerHTML = bodyMobile;
   else root.innerHTML = bodyDesktop;
 };
 

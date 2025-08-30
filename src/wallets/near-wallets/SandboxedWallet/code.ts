@@ -3,10 +3,11 @@ import SandboxExecutor from "./executor";
 async function getIframeCode(args: { id: string; executor: SandboxExecutor; code: string }) {
   const storage = await args.executor.getAllStorage();
   const manifest = args.executor.manifest;
+  const walletConnect = args.executor.connector.walletConnect;
   const uuid = args.id;
 
   const code = args.code
-    .replaceAll("window.localStorage", "window.sandboxedLocalStorage")
+    .replaceAll(".localStorage", ".sandboxedLocalStorage")
     .replaceAll("window.top", "window.selector")
     .replaceAll("window.open", "window.selector.open");
 
@@ -191,6 +192,24 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
             return v.toString(16);
           });
         },
+
+        walletConnect: {
+          connect(params) {
+            return window.selector.call("walletConnect.connect", params);
+          },
+          disconnect(params) {
+            return window.selector.call("walletConnect.disconnect", params);
+          },
+          request(params) {
+            return window.selector.call("walletConnect.request", params);
+          },
+          getProjectId() {
+            return window.selector.call("walletConnect.getProjectId", {});
+          },
+          getSession() {
+            return window.selector.call("walletConnect.getSession", {});
+          },
+        },
       
         async ready(wallet) {
           window.parent.postMessage({ method: "wallet-ready", origin: "${uuid}" }, "*");
@@ -224,6 +243,14 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
 
         open(url, _, params) {
           return new ProxyWindow(url, params)
+        },
+
+        external(entity, key, ...args) {
+          return window.selector.call("external", { entity, key, args: args || [] });
+        },
+
+        openNativeApp(url) {
+          return window.selector.call("open.nativeApp", { url });
         },
 
         ui: {

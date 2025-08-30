@@ -76,9 +76,11 @@ export type EventNearWalletInjected = CustomEvent<NearWalletBase>;
 
 export interface WalletPermissions {
   storage?: boolean;
-  open?: { allows?: string[] };
-  autoRun?: { parentFrame?: boolean; webviewUserAgent?: string };
-  parentFrame?: string[];
+  external?: string[];
+  walletConnect?: boolean;
+  allowsOpen?: string[];
+  clipboardRead?: boolean;
+  clipboardWrite?: boolean;
   usb?: boolean;
   hid?: boolean;
 }

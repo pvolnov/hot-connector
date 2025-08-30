@@ -32,17 +32,14 @@ class IframeExecutor {
 
     window.addEventListener("message", this.handler);
 
-    this.iframe.setAttribute("sandbox", "allow-scripts");
     const iframeAllowedPersimissions = [];
-    if (this.executor.checkPermissions("usb")) {
-      iframeAllowedPersimissions.push("usb *;");
-    }
-
-    if (this.executor.checkPermissions("hid")) {
-      iframeAllowedPersimissions.push("hid *;");
-    }
-
+    if (this.executor.checkPermissions("usb")) iframeAllowedPersimissions.push("usb *;");
+    if (this.executor.checkPermissions("hid")) iframeAllowedPersimissions.push("hid *;");
+    if (this.executor.checkPermissions("clipboardRead")) iframeAllowedPersimissions.push("clipboard-read;");
+    if (this.executor.checkPermissions("clipboardWrite")) iframeAllowedPersimissions.push("clipboard-write;");
     this.iframe.allow = iframeAllowedPersimissions.join(" ");
+    this.iframe.setAttribute("sandbox", "allow-scripts");
+
     getIframeCode({ id: this.origin, executor: this.executor, code }).then((code) => {
       this.executor.connector.logger?.log(`Iframe code injected`);
       this.iframe.srcdoc = code;

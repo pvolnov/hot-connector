@@ -1,6 +1,6 @@
 {
   "name": "@hot-labs/near-connect",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "type": "commonjs",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
@@ -25,14 +25,19 @@
     "example": "cd example && yarn start",
     "build:example": "cd example && yarn build",
     "build:meteor": "PACKAGE=meteor vite build --config ./wallets/vite.config.ts",
-    "build:wallets": "yarn build:hotwallet && yarn build:ledger && yarn build:mnw && yarn build:near-mobile && yarn build:meteor",
+    "build:wallets": "yarn build:hotwallet && yarn build:ledger && yarn build:mnw && yarn build:near-mobile && yarn build:meteor && yarn build:wallet-connect && yarn build:nightly",
     "build:hotwallet": "PACKAGE=hotwallet vite build --config ./wallets/vite.config.ts",
     "build:near-mobile": "PACKAGE=near-mobile vite build --config ./wallets/vite.config.ts",
+    "build:wallet-connect": "PACKAGE=wallet-connect vite build --config ./wallets/vite.config.ts",
+    "build:nightly": "PACKAGE=nightly vite build --config ./wallets/vite.config.ts",
     "build:ledger": "PACKAGE=ledger vite build --config ./wallets/vite.config.ts",
     "build:mnw": "PACKAGE=mnw vite build --config ./wallets/vite.config.ts"
   },
+  "peerDependencies": {
+    "@walletconnect/sign-client": "^2.21.8"
+  },
   "devDependencies": {
-    "@creit.tech/stellar-wallets-kit": "^1.7.7",
+    "@creit.tech/stellar-wallets-kit": "^1.9.1",
     "@eslint/js": "^9.32.0",
     "@here-wallet/core": "^3.4.0",
     "@meteorwallet/sdk": "^1.0.9",
