@@ -1,6 +1,6 @@
-# NEAR Connect
+# HOT Connect
 
-![preview.mp4](./media/preview.mp4)
+![ezgif-26d74832f88c3c](https://github.com/user-attachments/assets/c4422057-38bb-4cd9-8bd0-568e29f46280)
 
 Zero-dependenices, robust, secure and lightweight wallet connector for the NEAR blockchain with **easily updatable** wallets code
 
