@@ -231,7 +231,7 @@ class SandboxExecutor {
       this.assertPermissions(iframe, "allowsOpen", event);
 
       const url = parseUrl(event.data.params.url);
-      if (!url || (url.protocol !== "https" && url.protocol !== "http")) {
+      if (!url || url.protocol === "https" || url.protocol === "http") {
         iframe.postMessage({ ...event.data, status: "failed", result: "Invalid URL" });
         throw new Error("[open.nativeApp] Invalid URL");
       }
