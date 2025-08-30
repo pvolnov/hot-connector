@@ -15,7 +15,14 @@ Unlike near-wallet-selector, this library provides a secure execution environmen
 ```ts
 import { NearConnector } from "@hot-labs/near-connect";
 
-const connector = new NearConnector({ network: "mainnet" });
+const connector = new NearConnector({
+  network: "mainnet",
+  // Optional for wallet-connect wallets
+  walletConnect: {
+    projectId: "",
+    metadata: {},
+  },
+});
 
 connector.on("wallet:signOut", async () => {});
 connector.on("wallet:signIn", async (t) => {
@@ -61,15 +68,13 @@ The developer writes a self-hosted script that implements the integration of the
 
   "permissions": {
     "storage": true,
-    "open": {
-      "allows": [
-        "https://hot-labs.org",
-        "https://t.me/hot_wallet",
-        "https://play.google.com",
-        "https://apps.apple.com",
-        "hotwallet://"
-      ]
-    }
+    "allowsOpen": [
+      "https://hot-labs.org",
+      "https://t.me/hot_wallet",
+      "https://play.google.com",
+      "https://apps.apple.com",
+      "hotwallet://"
+    ]
   }
 }
 ```
@@ -103,11 +108,10 @@ interface NearSelector {
 
 ## Manifest permissions
 
-- `{ "storage": true  }`: Use window.selector.storage in execution script
-- `{ "open": { allows: ["https://wallet.app"] } }` Use window.selector.open for `allow` domains
+- `{ "storage": true }`: Use window.selector.storage in execution script
+- `{ "allowsOpen": ["https://wallet.app"] }` Use window.selector.open for `allow` domains
 - `{ "location": true }`: Use window.selector.location for initial url from dapp
-- `{ "usb": true }`: Use usb in execution script (use for Ledger)
-- `{ "hid": true }`: Use hid in execution script (use for Ledger)
+- `{ "walletConnect": true }`: Use window.selector.walletConnect for use client
 
 ## Manifest features
 
