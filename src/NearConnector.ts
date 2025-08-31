@@ -63,26 +63,30 @@ export class NearConnector {
       resolve();
     });
 
-    window.addEventListener<any>("near-wallet-injected", this._handleNearWalletInjected);
-    window.dispatchEvent(new Event("near-selector-ready"));
+    if (typeof window !== "undefined") {
+      window.addEventListener<any>("near-wallet-injected", this._handleNearWalletInjected);
+      window.dispatchEvent(new Event("near-selector-ready"));
+      window.addEventListener("message", async (event) => {
+        if (event.data.type === "near-wallet-injected") {
+          await this.whenManifestLoaded.catch(() => {});
+          this.wallets = this.wallets.filter((wallet) => wallet.manifest.id !== event.data.manifest.id);
+          this.wallets.unshift(new ParentFrameWallet(this, event.data.manifest));
+          this.events.emit("selector:walletsChanged", {});
+          this.connect(event.data.manifest.id);
+        }
+      });
+    }
 
     this.whenManifestLoaded.then(() => {
-      window.parent.postMessage({ type: "near-selector-ready" }, "*");
+      if (typeof window !== "undefined") {
+        window.parent.postMessage({ type: "near-selector-ready" }, "*");
+      }
+
       this.manifest.wallets.forEach((wallet) => this.registerWallet(wallet));
       this.storage.get("debug-wallets").then((json) => {
         const debugWallets = JSON.parse(json ?? "[]") as WalletManifest[];
         debugWallets.forEach((wallet) => this.registerDebugWallet(wallet));
       });
-    });
-
-    window.addEventListener("message", async (event) => {
-      if (event.data.type === "near-wallet-injected") {
-        await this.whenManifestLoaded.catch(() => {});
-        this.wallets = this.wallets.filter((wallet) => wallet.manifest.id !== event.data.manifest.id);
-        this.wallets.unshift(new ParentFrameWallet(this, event.data.manifest));
-        this.events.emit("selector:walletsChanged", {});
-        this.connect(event.data.manifest.id);
-      }
     });
   }
 

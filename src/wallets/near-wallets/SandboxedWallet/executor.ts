@@ -239,13 +239,14 @@ class SandboxExecutor {
       this.assertPermissions(iframe, "allowsOpen", event);
 
       const url = parseUrl(event.data.params.url);
-      if (!url || url.protocol === "https" || url.protocol === "http") {
+      const invalid = ["https", "http", "javascript:", "file:", "data:", "blob:", "about:"];
+      if (!url || invalid.includes(url.protocol)) {
         iframe.postMessage({ ...event.data, status: "failed", result: "Invalid URL" });
         throw new Error("[open.nativeApp] Invalid URL");
       }
 
       const linkIframe = document.createElement("iframe");
-      linkIframe.setAttribute("sandbox", "");
+      linkIframe.setAttribute("sandbox", "allow-custom-protocols-navigation");
       linkIframe.src = event.data.params.url;
       linkIframe.style.display = "none";
       document.body.appendChild(linkIframe);
