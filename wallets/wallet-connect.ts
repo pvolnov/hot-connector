@@ -27,7 +27,7 @@ const WC_METHODS = [
 ];
 
 const WC_EVENTS = ["chainChanged", "accountsChanged"];
-const provider = new nearAPI.providers.JsonRpcProvider({ url: "https://rpc.mainnet.near.org" });
+const provider = new nearAPI.providers.JsonRpcProvider({ url: "https://relmn.aurora.dev" });
 const keystore = new SelectorStorageKeyStore();
 
 interface RetryOptions {
@@ -90,10 +90,7 @@ const connect = async (network: string) => {
 const disconnect = async () => {
   await window.selector.walletConnect.disconnect({
     topic: (await window.selector.walletConnect.getSession()).topic,
-    reason: {
-      code: 5900,
-      message: "User disconnected",
-    },
+    reason: { code: 5900, message: "User disconnected" },
   });
 };
 

@@ -273,7 +273,7 @@ export class HotConnector {
   }
 
   async viewMethod(contractId: string, method: string, args: Record<string, any> = {}) {
-    const rpc = "https://rpc.mainnet.near.org";
+    const rpc = "https://relmn.aurora.dev";
     const res = await fetch(rpc, {
       headers: { "Content-Type": "application/json" },
       method: "POST",

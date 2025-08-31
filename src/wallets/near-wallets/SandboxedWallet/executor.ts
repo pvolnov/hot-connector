@@ -176,6 +176,14 @@ class SandboxExecutor {
       try {
         const { entity, key, args } = event.data.params;
         const obj = entity.split(".").reduce((acc: any, key: string) => acc[key], window);
+
+        // TODO: remove hack after Nightly fixes.
+        // Their method wait near.Transaction and call encode() to get bytes.
+        // External API should not require non-serializable data, this is unsafe from an isolation point of view.
+        if (entity === "nightly.near" && key === "signTransaction") {
+          args[0].encode = () => args[0];
+        }
+
         const result = typeof obj[key] === "function" ? await obj[key](...(args || [])) : obj[key];
         iframe.postMessage({ ...event.data, status: "success", result: result });
       } catch (e) {

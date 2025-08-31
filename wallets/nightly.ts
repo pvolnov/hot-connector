@@ -1,12 +1,30 @@
-import type { Optional, Transaction, Account } from "@near-wallet-selector/core";
+import type { Account, Network } from "@near-wallet-selector/core";
+import { base_encode } from "near-api-js/lib/utils/serialize.js";
 import { signTransactions } from "@near-wallet-selector/wallet-utils";
 import type { FinalExecutionOutcome } from "near-api-js/lib/providers/index.js";
 import type { Signer } from "near-api-js";
 import * as nearAPI from "near-api-js";
 
 const provider = new nearAPI.providers.JsonRpcProvider({
-  url: "https://rpc.mainnet.near.org",
+  url: "https://relmn.aurora.dev",
 });
+
+const networks: Record<string, Network> = {
+  mainnet: {
+    nodeUrl: "https://relmn.aurora.dev",
+    networkId: "mainnet",
+    helperUrl: "",
+    explorerUrl: "",
+    indexerUrl: "",
+  },
+  testnet: {
+    nodeUrl: "https://rpc.testnet.near.org",
+    networkId: "testnet",
+    helperUrl: "",
+    explorerUrl: "",
+    indexerUrl: "",
+  },
+};
 
 const Nightly = async () => {
   await window.selector.external("nightly.near", "connect");
@@ -14,24 +32,8 @@ const Nightly = async () => {
   const getAccounts = async (): Promise<Array<Account>> => {
     const { accountId, publicKey } = await window.selector.external("nightly.near", "account");
     if (!accountId) return [];
-    return [{ accountId, publicKey: publicKey.toString() }];
-  };
 
-  const transformTransactions = async (
-    transactions: Array<Optional<Transaction, "signerId" | "receiverId">>
-  ): Promise<Array<Transaction>> => {
-    const accounts = await getAccounts();
-    if (!accounts.length) {
-      throw new Error("Wallet not signed in");
-    }
-
-    return transactions.map((transaction) => {
-      return {
-        signerId: transaction.signerId || accounts[0].accountId,
-        receiverId: transaction.receiverId || "",
-        actions: transaction.actions,
-      };
-    });
+    return [{ accountId, publicKey: `ed25519:${base_encode(publicKey.data)}` }];
   };
 
   const signer: Signer = {
@@ -42,11 +44,7 @@ const Nightly = async () => {
     getPublicKey: async (accountId) => {
       const accounts = await getAccounts();
       const account = accounts.find((a) => a.accountId === accountId);
-
-      if (!account) {
-        throw new Error("Failed to find public key for account");
-      }
-
+      if (!account) throw new Error("Failed to find public key for account");
       return nearAPI.utils.PublicKey.from(account.publicKey!);
     },
 
@@ -58,15 +56,8 @@ const Nightly = async () => {
         throw new Error("Failed to find account for signing");
       }
 
-      try {
-        const tx = nearAPI.transactions.Transaction.decode(Buffer.from(message));
-        const signedTx = await window.selector.external("nightly.near", "signTransaction", tx);
-        return { signature: signedTx.signature.data, publicKey: tx.publicKey };
-      } catch (err) {
-        console.log("Failed to sign message");
-        console.error(err);
-        throw Error("Invalid message. Only transactions can be signed");
-      }
+      const signedTx = await window.selector.external("nightly.near", "signTransaction", message);
+      return { signature: signedTx.signature.data, publicKey: signedTx.publicKey };
     },
   };
 
@@ -103,28 +94,34 @@ const Nightly = async () => {
       });
     },
 
-    async signAndSendTransaction({ signerId, receiverId, actions, network }: any) {
-      console.log("signAndSendTransaction", { signerId, receiverId, actions });
+    async signAndSendTransaction({
+      receiverId,
+      actions,
+      network,
+    }: {
+      receiverId: string;
+      actions: any;
+      network: string;
+    }) {
       const accounts = await getAccounts();
-
-      if (!accounts.length) {
-        throw new Error("Wallet not signed in");
-      }
-
-      const [signedTx] = await signTransactions(
-        await transformTransactions([{ signerId, receiverId, actions }]),
-        signer,
-        network
-      );
-
+      if (!accounts.length) throw new Error("Wallet not signed in");
+      const signerId = accounts[0].accountId;
+      const [signedTx] = await signTransactions([{ signerId, receiverId, actions }], signer, networks[network]);
       return provider.sendTransaction(signedTx);
     },
 
-    async signAndSendTransactions({ transactions, network }: any) {
-      console.log("signAndSendTransactions", { transactions });
-      const signedTxs = await signTransactions(await transformTransactions(transactions), signer, network);
-      const results: Array<FinalExecutionOutcome> = [];
+    async signAndSendTransactions({ transactions, network }: { transactions: any; network: string }) {
+      const accounts = await getAccounts();
+      if (!accounts.length) throw new Error("Wallet not signed in");
+      const signerId = accounts[0].accountId;
 
+      const signedTxs = await signTransactions(
+        transactions.map((x: any) => ({ ...x, signerId })),
+        signer,
+        networks[network]
+      );
+
+      const results: Array<FinalExecutionOutcome> = [];
       for (let i = 0; i < signedTxs.length; i++) {
         results.push(await provider.sendTransaction(signedTxs[i]));
       }
@@ -132,23 +129,32 @@ const Nightly = async () => {
       return results;
     },
 
-    async createSignedTransaction({ receiverId, actions, network }: any) {
-      console.log("createSignedTransaction", { receiverId, actions });
-      const [signedTx] = await signTransactions(
-        await transformTransactions([{ receiverId, actions }]),
-        signer,
-        network
-      );
+    async createSignedTransaction({
+      receiverId,
+      actions,
+      network,
+    }: {
+      receiverId: string;
+      actions: any;
+      network: string;
+    }) {
+      const accounts = await getAccounts();
+      if (!accounts.length) throw new Error("Wallet not signed in");
+      const signerId = accounts[0].accountId;
+      const [signedTx] = await signTransactions([{ signerId, receiverId, actions }], signer, networks[network]);
       return signedTx;
     },
 
     async signTransaction({ transaction, network }: any) {
-      console.log("signTransaction", { transaction });
-      return await nearAPI.transactions.signTransaction(transaction, signer, transaction.signerId, network);
+      return await nearAPI.transactions.signTransaction(
+        transaction,
+        signer,
+        transaction.signerId,
+        networks[network].networkId
+      );
     },
 
     async getPublicKey() {
-      console.log("getPublicKey", {});
       throw new Error(`Method not supported`);
     },
 
