@@ -99,7 +99,7 @@
       "description": "The most simple and secure wallet to manage your crypto, access DeFi, and explore Web3",
       "website": "https://meteorwallet.app/",
       "version": "1.0.0",
-      "executor": "/repository/meteor.js",
+      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/meteor.js",
       "type": "sandbox",
 
       "features": {
