@@ -26,8 +26,17 @@ const networks: Record<string, Network> = {
   },
 };
 
+const checkExist = async () => {
+  try {
+    await window.selector.external("nightly.near", "isConnected");
+  } catch {
+    await window.selector.ui.whenApprove({ title: "Download Nightly", button: "Download" });
+    window.selector.open("https://chromewebstore.google.com/detail/nightly/fiikommddbeccaoicoejoniammnalkfa");
+  }
+};
+
 const Nightly = async () => {
-  await window.selector.external("nightly.near", "connect");
+  await window.selector.external("nightly.near", "connect").catch(() => {});
 
   const getAccounts = async (): Promise<Array<Account>> => {
     const { accountId, publicKey } = await window.selector.external("nightly.near", "account");
@@ -63,6 +72,7 @@ const Nightly = async () => {
 
   return {
     async signIn() {
+      await checkExist();
       const existingAccounts = await getAccounts();
       if (existingAccounts.length) return existingAccounts;
       await window.selector.external("nightly.near", "connect");
@@ -70,6 +80,7 @@ const Nightly = async () => {
     },
 
     async signOut() {
+      await checkExist();
       await window.selector.external("nightly.near", "disconnect");
     },
 
@@ -82,14 +93,13 @@ const Nightly = async () => {
     },
 
     async signMessage({ message, nonce, recipient, state }: any) {
-      console.log("Nightly:signMessage", { message, nonce, recipient, state });
+      await checkExist();
       const isConnected = await window.selector.external("nightly.near", "isConnected");
       if (!isConnected) await window.selector.external("nightly.near", "connect");
-
       return await window.selector.external("nightly.near", "signMessage", {
-        message,
-        nonce,
+        nonce: Array.from(nonce),
         recipient,
+        message,
         state,
       });
     },
@@ -103,6 +113,7 @@ const Nightly = async () => {
       actions: any;
       network: string;
     }) {
+      await checkExist();
       const accounts = await getAccounts();
       if (!accounts.length) throw new Error("Wallet not signed in");
       const signerId = accounts[0].accountId;
@@ -111,6 +122,7 @@ const Nightly = async () => {
     },
 
     async signAndSendTransactions({ transactions, network }: { transactions: any; network: string }) {
+      await checkExist();
       const accounts = await getAccounts();
       if (!accounts.length) throw new Error("Wallet not signed in");
       const signerId = accounts[0].accountId;
@@ -138,6 +150,7 @@ const Nightly = async () => {
       actions: any;
       network: string;
     }) {
+      await checkExist();
       const accounts = await getAccounts();
       if (!accounts.length) throw new Error("Wallet not signed in");
       const signerId = accounts[0].accountId;
@@ -146,6 +159,7 @@ const Nightly = async () => {
     },
 
     async signTransaction({ transaction, network }: any) {
+      await checkExist();
       return await nearAPI.transactions.signTransaction(
         transaction,
         signer,

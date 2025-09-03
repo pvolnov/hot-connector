@@ -37,43 +37,17 @@ export abstract class NearWallet implements ChainAbstracted {
   getPublicKey = async (): Promise<string> => {
     const accounts = await this.getAccounts();
     if (accounts.length === 0) throw new Error("No account found");
-    return await this.getFullAccessPublicKey(accounts[0].accountId);
+    return accounts[0].publicKey;
   };
 
   getIntentsAddress = async (): Promise<string> => {
     return await this.getAddress();
   };
 
-  _cache: Record<string, string> = {};
-  getFullAccessPublicKey = async (address: string): Promise<string> => {
-    if (this._cache[address]) return this._cache[address];
-    if (!address.includes(".")) return `ed25519:${base58.encode(hex.decode(address))}`;
-
-    const response = await fetch("https://relmn.aurora.dev", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "dontcare",
-        method: "query",
-        params: {
-          request_type: "view_access_key_list",
-          finality: "final",
-          account_id: address,
-        },
-      }),
-    });
-
-    const { result } = await response.json();
-    const publicKey = result?.keys?.find((t: any) => t.access_key.permission === "FullAccess").public_key;
-    if (!publicKey) throw new Error("No full access key found");
-    this._cache[address] = publicKey;
-    return publicKey;
-  };
-
   signIntentsWithAuth = async (domain: string, intents?: Record<string, any>[]) => {
-    const address = await this.getAddress();
-    const publicKey = await this.getPublicKey();
+    const accounts = await this.getAccounts();
+    if (accounts.length === 0) throw new Error("No account found");
+    const { accountId, publicKey } = accounts[0];
 
     const seed = hex.encode(window.crypto.getRandomValues(new Uint8Array(32)));
     const msgBuffer = new TextEncoder().encode(`${domain}_${seed}`);
@@ -84,9 +58,9 @@ export abstract class NearWallet implements ChainAbstracted {
 
     return {
       signed: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce), signerId }),
-      address: address,
-      publicKey: publicKey,
       chainId: WalletType.NEAR,
+      publicKey: publicKey,
+      address: accountId,
       domain,
       seed,
     };

@@ -246,7 +246,6 @@ class SandboxExecutor {
       }
 
       const linkIframe = document.createElement("iframe");
-      linkIframe.setAttribute("sandbox", "allow-custom-protocols-navigation");
       linkIframe.src = event.data.params.url;
       linkIframe.style.display = "none";
       document.body.appendChild(linkIframe);
