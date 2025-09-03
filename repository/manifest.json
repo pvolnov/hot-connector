@@ -165,7 +165,7 @@
       "description": "Surf through the multichain Metaverse with Nightly",
       "website": "https://nightly.app",
       "version": "1.0.0",
-      "executor": "/repository/nightly.js",
+      "executor": "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/nightly.js",
       "type": "sandbox",
       "platform": {
         "chrome": "https://chromewebstore.google.com/detail/nightly/fiikommddbeccaoicoejoniammnalkfa"
