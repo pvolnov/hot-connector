@@ -10,6 +10,22 @@ const setupWalletState = async (network: string) => {
   return { wallet, keyStore };
 };
 
+const tryApprove = async <T>(request: { title: string; button: string; execute: () => Promise<T> }): Promise<T> => {
+  const { title, button, execute } = request;
+
+  try {
+    const result = await execute();
+    return result;
+  } catch (error) {
+    if (error?.toString?.()?.includes("Couldn't open popup window to complete wallet action")) {
+      await window.selector.ui.whenApprove({ title, button });
+      return await execute();
+    }
+
+    throw error;
+  }
+};
+
 const createMeteorWallet = async () => {
   const _states: Record<string, { wallet: MeteorWallet; keyStore: SelectorStorageKeyStore }> = {};
 
@@ -34,30 +50,37 @@ const createMeteorWallet = async () => {
   return {
     async signIn({ network, contractId, methodNames }: any) {
       const state = await getState(network);
-      await window.selector.ui.whenApprove({ title: "Sign in", button: "Open wallet" });
 
-      if (methodNames?.length) {
-        await state.wallet.requestSignIn({
-          type: EMeteorWalletSignInType.SELECTED_METHODS,
-          contract_id: contractId,
-          methods: methodNames,
-        });
-      } else {
-        await state.wallet.requestSignIn({
-          type: EMeteorWalletSignInType.ALL_METHODS,
-          contract_id: contractId,
-        });
-      }
+      await tryApprove({
+        title: "Sign in",
+        button: "Open wallet",
+        execute: async () => {
+          if (methodNames?.length) {
+            await state.wallet.requestSignIn({
+              type: EMeteorWalletSignInType.SELECTED_METHODS,
+              contract_id: contractId,
+              methods: methodNames,
+            });
+          } else {
+            await state.wallet.requestSignIn({
+              type: EMeteorWalletSignInType.ALL_METHODS,
+              contract_id: contractId,
+            });
+          }
+        },
+      });
 
-      const accounts = await getAccounts(network);
-      return accounts;
+      return await getAccounts(network);
     },
 
     async signOut({ network }: any) {
       const state = await getState(network);
       if (state.wallet.isSignedIn()) {
-        await window.selector.ui.whenApprove({ title: "Sign out", button: "Open wallet" });
-        await state.wallet.signOut();
+        await tryApprove({
+          title: "Sign out",
+          button: "Open wallet",
+          execute: async () => state.wallet.signOut(),
+        });
       }
     },
 
@@ -74,8 +97,11 @@ const createMeteorWallet = async () => {
     async verifyOwner({ network, message }: any) {
       const state = await getState(network);
 
-      await window.selector.ui.whenApprove({ title: "Verify owner", button: "Open wallet" });
-      const response = await state.wallet.verifyOwner({ message });
+      const response = await tryApprove({
+        title: "Verify owner",
+        button: "Open wallet",
+        execute: async () => state.wallet.verifyOwner({ message }),
+      });
 
       if (response.success) return response.payload;
       throw new Error(`Couldn't verify owner: ${response.message}`);
@@ -85,8 +111,11 @@ const createMeteorWallet = async () => {
       const { wallet } = await getState(network);
       const accountId = wallet.getAccountId();
 
-      await window.selector.ui.whenApprove({ title: "Sign message", button: "Open wallet" });
-      const response = await wallet.signMessage({ message, nonce, recipient, accountId, state });
+      const response = await tryApprove({
+        title: "Sign message",
+        button: "Open wallet",
+        execute: async () => wallet.signMessage({ message, nonce, recipient, accountId, state }),
+      });
 
       if (response.success) return response.payload;
       throw new Error(`Couldn't sign message owner: ${response.message}`);
@@ -97,16 +126,22 @@ const createMeteorWallet = async () => {
       if (!state.wallet.isSignedIn()) throw new Error("Wallet not signed in");
 
       const account = state.wallet.account()!;
-      await window.selector.ui.whenApprove({ title: "Sign transaction", button: "Open wallet" });
-      return account["signAndSendTransaction_direct"]({ receiverId: receiverId, actions });
+      return await tryApprove({
+        title: "Sign transaction",
+        button: "Open wallet",
+        execute: async () => account["signAndSendTransaction_direct"]({ receiverId: receiverId, actions }),
+      });
     },
 
     async signAndSendTransactions({ network, transactions }: any) {
       const state = await getState(network);
       if (!state.wallet.isSignedIn()) throw new Error("Wallet not signed in");
 
-      await window.selector.ui.whenApprove({ title: "Sign transactions", button: "Open wallet" });
-      return state.wallet.requestSignTransactions({ transactions });
+      return await tryApprove({
+        title: "Sign transactions",
+        button: "Open wallet",
+        execute: async () => state.wallet.requestSignTransactions({ transactions }),
+      });
     },
   };
 };

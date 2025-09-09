@@ -3,7 +3,6 @@ import SandboxExecutor from "./executor";
 async function getIframeCode(args: { id: string; executor: SandboxExecutor; code: string }) {
   const storage = await args.executor.getAllStorage();
   const manifest = args.executor.manifest;
-  const walletConnect = args.executor.connector.walletConnect;
   const uuid = args.id;
 
   const code = args.code

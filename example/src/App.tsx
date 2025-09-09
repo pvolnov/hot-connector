@@ -29,7 +29,7 @@ export const ExampleNEAR: FC = () => {
       setAccount(undefined);
     });
 
-    nearConnector.wallet().then((wallet) => {
+    nearConnector.wallet().then(async (wallet) => {
       wallet.getAccounts().then((t) => {
         setAccount(t[0]);
         setWallet(wallet);

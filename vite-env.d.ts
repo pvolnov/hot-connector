@@ -32,6 +32,7 @@ interface Window {
     ) => {
       close: () => void;
       postMessage: (message: any) => void;
+      windowIdPromise: Promise<string | null>;
       closed: boolean;
     };
 
