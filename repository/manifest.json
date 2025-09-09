@@ -89,7 +89,7 @@
 
       "permissions": {
         "storage": true,
-        "allowsOpen": ["https://app.mynearwallet.com"]
+        "allowsOpen": ["https://app.mynearwallet.com", "https://testnet.mynearwallet.com"]
       }
     },
     {
