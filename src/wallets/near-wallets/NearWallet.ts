@@ -53,11 +53,8 @@ export abstract class NearWallet implements ChainAbstracted {
     const msgBuffer = new TextEncoder().encode(`${domain}_${seed}`);
     const nonce = await window.crypto.subtle.digest("SHA-256", new Uint8Array(msgBuffer));
 
-    const signerId = hex.encode(base58.decode(publicKey.replace("ed25519:", "")));
-    if (!signerId) throw new Error("No full access key found");
-
     return {
-      signed: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce), signerId }),
+      signed: await this.signIntents(intents || [], { nonce: new Uint8Array(nonce) }),
       chainId: WalletType.NEAR,
       publicKey: publicKey,
       address: accountId,
@@ -68,10 +65,10 @@ export abstract class NearWallet implements ChainAbstracted {
 
   signIntents = async (
     intents: Record<string, any>[],
-    options?: { nonce?: Uint8Array; deadline?: number; signerId?: string }
+    options?: { nonce?: Uint8Array; deadline?: number }
   ): Promise<Record<string, any>> => {
     const nonce = new Uint8Array(options?.nonce || window.crypto.getRandomValues(new Uint8Array(32)));
-    const signerId = options?.signerId || (await this.getIntentsAddress());
+    const signerId = await this.getIntentsAddress();
 
     const message = JSON.stringify({
       deadline: options?.deadline ? new Date(options.deadline).toISOString() : "2100-01-01T00:00:00.000Z",

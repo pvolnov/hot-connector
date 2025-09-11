@@ -148,20 +148,20 @@ export class HotConnector {
     });
   }
 
-  async auth(
+  async auth<T>(
     type: WalletType | ConnectedWallets[keyof ConnectedWallets],
     domain: string,
     intents: Record<string, any>[],
-    then?: (signed: SignedAuth) => Promise<void>
-  ): Promise<SignedAuth> {
+    then?: (signed: SignedAuth) => Promise<T | void>
+  ): Promise<SignedAuth | T> {
     const wallet = this.resolveWallet(type);
-    return new Promise<SignedAuth>((resolve, reject) => {
+    return new Promise<SignedAuth | T>((resolve, reject) => {
       const popup = new AuthPopup({
         onApprove: async () => {
           try {
             const signed = await wallet.signIntentsWithAuth(domain, intents);
-            await then?.(signed);
-            resolve(signed);
+            const result = await then?.(signed);
+            resolve(result || signed);
             popup.destroy();
           } catch (e) {
             reject(e);
@@ -179,22 +179,29 @@ export class HotConnector {
     });
   }
 
-  async disconnect(type: WalletType | ConnectedWallets[keyof ConnectedWallets]) {
+  async disconnect(
+    type: WalletType | ConnectedWallets[keyof ConnectedWallets],
+    { silent = false }: { silent?: boolean } = {}
+  ) {
     const wallet = this.resolveWallet(type);
+
+    const disconnect = async () => {
+      if (wallet.type === WalletType.NEAR) await this.options.nearConnector?.disconnect().catch(() => null);
+      if (wallet.type === WalletType.SOLANA) await this.options.appKit?.disconnect("solana").catch(() => null);
+      if (wallet.type === WalletType.EVM) await this.options.appKit?.disconnect("eip155").catch(() => null);
+      if (wallet.type === WalletType.TON) await this.options.tonConnect?.connector.disconnect().catch(() => null);
+      if (wallet.type === WalletType.STELLAR) {
+        await this.options.stellarKit?.disconnect().catch(() => null);
+        this.storage.remove("hot-connector:stellar");
+      }
+      this.removeWallet(wallet.type);
+    };
+
+    if (silent) return await disconnect();
     return new Promise<void>((resolve, reject) => {
       const popup = new LogoutPopup({
         onApprove: async () => {
-          if (wallet.type === WalletType.NEAR) await this.options.nearConnector?.disconnect().catch(() => null);
-          if (wallet.type === WalletType.SOLANA) await this.options.appKit?.disconnect("solana").catch(() => null);
-          if (wallet.type === WalletType.EVM) await this.options.appKit?.disconnect("eip155").catch(() => null);
-          if (wallet.type === WalletType.TON) await this.options.tonConnect?.connector.disconnect().catch(() => null);
-
-          if (wallet.type === WalletType.STELLAR) {
-            await this.options.stellarKit?.disconnect().catch(() => null);
-            this.storage.remove("hot-connector:stellar");
-          }
-
-          this.removeWallet(wallet.type);
+          await disconnect();
           popup.destroy();
           resolve();
         },
