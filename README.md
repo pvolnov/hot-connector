@@ -168,7 +168,10 @@ Additional:
 Auditing `src/helpers` will help assess the correctness of the coding algorithms.
 Auditing `src/popups` will help assess the correctness of interaction with the DOM, the presence of potential XSS attacks.
 
-## Multichain Connector
+## Multichain Connector (WIP)
+
+HotConnector is an add-on for aggregating different connectors for different blockchains. The purpose of aggregation is to provide a single interface for working with NEAR Intents, implementing message signing standards for different types of blockchains and wallets.
+You can use only NearConnector. This library functionality is optional for use.
 
 ```ts
 const multichainConnector = new HotConnector({
@@ -211,17 +214,4 @@ const multichainConnector = new HotConnector({
 multichainConnector.executeIntents(WalletType.EVM, [
   { intent: "transfer", tokens: { "nep141:wrap.near": "10000" }, receiver: "address" },
 ]);
-```
-
-## Multichain Auth via Intents
-
-```ts
-const { seed, signed } = (await = connector.auth(WalletType.EVM, "myapp", []));
-
-// Verify that nonce of signed intent is your (app prefix + uniq seed)
-const nonce = base64(sha256(`myapp_${seed}`));
-if (signed.payload.nonce !== nonce) throw "Incorrect intent nonce";
-
-// Than just call simulate intent to verify signature
-await viewMethod("intents.near", "simulate_intents", { signed: [signed] });
 ```
