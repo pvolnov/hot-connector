@@ -151,7 +151,7 @@ window.addEventListener("near-selector-ready", () => {
 });
 ```
 
-## Background
+## Background and future audit scope
 
 Maintaining the current near-wallet-selector takes a lot of time and effort, wallet developers wait a long time to get an update to their connector inside a monolithic code base. After which they can wait months for applications to integrate their wallet into their site or update their frontend to update the wallet connector. This requires a lot of work on the review side of the near-wallet-selector team and STILL does not ensure the security of internal packages that will be installed in applications (for example, RHEA Finance or Near Intents).
 All these problems prompted us to write a new solution that will:
@@ -160,11 +160,13 @@ All these problems prompted us to write a new solution that will:
 2. quickly and conveniently update wallets on all sites
 3. Save the internal near-wallet-selector team from endlessly maintaining a huge code base, because now only the wallet itself is responsible for the connection of each wallet and hosts its script wherever it wants.
 
-## Milestones
+The auditor does not need to look for vulnerabilities in the connection code of each wallet, this is the responsibility of the wallet team and their own audits.
+The selector audit should be aimed at investigating the risks of interaction with the isolated code that is launched at the moment of connection to the wallet. The auditor should assess the reliability of the permissions that are described in the manifest and API for interaction of the isolated code with the host.
+In fact, main target for audit is `src/wallets/near-wallets/SandboxedWallet/*`.
 
-- Support all near-wallet-selector wallets
-- Custom manifests for debugging mode
-- Full backward compatibility with near-wallet-selector
+Additional:
+Auditing `src/helpers` will help assess the correctness of the coding algorithms.
+Auditing `src/popups` will help assess the correctness of interaction with the DOM, the presence of potential XSS attacks.
 
 ## Multichain Connector
 
