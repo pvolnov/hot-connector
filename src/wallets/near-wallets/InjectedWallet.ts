@@ -45,7 +45,13 @@ export class InjectedWallet extends NearWallet {
   }
 
   async signAndSendTransactions(params: SignAndSendTransactionsParams): Promise<Array<FinalExecutionOutcome>> {
-    return this.wallet.signAndSendTransactions({ ...params, network: params.network || this.connector.network });
+    const network = params.network || this.connector.network;
+    const result = await this.wallet.signAndSendTransactions({ ...params, network });
+    if (!result) throw new Error("No result from wallet");
+
+    // @ts-ignore
+    if (Array.isArray(result.transactions)) return result.transactions;
+    return result;
   }
 
   async signMessage(params: SignMessageParams): Promise<SignedMessage> {

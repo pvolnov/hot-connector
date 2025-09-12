@@ -10,6 +10,16 @@ Zero-dependenices, robust, secure and lightweight wallet connector for the NEAR 
 
 Unlike near-wallet-selector, this library provides a secure execution environment for integrating wallets. This eliminates the need for a single registry of code for all wallets.
 
+## Available wallets in manifest
+
+- HOT Wallet
+- Meteor Wallet
+- MyNearWallet
+- Nightly Wallet
+- Near Mobile Wallet
+- Unity Wallet
+- any wallet via WalletConnect
+
 ## Dapp integration
 
 ```ts
