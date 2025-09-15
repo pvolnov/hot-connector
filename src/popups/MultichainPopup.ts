@@ -66,7 +66,7 @@ export class MultichainPopup extends Popup<{ wallets: Record<WalletType, string 
       <img src="https://storage.herewallet.app/ft/${type}:native.png" alt="${type}" />
       <div class="connect-item-info">
         <span>${this.label(type)}</span>
-        ${this.address(type) ? `<span class="wallet-address">${this.address(type)}</span>` : ""}
+        ${safeHtml(this.address(type) ? html`<span class="wallet-address">${this.address(type)}</span>` : "")}
       </div>
       ${this.address(type) ? this.logout : ""}
     </div>`;

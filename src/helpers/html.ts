@@ -15,6 +15,7 @@ export function html(strings: TemplateStringsArray, ...values: any[]): string {
     const escaped = value?.__html ? value.__html : escapeHtml(String(value ?? ""));
     result += escaped + strings[i + 1];
   }
+
   return result;
 }
 
