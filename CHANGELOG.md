@@ -1,3 +1,9 @@
+# 0.6.0
+
+- add html templater and improve Popup lifecycle render flow
+- add debug manifests
+- improve styles
+
 # 0.5.7
 
 - fix returns types for `signAndSendTransactions` in `InjectedWallet`
