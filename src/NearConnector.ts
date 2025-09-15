@@ -146,16 +146,33 @@ export class NearConnector {
     this.events.emit("selector:walletsChanged", {});
   }
 
-  async registerDebugWallet(manifest: WalletManifest) {
-    if (manifest.type !== "sandbox") throw new Error("Only sandbox wallets are supported");
+  async registerDebugWallet(json: string | WalletManifest) {
+    const manifest = typeof json === "string" ? (JSON.parse(json) as WalletManifest) : json;
+    if (manifest.type !== "sandbox") throw new Error("Only sandbox wallets type are supported");
+    if (!manifest.id) throw new Error("Manifest must have an id");
+    if (!manifest.name) throw new Error("Manifest must have a name");
+    if (!manifest.icon) throw new Error("Manifest must have an icon");
+    if (!manifest.website) throw new Error("Manifest must have a website");
+    if (!manifest.version) throw new Error("Manifest must have a version");
+    if (!manifest.executor) throw new Error("Manifest must have an executor");
+    if (!manifest.features) throw new Error("Manifest must have features");
+    if (!manifest.permissions) throw new Error("Manifest must have permissions");
     if (this.wallets.find((wallet) => wallet.manifest.id === manifest.id)) throw new Error("Wallet already registered");
 
     manifest.debug = true;
-    this.wallets.push(new SandboxWallet(this, manifest));
+    this.wallets.unshift(new SandboxWallet(this, manifest));
     this.events.emit("selector:walletsChanged", {});
 
     const debugWallets = this.wallets.filter((wallet) => wallet.manifest.debug).map((wallet) => wallet.manifest);
     this.storage.set("debug-wallets", JSON.stringify(debugWallets));
+    return manifest;
+  }
+
+  async removeDebugWallet(id: string) {
+    this.wallets = this.wallets.filter((wallet) => wallet.manifest.id !== id);
+    const debugWallets = this.wallets.filter((wallet) => wallet.manifest.debug).map((wallet) => wallet.manifest);
+    this.storage.set("debug-wallets", JSON.stringify(debugWallets));
+    this.events.emit("selector:walletsChanged", {});
   }
 
   async selectWallet() {
@@ -163,14 +180,10 @@ export class NearConnector {
     return new Promise<string>((resolve, reject) => {
       const popup = new NearWalletsPopup({
         wallets: this.availableWallets.map((wallet) => wallet.manifest),
-        onSelect: (id: string) => {
-          resolve(id);
-          popup.destroy();
-        },
-        onReject: () => {
-          reject(new Error("User rejected"));
-          popup.destroy();
-        },
+        onRemoveDebugManifest: async (id: string) => this.removeDebugWallet(id),
+        onAddDebugManifest: async (wallet: string) => this.registerDebugWallet(wallet),
+        onReject: () => (reject(new Error("User rejected")), popup.destroy()),
+        onSelect: (id: string) => (resolve(id), popup.destroy()),
       });
 
       popup.create();

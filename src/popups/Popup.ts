@@ -8,10 +8,10 @@ if (typeof document !== "undefined") {
   document.head.append(style);
 }
 
-export class Popup {
+export class Popup<T extends Record<string, any>> {
   isClosed = false;
   root = document.createElement("div");
-  state: Record<string, any> = {};
+  state: T = {} as T;
 
   constructor(readonly delegate: { onReject: () => void }) {}
 
@@ -19,30 +19,46 @@ export class Popup {
     return "";
   }
 
-  update(state: Record<string, any>) {
-    this.state = state;
+  disposables: (() => void)[] = [];
+  addListener(querySelector: string | Element, event: string, callback: (e: Event) => void) {
+    const element = typeof querySelector === "string" ? this.root.querySelector(querySelector)! : querySelector;
+    if (!element) return;
+    element.addEventListener(event, callback);
+    this.disposables.push(() => element.removeEventListener(event, callback));
+  }
+
+  handlers() {
+    this.disposables.forEach((dispose) => dispose());
+    this.disposables = [];
+
+    const modalContainer = this.root.querySelector(".modal-container")! as HTMLElement;
+    const modalContent = this.root.querySelector(".modal-content")! as HTMLElement;
+    const getWalletLink = this.root.querySelector(".get-wallet-link")! as HTMLElement;
+    modalContent.onclick = (e) => e.stopPropagation();
+    getWalletLink.onclick = () => window.open("https://download.hot-labs.org?hotconnector", "_blank");
+    modalContainer.onclick = () => {
+      this.delegate.onReject();
+      this.destroy();
+    };
+  }
+
+  update(state: Partial<T>) {
+    this.state = { ...this.state, ...state } as T;
     this.root.innerHTML = this.dom;
+    this.handlers();
   }
 
   create({ show = true }: { show?: boolean }) {
     this.root.className = ID;
     this.root.innerHTML = this.dom;
     document.body.append(this.root);
+    this.handlers();
 
     const modalContainer = this.root.querySelector(".modal-container")! as HTMLElement;
     const modalContent = this.root.querySelector(".modal-content")! as HTMLElement;
-    const getWalletLink = this.root.querySelector(".get-wallet-link")! as HTMLElement;
-
     modalContent.style.transform = "translateY(50px)";
     modalContainer.style.opacity = "0";
     this.root.style.display = "none";
-
-    modalContent.addEventListener("click", (e) => e.stopPropagation());
-    getWalletLink.addEventListener("click", () => window.open("https://download.hot-labs.org?hotconnector", "_blank"));
-    modalContainer.addEventListener("click", () => {
-      this.delegate.onReject();
-      this.destroy();
-    });
 
     if (show) {
       setTimeout(() => this.show(), 10);

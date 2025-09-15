@@ -58,12 +58,33 @@ ${id} .modal-content {
 
 
 ${id} .modal-header {
-    display: flex;
-    padding: 24px;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    align-self: stretch;
+  display: flex;
+  padding: 16px;
+  gap: 16px;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+${id} .modal-header button {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+  border: none;
+  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+${id} .modal-header button:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
   
 ${id} .modal-header p {
@@ -90,6 +111,20 @@ ${id} .modal-body {
   background: rgba(255, 255, 255, 0.08);
   width: 100%;
   flex: 1;
+}
+
+${id} .modal-body textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  background: #0d0d0d;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  outline: none;
+  font-size: 16px;
+  transition: background 0.2s ease-in-out;
+  font-family: monospace;
+  font-size: 12px;
 }
 
 ${id} .modal-body button {
@@ -151,7 +186,7 @@ ${id} .get-wallet-link:hover {
 
 ${id} .connect-item {
   display: flex;
-  padding: 12px;
+  padding: 8px;
   align-items: center;
   gap: 12px;
   align-self: stretch;
@@ -164,7 +199,7 @@ ${id} .connect-item {
 ${id} .connect-item img {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  border-radius: 16px;
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -194,7 +229,7 @@ ${id} .connect-item:hover {
 ${id} .connect-item img {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  border-radius: 16px;
   object-fit: cover;
 }
 
