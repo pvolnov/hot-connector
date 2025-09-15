@@ -37,6 +37,7 @@
     "@walletconnect/sign-client": "^2.21.8"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.7",
     "@creit.tech/stellar-wallets-kit": "^1.9.1",
     "@eslint/js": "^9.32.0",
     "@here-wallet/core": "^3.4.0",
