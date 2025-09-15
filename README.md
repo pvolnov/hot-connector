@@ -135,6 +135,14 @@ const selector = new NearConnector({
 });
 ```
 
+## How to add my wallet?
+
+When you develop a connector for your wallet, you can immediately test your code on real applications that use HOT Connect. Super easy!
+Once you have written your executor script and tested it - you only need to send a PR to update repository/manifest.json. After review, your wallet will automatically become available to all dApps that use the HOT Connector.
+
+![Adobe Express - Screen Recording 2025-09-16 at 00 52 31 (1)](https://github.com/user-attachments/assets/80855260-82f3-4c35-ae27-034e263c7b71)
+
+
 ## Injected wallets
 
 Like [Ethereum Multi Injected Provider Standart](https://eips.ethereum.org/EIPS/eip-6963) this library supports injected wallets for extenstions and in-app browsers. Your injection script can dispatch custom event with your wallet:
