@@ -27,7 +27,10 @@ jobs:
 
       - name: Read version from package.json
         id: pkg
-        run: echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Prepare release notes from CHANGELOG.md
         id: changelog
@@ -35,8 +38,8 @@ jobs:
         run: |
           VERSION="${{ steps.pkg.outputs.version }}"
           awk -v ver="$VERSION" '
-            $0 ~ "^# "ver"$" {print; flag=1; next}
-            flag && $0 ~ "^# " && $0 !~ "^# "ver"$" {flag=0}
+            $0 ~ "^# " ver "$" {print; flag=1; next}
+            flag && $0 ~ "^# " && $0 !~ "^# " ver "$" {flag=0}
             flag {print}
           ' CHANGELOG.md > RELEASE_CHANGELOG.md
           if [ ! -s RELEASE_CHANGELOG.md ]; then
