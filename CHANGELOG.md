@@ -1,5 +1,11 @@
 # 0.6.0
 
+## 0.7.0
+
+### Minor Changes
+
+- 8a1b356: Improved UI styles and security, added debug mode for custom manifests
+
 - add html templater and improve Popup lifecycle render flow
 - add debug manifests
 - improve styles
