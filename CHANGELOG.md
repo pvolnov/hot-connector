@@ -1,3 +1,7 @@
+# 0.6.1
+
+- Fix MultichainPopup ui bug
+
 # 0.6.0
 
 - add html templater and improve Popup lifecycle render flow
