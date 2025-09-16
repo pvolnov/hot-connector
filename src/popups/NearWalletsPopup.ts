@@ -1,4 +1,4 @@
-import { html, safeHtml } from "../helpers/html";
+import { html } from "../helpers/html";
 import { parseUrl } from "../helpers/url";
 import { WalletManifest } from "../types/wallet";
 import { Popup } from "./Popup";
@@ -111,7 +111,7 @@ export class NearWalletsPopup extends Popup<{ wallets: WalletManifest[]; showSet
           <span>${wallet.name}</span>
           <span class="wallet-address">${parseUrl(wallet.website)?.hostname}</span>
         </div>
-        ${wallet.debug ? safeHtml(removeButton) : ""}
+        ${wallet.debug ? removeButton : ""}
       </div>
     `;
   }
@@ -172,9 +172,7 @@ ${JSON.stringify(debugManifest, null, 2)}</textarea
           </button>
         </div>
 
-        <div class="modal-body">
-          ${safeHtml(this.state.wallets.map((wallet: WalletManifest) => this.walletDom(wallet)).join(""))}
-        </div>
+        <div class="modal-body">${this.state.wallets.map((wallet: WalletManifest) => this.walletDom(wallet))}</div>
 
         <div class="footer">
           <img src="https://tgapp.herewallet.app/images/hot/hot-icon.png" alt="HOT Connector" />

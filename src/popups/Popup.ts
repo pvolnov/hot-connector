@@ -1,4 +1,5 @@
 import { css } from "./styles";
+import { html } from "../helpers/html";
 
 const ID = "hot-connector-popup";
 
@@ -16,7 +17,7 @@ export class Popup<T extends Record<string, any>> {
   constructor(readonly delegate: { onReject: () => void }) {}
 
   get dom() {
-    return "";
+    return html``;
   }
 
   disposables: (() => void)[] = [];
@@ -44,13 +45,13 @@ export class Popup<T extends Record<string, any>> {
 
   update(state: Partial<T>) {
     this.state = { ...this.state, ...state } as T;
-    this.root.innerHTML = this.dom;
+    this.root.innerHTML = this.dom.html;
     this.handlers();
   }
 
   create({ show = true }: { show?: boolean }) {
     this.root.className = ID;
-    this.root.innerHTML = this.dom;
+    this.root.innerHTML = this.dom.html;
     document.body.append(this.root);
     this.handlers();
 

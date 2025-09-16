@@ -1,4 +1,4 @@
-import { html, safeHtml } from "../helpers/html";
+import { html } from "../helpers/html";
 import { WalletType } from "../wallets/ChainAbstracted";
 import { Popup } from "./Popup";
 
@@ -31,11 +31,14 @@ export class MultichainPopup extends Popup<{ wallets: Record<WalletType, string 
   }
 
   get logout() {
-    return safeHtml(`
-			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="rgba(255,255,255,0.5)"/>
-			</svg>
-		`);
+    return html`
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z"
+          fill="rgba(255,255,255,0.5)"
+        />
+      </svg>
+    `;
   }
 
   label(type: WalletType) {
@@ -62,13 +65,14 @@ export class MultichainPopup extends Popup<{ wallets: Record<WalletType, string 
   }
 
   walletOption(type: WalletType) {
+    const address = this.address(type);
     return html` <div class="connect-item" data-type="${type}">
       <img src="https://storage.herewallet.app/ft/${type}:native.png" alt="${type}" />
       <div class="connect-item-info">
         <span>${this.label(type)}</span>
-        ${safeHtml(this.address(type) ? html`<span class="wallet-address">${this.address(type)}</span>` : "")}
+        ${address ? html`<span class="wallet-address">${address}</span>` : ""}
       </div>
-      ${this.address(type) ? this.logout : ""}
+      ${address ? this.logout : ""}
     </div>`;
   }
 
@@ -79,7 +83,7 @@ export class MultichainPopup extends Popup<{ wallets: Record<WalletType, string 
           <p>Select network</p>
         </div>
 
-        <div class="modal-body">${safeHtml(this.delegate.chains.map((type) => this.walletOption(type)).join(""))}</div>
+        <div class="modal-body">${this.delegate.chains.map((type) => this.walletOption(type))}</div>
 
         <div class="footer">
           <img src="https://tgapp.herewallet.app/images/hot/hot-icon.png" alt="HOT Connector" />

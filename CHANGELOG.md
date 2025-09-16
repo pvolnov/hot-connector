@@ -1,3 +1,7 @@
+# 0.6.2
+
+- Improve html templater, fix ui bugs
+
 # 0.6.1
 
 - Fix MultichainPopup ui bug

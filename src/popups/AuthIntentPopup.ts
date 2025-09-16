@@ -1,4 +1,4 @@
-import { html, safeHtml } from "../helpers/html";
+import { html } from "../helpers/html";
 import { Popup } from "./Popup";
 
 export class AuthPopup extends Popup<{ loading: boolean }> {
@@ -21,11 +21,34 @@ export class AuthPopup extends Popup<{ loading: boolean }> {
   }
 
   get loader() {
-    return safeHtml(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" width="48" height="48" style="shape-rendering: auto; display: block; background: transparent;" xmlns:xlink="http://www.w3.org/1999/xlink">
-      <circle stroke-dasharray="75.39822368615503 27.132741228718345" r="16" stroke-width="4" stroke="#000" fill="none" cy="50" cx="50">
-        <animateTransform keyTimes="0;1" values="0 50 50;360 50 50" dur="1.408450704225352s" repeatCount="indefinite" type="rotate" attributeName="transform"></animateTransform>
+    return html`<svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="xMidYMid"
+      width="48"
+      height="48"
+      style="shape-rendering: auto; display: block; background: transparent;"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+    >
+      <circle
+        stroke-dasharray="75.39822368615503 27.132741228718345"
+        r="16"
+        stroke-width="4"
+        stroke="#000"
+        fill="none"
+        cy="50"
+        cx="50"
+      >
+        <animateTransform
+          keyTimes="0;1"
+          values="0 50 50;360 50 50"
+          dur="1.408450704225352s"
+          repeatCount="indefinite"
+          type="rotate"
+          attributeName="transform"
+        ></animateTransform>
       </circle>
-    </svg>`);
+    </svg>`;
   }
 
   get dom() {
