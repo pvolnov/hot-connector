@@ -1,3 +1,7 @@
+# 0.6.3
+
+- Add autoConnect option for NearConnector (usable for ParentFrameWallets)
+
 # 0.6.2
 
 - Improve html templater, fix ui bugs

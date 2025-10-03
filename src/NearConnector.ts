@@ -18,6 +18,7 @@ interface NearConnectorOptions {
   manifest?: string | { wallets: WalletManifest[]; version: string };
   network?: Network;
   features?: Partial<WalletFeatures>;
+  autoConnect?: boolean;
   connectWithKey?: {
     contractId: string;
     methodNames?: string[];
@@ -38,6 +39,7 @@ export class NearConnector {
   network: Network = "mainnet";
   connectWithKey?: { contractId: string; methodNames?: string[]; allowance?: string };
   walletConnect?: { projectId: string; metadata: any };
+  autoConnect?: boolean;
 
   readonly whenManifestLoaded: Promise<void>;
 
@@ -51,6 +53,7 @@ export class NearConnector {
     this.connectWithKey = options?.connectWithKey;
     this.features = options?.features ?? {};
     this.walletConnect = options?.walletConnect;
+    this.autoConnect = options?.autoConnect ?? true;
 
     this.whenManifestLoaded = new Promise(async (resolve) => {
       if (options?.manifest == null || typeof options.manifest === "string") {
@@ -72,7 +75,7 @@ export class NearConnector {
           this.wallets = this.wallets.filter((wallet) => wallet.manifest.id !== event.data.manifest.id);
           this.wallets.unshift(new ParentFrameWallet(this, event.data.manifest));
           this.events.emit("selector:walletsChanged", {});
-          this.connect(event.data.manifest.id);
+          if (this.autoConnect) this.connect(event.data.manifest.id);
         }
       });
     }
