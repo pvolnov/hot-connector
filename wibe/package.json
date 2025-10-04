@@ -1,0 +1,19 @@
+{
+  "name": "@hot-labs/wibe3",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "dependencies": {
+    "@creit.tech/stellar-wallets-kit": "^1.7.7",
+    "@hot-labs/near-connect": "^0.6.3",
+    "@near-js/crypto": "^2.3.3",
+    "@near-js/utils": "^2.2.4",
+    "@reown/appkit-adapter-ethers": "^1.7.17"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
