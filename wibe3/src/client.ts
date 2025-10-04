@@ -11,6 +11,7 @@ import {
   TonWallet,
   EventEmitter,
 } from "@hot-labs/near-connect";
+import { HotBridge, utils } from "@hot-labs/omni-sdk";
 import { StellarWalletsKit, allowAllModules, WalletNetwork } from "@creit.tech/stellar-wallets-kit";
 import { base, bsc, mainnet, solana } from "@reown/appkit/networks";
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
@@ -36,10 +37,17 @@ const initialConfig: WibeClientOptions = {
   icons: ["https://wibe.io/favicon.ico"],
 };
 
+const hotBridge = new HotBridge({});
+
 export class Wibe3Client {
   private hotConnector: HotConnector;
   wallet: NearWallet | EvmWallet | SolanaWallet | StellarWallet | TonWallet | null = null;
-  events: EventEmitter<{ connect: { wallet: ChainAbstracted }; disconnect: {} }>;
+  balances: TokenBalance[] = [];
+  events = new EventEmitter<{
+    connect: { wallet: ChainAbstracted };
+    "balance:changed": { balances: TokenBalance[] };
+    disconnect: {};
+  }>();
 
   onConnect: (wallet: ChainAbstracted) => void = () => {};
   onDisconnect: () => void = () => {};
@@ -53,16 +61,19 @@ export class Wibe3Client {
       div.style.display = "none";
     }
 
-    this.events = new EventEmitter<{ connect: { wallet: ChainAbstracted }; disconnect: {} }>();
-
     this.hotConnector = new HotConnector({
       onConnect: (wallet) => {
         this.wallet = wallet;
+        this.balances = [];
         this.events.emit("connect", { wallet: wallet as ChainAbstracted });
+        this.events.emit("balance:changed", { balances: [] });
+        this.refreshBalances();
       },
 
       onDisconnect: () => {
         this.wallet = null;
+        this.balances = [];
+        this.events.emit("balance:changed", { balances: [] });
         this.events.emit("disconnect", {});
       },
 
@@ -88,21 +99,32 @@ export class Wibe3Client {
     });
   }
 
-  async getBalance(token: OmniToken): Promise<TokenBalance> {
-    if (!this.wallet) throw new Error("No wallet connected");
-    const tradingAddress = await this.wallet.getIntentsAddress();
-    const balances = await this.hotConnector.intents.getIntentsBalances([token], tradingAddress);
-    const metadata = OmniTokenMetadata[token];
-    return {
-      int: balances[token] || 0n,
-      id: metadata.contractId,
-      float: Number(balances[token] || 0) / Math.pow(10, metadata.decimals),
-      decimals: metadata.decimals,
-      symbol: metadata.symbol,
-    };
+  async refreshBalances() {
+    this.balances = await this.getBalances(Object.values(OmniToken));
+    this.events.emit("balance:changed", { balances: this.balances });
   }
 
-  async isSignedIn() {
+  async getBalances(tokens: OmniToken[]): Promise<TokenBalance[]> {
+    if (!this.wallet) throw new Error("No wallet connected");
+    const tradingAddress = await this.wallet.getIntentsAddress();
+    const balances = await this.hotConnector.intents.getIntentsBalances(tokens, tradingAddress);
+
+    return tokens.map((token) => {
+      const metadata = OmniTokenMetadata[token];
+      const icon = `https://storage.herewallet.app/ft/1010:${metadata.contractId}.png`;
+
+      return {
+        icon,
+        int: balances[token] || 0n,
+        id: metadata.contractId,
+        float: Number(balances[token] || 0) / Math.pow(10, metadata.decimals),
+        decimals: metadata.decimals,
+        symbol: metadata.symbol,
+      };
+    });
+  }
+
+  get isSignedIn() {
     return !!this.wallet;
   }
 
@@ -124,32 +146,50 @@ export class Wibe3Client {
     };
   }
 
-  async withdraw() {}
+  async withdraw(args: { token: OmniToken; amount: number }) {
+    if (!this.wallet) throw new Error("No wallet connected");
+    if (this.wallet.type !== WalletType.NEAR) throw new Error("Only NEAR wallet can withdraw");
+
+    const token = OmniTokenMetadata[args.token];
+    await hotBridge.withdrawToken({
+      chain: 1010,
+      token: token.contractId,
+      amount: BigInt(utils.parseAmount(args.amount, token.decimals)),
+      intentAccount: await this.wallet.getIntentsAddress(),
+      receiver: await this.wallet.getAddress(),
+      signIntents: (t) => this.wallet!.signIntents(t),
+    });
+  }
 }
 
 export const useWibe3 = (wibe3: Wibe3Client) => {
   const [wallet, setWallet] = useState<ChainAbstracted | null>(wibe3.wallet);
+  const [balances, setBalances] = useState<TokenBalance[]>(wibe3.balances);
   const [address, setAddress] = useState<string | null>(null);
+  const [tradingAddress, setTradingAddress] = useState<string | null>(null);
 
   useEffect(() => {
+    const onBalanceChanged = (t: { balances: TokenBalance[] }) => setBalances(t.balances);
     const onConnect = (t: { wallet: ChainAbstracted }) => setWallet(t.wallet);
     const onDisconnect = () => setWallet(null);
     wibe3.events.on("connect", onConnect);
     wibe3.events.on("disconnect", onDisconnect);
+    wibe3.events.on("balance:changed", onBalanceChanged);
     return () => {
       wibe3.events.off("connect", onConnect);
       wibe3.events.off("disconnect", onDisconnect);
+      wibe3.events.off("balance:changed", onBalanceChanged);
     };
   }, [wibe3]);
 
   useEffect(() => {
     setAddress(null);
     wallet?.getAddress().then(setAddress);
+    wallet?.getIntentsAddress().then(setTradingAddress);
   }, [wallet]);
 
   const connect = useCallback(async () => {
     await wibe3.connect();
-    setWallet(wallet);
   }, []);
 
   const auth = useCallback(async () => {
@@ -159,12 +199,15 @@ export const useWibe3 = (wibe3: Wibe3Client) => {
 
   const disconnect = useCallback(async () => {
     await wibe3.disconnect();
-    setWallet(null);
   }, []);
 
-  const getBalance = useCallback(async (token: OmniToken) => {
-    return wibe3.getBalance(token);
+  const refresh = useCallback(async () => {
+    await wibe3.refreshBalances();
   }, []);
 
-  return { address, connect, auth, disconnect, getBalance };
+  const withdraw = useCallback(async (token: OmniToken, amount: number) => {
+    await wibe3.withdraw({ token, amount });
+  }, []);
+
+  return { address, connect, auth, disconnect, balances, tradingAddress, withdraw, refresh };
 };

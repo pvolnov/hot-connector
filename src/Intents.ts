@@ -84,7 +84,7 @@ class Intents {
     return assets;
   }
 
-  async viewMethod(args: { contractId: string; method: string; args: Record<string, any> }) {
+  async viewMethod({ contractId, method, args }: { contractId: string; method: string; args: Record<string, any> }) {
     const rpc = "https://relmn.aurora.dev";
     const res = await fetch(rpc, {
       headers: { "Content-Type": "application/json" },
@@ -96,8 +96,8 @@ class Intents {
         params: {
           request_type: "call_function",
           finality: "final",
-          account_id: args.contractId,
-          method_name: args.method,
+          account_id: contractId,
+          method_name: method,
           args_base64: base64.encode(new TextEncoder().encode(JSON.stringify(args))),
         },
       }),
