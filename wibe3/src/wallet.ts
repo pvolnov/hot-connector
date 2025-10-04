@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { KeyPair, KeyPairString } from "@near-js/crypto";
 import { Intents, base58 } from "@hot-labs/near-connect";
 import { AuthCommitment, OmniToken, OmniTokenMetadata, TrasferIntent, TokenBalance } from "./types";
@@ -40,7 +41,8 @@ class Wibe3Wallet {
       receiver_id: args.to.toLowerCase(),
     };
 
-    const signed = await this.signIntents({ nonce: Buffer.from(args.paymentId, "utf8"), intents: [intent] });
+    const hash = crypto.createHash("sha256").update(args.paymentId, "utf8").digest();
+    const signed = await this.signIntents({ nonce: new Uint8Array(hash).slice(0, 32), intents: [intent] });
     await this.intents.publishSignedIntents([signed]);
   }
 

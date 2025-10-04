@@ -130,6 +130,7 @@ export class Wibe3Client {
 export const useWibe3 = (wibe3: Wibe3Client) => {
   const [wallet, setWallet] = useState<ChainAbstracted | null>(wibe3.wallet);
   const [address, setAddress] = useState<string | null>(null);
+  const [tradingAddress, setTradingAddress] = useState<string | null>(null);
 
   useEffect(() => {
     const onConnect = (t: { wallet: ChainAbstracted }) => setWallet(t.wallet);
@@ -145,6 +146,7 @@ export const useWibe3 = (wibe3: Wibe3Client) => {
   useEffect(() => {
     setAddress(null);
     wallet?.getAddress().then(setAddress);
+    wallet?.getIntentsAddress().then(setTradingAddress);
   }, [wallet]);
 
   const connect = useCallback(async () => {
@@ -166,5 +168,9 @@ export const useWibe3 = (wibe3: Wibe3Client) => {
     return wibe3.getBalance(token);
   }, []);
 
-  return { address, connect, auth, disconnect, getBalance };
+  const withdraw = useCallback(async () => {
+    await wibe3.withdraw();
+  }, []);
+
+  return { address, connect, auth, disconnect, getBalance, tradingAddress, withdraw };
 };
