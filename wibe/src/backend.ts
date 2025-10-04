@@ -1,6 +1,6 @@
 import { KeyPair, KeyPairString } from "@near-js/crypto";
 import { Intents, base58 } from "@hot-labs/near-connect";
-import { AuthCommitment, OmniToken, OmniTokenMetadata, TrasferIntent } from "./types";
+import { AuthCommitment, OmniToken, OmniTokenMetadata, TrasferIntent, TokenBalance } from "./types";
 
 class Wibe3Wallet {
   #keyPair: KeyPair;
@@ -19,9 +19,7 @@ class Wibe3Wallet {
     return true;
   }
 
-  async getBalance(
-    token: OmniToken
-  ): Promise<{ id: string; int: bigint; float: number; decimals: number; symbol: string }> {
+  async getBalance(token: OmniToken): Promise<TokenBalance> {
     const balances = await this.intents.getIntentsBalances([token], this.tradingAddress);
     const metadata = OmniTokenMetadata[token];
     return {
@@ -64,7 +62,7 @@ class Wibe3Wallet {
 
     const signature = this.#keyPair.sign(Buffer.from(message)).signature;
     return {
-      signature: `ed25519:${base58.encode(signature)}`,
+      signature: `ed25519:${base58.default.encode(signature)}`,
       public_key: this.#keyPair.getPublicKey().toString(),
       standard: "raw_ed25519",
       payload: message,

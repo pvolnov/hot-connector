@@ -1,19 +1,30 @@
 {
   "name": "@hot-labs/wibe3",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "license": "ISC",
   "author": "",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "directories": {
+    "build": "build"
+  },
   "dependencies": {
-    "@creit.tech/stellar-wallets-kit": "^1.7.7",
-    "@hot-labs/near-connect": "^0.6.3",
+    "@creit.tech/stellar-wallets-kit": "^1.9.1",
+    "@hot-labs/near-connect": "0.6.4",
     "@near-js/crypto": "^2.3.3",
     "@near-js/utils": "^2.2.4",
-    "@reown/appkit-adapter-ethers": "^1.7.17"
+    "@reown/appkit": "^1.8.8",
+    "@reown/appkit-adapter-ethers": "^1.7.17",
+    "@reown/appkit-adapter-solana": "^1.7.17",
+    "@tonconnect/ui": "^2.2.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "yarn tsc"
+  },
+  "devDependencies": {
+    "tsc": "^2.0.4",
+    "typescript": "^5.9.3"
   }
 }

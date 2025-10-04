@@ -1,3 +1,7 @@
+# 0.6.4
+
+- Add Intents class and more exports
+
 # 0.6.3
 
 - Add autoConnect option for NearConnector (usable for ParentFrameWallets)

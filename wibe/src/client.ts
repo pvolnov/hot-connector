@@ -1,4 +1,3 @@
-import { createAppKit } from "@reown/appkit";
 import {
   NearConnector,
   HotConnector,
@@ -9,12 +8,7 @@ import {
   StellarWallet,
   TonWallet,
 } from "@hot-labs/near-connect";
-import { StellarWalletsKit, allowAllModules, WalletNetwork } from "@creit.tech/stellar-wallets-kit";
-import { base, bsc, mainnet, solana } from "@reown/appkit/networks";
-import { EthersAdapter } from "@reown/appkit-adapter-ethers";
-import { SolanaAdapter } from "@reown/appkit-adapter-solana";
-import { TonConnectUI } from "@tonconnect/ui";
-import { AuthCommitment, OmniToken, OmniTokenMetadata } from "./types";
+import { AuthCommitment, OmniToken, OmniTokenMetadata, TokenBalance } from "./types";
 
 interface WibeClientOptions {
   projectId: string;
@@ -46,7 +40,14 @@ class Wibe3Client {
     };
   }
 
-  static initialize(options: WibeClientOptions = initialConfig) {
+  static async initialize(options: WibeClientOptions = initialConfig) {
+    const { createAppKit } = await import("@reown/appkit");
+    const { StellarWalletsKit, allowAllModules, WalletNetwork } = await import("@creit.tech/stellar-wallets-kit");
+    const { base, bsc, mainnet, solana } = await import("@reown/appkit/networks");
+    const { EthersAdapter } = await import("@reown/appkit-adapter-ethers");
+    const { SolanaAdapter } = await import("@reown/appkit-adapter-solana");
+    const { TonConnectUI } = await import("@tonconnect/ui");
+
     const hasTonConnect = !!document.getElementById("ton-connect");
     if (!hasTonConnect) {
       const div = document.createElement("div");
@@ -84,15 +85,15 @@ class Wibe3Client {
     return new Wibe3Client(hotConnector);
   }
 
-  async getBalance(
-    token: OmniToken
-  ): Promise<{ id: string; int: bigint; float: number; decimals: number; symbol: string }> {
-    const balance = await this.hotConnector.intents.viewMethod("intents.near", "get_balance", { token: token });
+  async getBalance(token: OmniToken): Promise<TokenBalance> {
+    if (!this.wallet) throw new Error("No wallet connected");
+    const tradingAddress = await this.wallet.getIntentsAddress();
+    const balances = await this.hotConnector.intents.getIntentsBalances([token], tradingAddress);
     const metadata = OmniTokenMetadata[token];
     return {
-      int: BigInt(balance),
+      int: balances[token] || 0n,
       id: metadata.contractId,
-      float: balance / Math.pow(10, metadata.decimals),
+      float: Number(balances[token] || 0) / Math.pow(10, metadata.decimals),
       decimals: metadata.decimals,
       symbol: metadata.symbol,
     };

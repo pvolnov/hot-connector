@@ -24,3 +24,11 @@ export interface TrasferIntent {
   tokens: Record<string, string>;
   receiver_id: string;
 }
+
+export interface TokenBalance {
+  id: string;
+  int: bigint;
+  float: number;
+  decimals: number;
+  symbol: string;
+}
