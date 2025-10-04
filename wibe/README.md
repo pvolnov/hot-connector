@@ -4,28 +4,54 @@
 
 ## Client side
 
-```ts
-import { Wibe3Client } from "@hot-labs/wibe3";
+```tsx
+import { Wibe3Client, useWibe3 } from "@hot-labs/wibe3/client";
 
-const wibe3 = await Wibe3Client.initialize();
+const wibe3 = new Wibe3Client();
 
-// Connect user wallet
-await wibe3.connect();
+const Wibe3App = () => {
+  const { address, connect, auth } = useWibe3(wibe3);
+  const [jwt, setJwt] = useState<string | null>(null);
 
-// Authorize user crypto wallet
-const auth = await wibe3.auth();
-const jwt = await fetch("/auth", { body: JSON.stringify(auth), method: "POST" }).then((r) => r.json());
+  const authUser = async () => {
+    const auth = await wibe3.auth();
+    const jwt = await fetch("/auth", { body: JSON.stringify(auth), method: "POST" }).then((r) => r.json());
+    setJwt(jwt);
+  };
 
-// Claim some crypto to user after auth
-const password = prompt("Enter password to get 10 USDT");
-await fetch("/claim", {
-  body: JSON.stringify({ password }),
-  headers: { Authorization: jwt },
-  method: "POST",
-});
+  const claim = async () => {
+    const password = prompt("Enter password to get 10 USDT");
+    await fetch("/claim", {
+      body: JSON.stringify({ password }),
+      headers: { Authorization: jwt },
+      method: "POST",
+    });
+  };
 
-// After claim user can withdraw crypto!
-await wibe3.withdraw();
+  if (!address) {
+    return (
+      <div>
+        <button onClick={() => connect()}>Connect</button>
+      </div>
+    );
+  }
+
+  if (!jwt) {
+    return (
+      <div>
+        <p>Address: {address}</p>
+        <button onClick={() => authUser()}>Auth</button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p>Address: {address}</p>
+      <button onClick={() => claim()}>Claim 10$</button>
+    </div>
+  );
+};
 ```
 
 ## Backend side

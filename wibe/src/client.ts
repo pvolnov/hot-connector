@@ -1,4 +1,6 @@
+import { useState, useCallback, useEffect } from "react";
 import {
+  ChainAbstracted,
   NearConnector,
   HotConnector,
   WalletType,
@@ -7,7 +9,15 @@ import {
   SolanaWallet,
   StellarWallet,
   TonWallet,
+  EventEmitter,
 } from "@hot-labs/near-connect";
+import { StellarWalletsKit, allowAllModules, WalletNetwork } from "@creit.tech/stellar-wallets-kit";
+import { base, bsc, mainnet, solana } from "@reown/appkit/networks";
+import { EthersAdapter } from "@reown/appkit-adapter-ethers";
+import { SolanaAdapter } from "@reown/appkit-adapter-solana";
+import { TonConnect, TonConnectUI } from "@tonconnect/ui";
+import { createAppKit } from "@reown/appkit";
+
 import { AuthCommitment, OmniToken, OmniTokenMetadata, TokenBalance } from "./types";
 
 interface WibeClientOptions {
@@ -26,28 +36,15 @@ const initialConfig: WibeClientOptions = {
   icons: ["https://wibe.io/favicon.ico"],
 };
 
-class Wibe3Client {
-  private wallet: NearWallet | EvmWallet | SolanaWallet | StellarWallet | TonWallet | null = null;
+export class Wibe3Client {
+  private hotConnector: HotConnector;
+  wallet: NearWallet | EvmWallet | SolanaWallet | StellarWallet | TonWallet | null = null;
+  events: EventEmitter<{ connect: { wallet: ChainAbstracted }; disconnect: {} }>;
 
-  constructor(private hotConnector: HotConnector) {
-    this.hotConnector = hotConnector;
-    this.hotConnector.options.onConnect = async (wallet) => {
-      this.wallet = wallet;
-    };
+  onConnect: (wallet: ChainAbstracted) => void = () => {};
+  onDisconnect: () => void = () => {};
 
-    this.hotConnector.options.onDisconnect = () => {
-      this.wallet = null;
-    };
-  }
-
-  static async initialize(options: WibeClientOptions = initialConfig) {
-    const { createAppKit } = await import("@reown/appkit");
-    const { StellarWalletsKit, allowAllModules, WalletNetwork } = await import("@creit.tech/stellar-wallets-kit");
-    const { base, bsc, mainnet, solana } = await import("@reown/appkit/networks");
-    const { EthersAdapter } = await import("@reown/appkit-adapter-ethers");
-    const { SolanaAdapter } = await import("@reown/appkit-adapter-solana");
-    const { TonConnectUI } = await import("@tonconnect/ui");
-
+  constructor(config: WibeClientOptions = initialConfig) {
     const hasTonConnect = !!document.getElementById("ton-connect");
     if (!hasTonConnect) {
       const div = document.createElement("div");
@@ -56,20 +53,28 @@ class Wibe3Client {
       div.style.display = "none";
     }
 
-    const hotConnector = new HotConnector({
-      onConnect: () => {},
-      onDisconnect: () => {},
+    this.events = new EventEmitter<{ connect: { wallet: ChainAbstracted }; disconnect: {} }>();
+
+    this.hotConnector = new HotConnector({
+      onConnect: (wallet) => {
+        this.wallet = wallet;
+        this.events.emit("connect", { wallet: wallet as ChainAbstracted });
+      },
+
+      onDisconnect: () => {
+        this.wallet = null;
+        this.events.emit("disconnect", {});
+      },
 
       chains: [WalletType.NEAR, WalletType.EVM, WalletType.SOLANA, WalletType.TON, WalletType.STELLAR],
       stellarKit: new StellarWalletsKit({ network: WalletNetwork.PUBLIC, modules: allowAllModules() }),
-
       nearConnector: new NearConnector({ network: "mainnet" }),
-      tonConnect: new TonConnectUI({ buttonRootId: "ton-connect" }),
+      tonConnect: new TonConnectUI({ connector: new TonConnect(), buttonRootId: "ton-connect" }),
       appKit: createAppKit({
         adapters: [new EthersAdapter(), new SolanaAdapter()],
         networks: [mainnet, solana, base, bsc],
-        metadata: options,
-        projectId: options.projectId,
+        projectId: config.projectId,
+        metadata: config,
         features: {
           onramp: false,
           email: false,
@@ -81,8 +86,6 @@ class Wibe3Client {
         },
       }),
     });
-
-    return new Wibe3Client(hotConnector);
   }
 
   async getBalance(token: OmniToken): Promise<TokenBalance> {
@@ -124,4 +127,44 @@ class Wibe3Client {
   async withdraw() {}
 }
 
-export default Wibe3Client;
+export const useWibe3 = (wibe3: Wibe3Client) => {
+  const [wallet, setWallet] = useState<ChainAbstracted | null>(wibe3.wallet);
+  const [address, setAddress] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onConnect = (t: { wallet: ChainAbstracted }) => setWallet(t.wallet);
+    const onDisconnect = () => setWallet(null);
+    wibe3.events.on("connect", onConnect);
+    wibe3.events.on("disconnect", onDisconnect);
+    return () => {
+      wibe3.events.off("connect", onConnect);
+      wibe3.events.off("disconnect", onDisconnect);
+    };
+  }, [wibe3]);
+
+  useEffect(() => {
+    setAddress(null);
+    wallet?.getAddress().then(setAddress);
+  }, [wallet]);
+
+  const connect = useCallback(async () => {
+    await wibe3.connect();
+    setWallet(wallet);
+  }, []);
+
+  const auth = useCallback(async () => {
+    const auth = await wibe3.auth();
+    return auth;
+  }, []);
+
+  const disconnect = useCallback(async () => {
+    await wibe3.disconnect();
+    setWallet(null);
+  }, []);
+
+  const getBalance = useCallback(async (token: OmniToken) => {
+    return wibe3.getBalance(token);
+  }, []);
+
+  return { address, connect, auth, disconnect, getBalance };
+};

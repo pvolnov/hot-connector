@@ -1,12 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import { ExampleNEAR } from "./App";
-import { MultichainExample } from "./App";
+import { Wibe } from "./Wibe";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ExampleNEAR />
-    <MultichainExample />
+    <Wibe />
   </React.StrictMode>
 );

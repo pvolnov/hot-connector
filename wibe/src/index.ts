@@ -1,3 +1,2 @@
-export { default as Wibe3Client } from "./client";
-export { default as Wibe3Wallet } from "./backend";
+export { default as Wibe3Wallet } from "./wallet";
 export * from "./types";
