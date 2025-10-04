@@ -10,6 +10,7 @@ build
 .vite
 example/public
 dist
+.env
 
 node_modules
 dist-ssr

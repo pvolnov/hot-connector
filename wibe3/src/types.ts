@@ -35,4 +35,5 @@ export interface TokenBalance {
   float: number;
   decimals: number;
   symbol: string;
+  icon: string;
 }
